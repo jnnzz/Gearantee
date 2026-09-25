@@ -22,7 +22,13 @@
                     </li>
                     <li>
                         <i class="fa-solid fa-right-from-bracket"></i>
-                        <a asp-action="SignOutUser" asp-controller="Account">Logout</a>
+                        <form asp-action="SignOutUser" asp-controller="Account"
+                              method="post" style="display:inline">
+                            <button type="submit"
+                                    style="border:0;background:transparent;padding:0;color:#333">
+                                Logout
+                            </button>
+                        </form>
                     </li>
                 </ul>
             </div>

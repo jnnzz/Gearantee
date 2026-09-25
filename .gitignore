@@ -19,6 +19,7 @@ x64/
 [Bb]in/
 [Oo]bj/
 .dotnet/
+.dotnet-home/
 .tools/
 .packages/
 
@@ -164,6 +165,7 @@ UpgradeLog*.htm
 # SQL Server files
 App_Data/*.mdf
 App_Data/*.ldf
+**/App_Data/
 
 
 #LightSwitch generated files

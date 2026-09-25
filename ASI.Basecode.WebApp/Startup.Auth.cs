@@ -1,64 +1,84 @@
-﻿using ASI.Basecode.WebApp.Authentication;
-using ASI.Basecode.WebApp.Extensions.Configuration;
-using ASI.Basecode.Resources.Constants;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+using ASI.Basecode.Data;
+using ASI.Basecode.Data.Models;
+using ASI.Basecode.WebApp.Authorization;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.IdentityModel.Tokens;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Authorization;
+using Microsoft.Extensions.DependencyInjection;
+using System;
 
 namespace ASI.Basecode.WebApp
 {
-    // Authorization configuration
     internal partial class StartupConfigurer
     {
-        private readonly SymmetricSecurityKey _signingKey;
-        private readonly TokenValidationParameters _tokenValidationParameters;
-        private readonly TokenProviderOptions _tokenProviderOptions;
-
-        /// <summary>
-        /// Configure authorization
-        /// </summary>
-        private void ConfigureAuthorization()
+        private void ConfigureIdentityAndAuthorization()
         {
-            var token = Configuration.GetTokenAuthentication();
-            var tokenProviderOptionsFactory = this._services.BuildServiceProvider().GetService<TokenProviderOptionsFactory>();
-            var tokenValidationParametersFactory = this._services.BuildServiceProvider().GetService<TokenValidationParametersFactory>();
-            var tokenValidationParameters = tokenValidationParametersFactory.Create();
-
-            this._services.AddAuthentication(Const.AuthenticationScheme)
-            .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
-            {
-                options.TokenValidationParameters = tokenValidationParameters;
-            })
-            .AddCookie(Const.AuthenticationScheme, options =>
-            {
-                options.Cookie = new CookieBuilder()
+            _services
+                .AddIdentity<ApplicationUser, IdentityRole>(options =>
                 {
-                    IsEssential = true,
-                    SameSite = SameSiteMode.Lax,
-                    SecurePolicy = CookieSecurePolicy.SameAsRequest,
-                    Name = $"{this._environment.ApplicationName}_{token.CookieName}"
-                };
-                options.LoginPath = new PathString("/Account/Login");
-                options.AccessDeniedPath = new PathString("/html/Forbidden.html");
-                options.ReturnUrlParameter = "ReturnUrl";
-                options.TicketDataFormat = new CustomJwtDataFormat(SecurityAlgorithms.HmacSha256, _tokenValidationParameters, Configuration, tokenProviderOptionsFactory);
+                    options.Password.RequiredLength = 8;
+                    options.Password.RequireDigit = true;
+                    options.Password.RequireLowercase = true;
+                    options.Password.RequireUppercase = true;
+                    options.Password.RequireNonAlphanumeric = true;
+
+                    options.Lockout.AllowedForNewUsers = true;
+                    options.Lockout.MaxFailedAccessAttempts = 5;
+                    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+
+                    options.User.RequireUniqueEmail = true;
+                    options.SignIn.RequireConfirmedEmail = false;
+                })
+                .AddEntityFrameworkStores<AsiBasecodeDBContext>()
+                .AddDefaultTokenProviders();
+
+            _services.ConfigureApplicationCookie(options =>
+            {
+                options.Cookie.Name = "Gearantee.Identity";
+                options.Cookie.HttpOnly = true;
+                options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Lax;
+                options.Cookie.SecurePolicy =
+                    Microsoft.AspNetCore.Http.CookieSecurePolicy.SameAsRequest;
+                options.LoginPath = "/Account/Login";
+                options.AccessDeniedPath = "/Account/AccessDenied";
+                options.ExpireTimeSpan = TimeSpan.FromHours(2);
+                options.SlidingExpiration = true;
             });
 
-            this._services.AddAuthorization(options =>
+            _services.AddScoped<
+                IUserClaimsPrincipalFactory<ApplicationUser>,
+                ApplicationClaimsPrincipalFactory>();
+
+            _services.AddAuthorization(options =>
             {
-                options.AddPolicy("RequireAuthenticatedUser", policy =>
-                {
-                    policy.RequireAuthenticatedUser();
-                });
+                AddPermissionPolicy(options, DomainValues.Permissions.EquipmentBrowse);
+                AddPermissionPolicy(options, DomainValues.Permissions.ReservationCreate);
+                AddPermissionPolicy(options, DomainValues.Permissions.ReservationReview);
+                AddPermissionPolicy(options, DomainValues.Permissions.TransactionReleaseReturn);
+                AddPermissionPolicy(options, DomainValues.Permissions.EquipmentManage);
+                AddPermissionPolicy(options, DomainValues.Permissions.BorrowerManage);
+                AddPermissionPolicy(options, DomainValues.Permissions.UserRoleManage);
+                AddPermissionPolicy(options, DomainValues.Permissions.HistoryView);
             });
 
-            this._services.AddMvc(options =>
+            _services.AddControllersWithViews(options =>
             {
-                options.Filters.Add(new AuthorizeFilter("RequireAuthenticatedUser"));
+                var policy = new AuthorizationPolicyBuilder()
+                    .RequireAuthenticatedUser()
+                    .Build();
+                options.Filters.Add(new AuthorizeFilter(policy));
             });
+        }
+
+        private static void AddPermissionPolicy(
+            AuthorizationOptions options,
+            string permission)
+        {
+            options.AddPolicy(
+                permission,
+                policy => policy.RequireClaim(
+                    ApplicationClaimsPrincipalFactory.PermissionClaimType,
+                    permission));
         }
     }
 }

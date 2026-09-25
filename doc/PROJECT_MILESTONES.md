@@ -2,7 +2,7 @@
 
 ## Campus Equipment Borrowing & Reservation System
 
-This plan covers the complete first version of the system using ASP.NET Core Razor Pages, PostgreSQL, Entity Framework Core/Npgsql, ASP.NET Core Identity, MailKit, and school SMTP.
+This plan covers the complete first version of the system using ASP.NET Core MVC with Razor Views, Microsoft SQL Server, Entity Framework Core's SQL Server provider, ASP.NET Core Identity, Tailwind CSS, MailKit, and school SMTP.
 
 **Tracking:** change `[ ]` to `[x]` as each task is completed.
 
@@ -10,7 +10,7 @@ This plan covers the complete first version of the system using ASP.NET Core Raz
 
 | Milestone | Focus | Main deliverable |
 | --- | --- | --- |
-| 1 | Project foundation | Running ASP.NET Core project connected to PostgreSQL |
+| 1 | Project foundation | Running ASP.NET Core MVC project connected to SQL Server |
 | 2 | Authentication and access | Secure sign-in, password recovery, and role-based dashboards |
 | 3 | Master data | Managed users, borrower profiles, categories, and equipment items |
 | 4 | Reservations | Searchable catalog, availability checking, and reservation requests |
@@ -27,17 +27,20 @@ This plan covers the complete first version of the system using ASP.NET Core Raz
 
 ### Tasks
 
-- [ ] Create the ASP.NET Core Razor Pages project.
-- [ ] Create the PostgreSQL database and configure the connection string through user secrets/environment variables.
-- [ ] Add Entity Framework Core and the Npgsql PostgreSQL provider.
-- [ ] Add the initial entities and migrations based on the ERD.
-- [ ] Establish the shared layout, navigation, Bootstrap styling, error pages, and basic logging.
+- [x] Confirm the ASP.NET Core MVC project structure with controllers and Razor Views.
+- [x] Create/configure the Microsoft SQL Server development database with a non-secret LocalDB connection that can be overridden through user secrets or environment variables.
+- [ ] Optionally use SQL Server Management Studio (SSMS) to administer and inspect SQL Server; SSMS is not the database engine.
+- [x] Use Entity Framework Core with `Microsoft.EntityFrameworkCore.SqlServer`.
+- [x] Add the initial entities and create/apply migrations based on the canonical ERD.
+- [ ] Configure Tailwind CSS, its Razor content scanning, development watch command, and minified production build.
+- [ ] Establish the shared layout, navigation, Tailwind styling, error pages, and basic logging.
 - [ ] Create development/production configuration separation.
 
 ### Completion criteria
 
 - The application runs locally.
-- Entity Framework Core can create/update the PostgreSQL schema through migrations.
+- Entity Framework Core can create/update the SQL Server schema through migrations.
+- The compiled Tailwind stylesheet is generated under `wwwroot` and loaded by the shared layout.
 - The database contains the initial tables required by the ERD.
 - No credentials are stored in source control.
 
@@ -49,9 +52,9 @@ This plan covers the complete first version of the system using ASP.NET Core Raz
 
 ### Tasks
 
-- [ ] Configure ASP.NET Core Identity with PostgreSQL.
-- [ ] Seed or create the three roles: Borrower, Custodian, and Administrator.
-- [ ] Build login and logout pages.
+- [x] Configure ASP.NET Core Identity with SQL Server.
+- [x] Seed the three roles and documented role-permission assignments.
+- [x] Build Identity-backed registration, login, and logout pages.
 - [ ] Build role-based dashboards and navigation.
 - [ ] Add account activation/deactivation behavior.
 - [ ] Implement Forgot Password using Identity reset tokens, MailKit, and school SMTP.
@@ -170,6 +173,7 @@ This plan covers the complete first version of the system using ASP.NET Core Raz
 - [ ] Test password reset expiration, reuse prevention, and unknown-email handling.
 - [ ] Validate all forms and server-side business rules.
 - [ ] Test desktop and mobile responsiveness.
+- [ ] Verify that the Tailwind production build includes every class used by Razor Views and JavaScript.
 - [ ] Review error handling, logging, security headers, HTTPS, and secret management.
 - [ ] Finalize technical documentation, ERD, setup guide, and user guide.
 
@@ -188,11 +192,12 @@ This plan covers the complete first version of the system using ASP.NET Core Raz
 
 ### Tasks
 
-- [ ] Configure the production PostgreSQL database and run migrations.
+- [ ] Configure the production SQL Server database and run migrations through a controlled deployment process.
 - [ ] Configure production environment variables, SMTP credentials, HTTPS certificate, and application URL.
 - [ ] Deploy to the approved IIS server or Azure App Service environment.
 - [ ] Create the initial administrator account securely.
 - [ ] Configure database backup and restore procedures.
+- [ ] Test a SQL Server backup restoration before handover.
 - [ ] Perform production smoke tests: sign-in, reset password, create reservation, approve, release, return, calendar, and reports.
 - [ ] Deliver the administrator setup guide and user quick-start guide.
 
@@ -217,4 +222,4 @@ Foundation
 
 ## Definition of Done for Version 1
 
-The first version is complete when borrowers can securely reserve available equipment; custodians can approve, release, and receive it; administrators can manage people and inventory; and authorized users can view availability and transaction history. All core actions must be role-protected, stored in PostgreSQL, and usable through the deployed web application.
+The first version is complete when borrowers can securely reserve one available equipment item per reservation; custodians can approve, release, and receive it; administrators can manage people and inventory; and authorized users can view availability and transaction history. All core actions must be protected by Identity roles/permissions, stored in Microsoft SQL Server, styled with the compiled Tailwind CSS output, and usable through the deployed ASP.NET Core MVC application.

@@ -1,70 +1,97 @@
-﻿@using ASI.Basecode.Services.ServiceModels
-@model UserViewModel
+@model RegisterViewModel
 @{
     ViewBag.LoginView = true;
-    ViewData["Title"] = "Register Page";
+    ViewData["Title"] = "Register";
 }
 @section styles {
     <link rel="stylesheet" href="~/css/login.css" />
 }
-<div class="container py-5 h-100 register-box">
-    <div class="row d-flex justify-content-center align-items-center h-100">
+
+<div class="container py-5 register-box">
+    <div class="row d-flex justify-content-center align-items-center">
         <div class="col-xl-10">
             <div class="card rounded-3 text-black">
-                <div class="row g-0">
-                    <div class="card-body p-md-5 mx-md-4">
+                <div class="card-body p-md-5 mx-md-4">
+                    <div class="text-center">
+                        <img src="~/img/asi-logo-invert.svg"
+                             style="width: 185px;" alt="logo">
+                    </div>
 
-                        <div class="text-center">
-                            <img src="https://www.alliance.com.ph/images/asi-logo-invert.svg"
-                                 style="width: 185px;" alt="logo">
+                    <form asp-action="Register" asp-controller="Account" method="post">
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                        <div class="row">
+                            <div class="col-md-6 form-outline mb-4">
+                                <label asp-for="UserCode" class="form-label"></label>
+                                <input asp-for="UserCode" class="form-control"
+                                       autocomplete="username" />
+                                <span asp-validation-for="UserCode" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 form-outline mb-4">
+                                <label asp-for="Email" class="form-label"></label>
+                                <input asp-for="Email" class="form-control"
+                                       autocomplete="email" />
+                                <span asp-validation-for="Email" class="text-danger"></span>
+                            </div>
                         </div>
 
-                        <form method="post" action="/Account/Register">
-                            <div class="form-outline mb-4">
-                                <label class="form-label" for="userId">UserId</label>
-                                <input type="text" id="userId" class="form-control"
-                                       asp-for="UserId" placeholder="Enter userid" />
-                                <span asp-validation-for="UserId" class="text-danger"></span>
+                        <div class="row">
+                            <div class="col-md-6 form-outline mb-4">
+                                <label asp-for="FirstName" class="form-label"></label>
+                                <input asp-for="FirstName" class="form-control" />
+                                <span asp-validation-for="FirstName" class="text-danger"></span>
                             </div>
-                            <div class="form-outline mb-4">
-                                <label class="form-label" for="name">Name</label>
-                                <input type="text" id="name" class="form-control"
-                                       asp-for="Name" placeholder="Enter name" />
-                                <span asp-validation-for="Name" class="text-danger"></span>
+                            <div class="col-md-6 form-outline mb-4">
+                                <label asp-for="LastName" class="form-label"></label>
+                                <input asp-for="LastName" class="form-control" />
+                                <span asp-validation-for="LastName" class="text-danger"></span>
                             </div>
-                            <div class="form-outline mb-4">
-                                <label class="form-label" for="password">Password</label>
-                                <input type="password" id="password" class="form-control"
-                                       asp-for="Password" placeholder="Enter password" />
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 form-outline mb-4">
+                                <label asp-for="Department" class="form-label"></label>
+                                <input asp-for="Department" class="form-control" />
+                                <span asp-validation-for="Department" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 form-outline mb-4">
+                                <label asp-for="ContactNumber" class="form-label"></label>
+                                <input asp-for="ContactNumber" class="form-control" />
+                                <span asp-validation-for="ContactNumber" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 form-outline mb-4">
+                                <label asp-for="Password" class="form-label"></label>
+                                <input asp-for="Password" class="form-control"
+                                       autocomplete="new-password" />
                                 <span asp-validation-for="Password" class="text-danger"></span>
                             </div>
-                            <div class="form-outline mb-4">
-                                <label class="form-label" for="confirmpassword">Confirm Password</label>
-                                <input type="password" id="confirmpassword" class="form-control" 
-                                       asp-for="ConfirmPassword" placeholder="Confirm Password" />
+                            <div class="col-md-6 form-outline mb-4">
+                                <label asp-for="ConfirmPassword" class="form-label"></label>
+                                <input asp-for="ConfirmPassword" class="form-control"
+                                       autocomplete="new-password" />
                                 <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
                             </div>
-                            <div class="text-center pt-1 mb-5 pb-1 d-flex flex-column align-items-center">
-                                <button class="btn btn-primary btn-block login-btn gradient-custom-2 mb-3" type="submit">
-                                    Register
-                                </button>
-                                <a asp-controller="Account" asp-action="Login">
-                                    &#8592 Back
-                                </a>
-                            </div>
-                        </form>
-                    </div>
+                        </div>
+
+                        <div class="text-center pt-1 pb-1 d-flex flex-column align-items-center">
+                            <button class="btn btn-primary btn-block login-btn gradient-custom-2 mb-3"
+                                    type="submit">
+                                Register
+                            </button>
+                            <a asp-controller="Account" asp-action="Login">
+                                &#8592; Back to login
+                            </a>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
 @section scripts {
-    <script>
-        // Check for error message and display Toastr notification
-        var errorMessage = '@TempData["ErrorMessage"]';
-        if (errorMessage) {
-            toastr.error(errorMessage);
-        }
-    </script>
+    <partial name="_ValidationScriptsPartial" />
 }

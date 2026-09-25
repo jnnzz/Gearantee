@@ -1,127 +1,159 @@
-# Entity Relationship Diagram (ERD)
+# Canonical Entity Relationship Diagram
 
-This ERD supports the initial Campus Equipment Borrowing & Reservation System scope. It models access control, equipment inventory, reservations, releases, and returns.
+This is the simplified visual reference for the Version 1 Campus Equipment Borrowing & Reservation System. The authoritative field definitions and SQL Server constraints are in `Campus_Equipment_Borrowing_ERD_Data_Dictionary.md`.
+
+## Design Decisions
+
+- ASP.NET Core Identity manages users, password hashes, roles, sign-in, and reset tokens.
+- `ApplicationUser` extends Identity with application-specific account fields.
+- `BorrowerProfile` stores school identity, department, contact, and borrowing eligibility.
+- Each reservation contains exactly one equipment item.
+- A borrower requests multiple items by creating multiple reservations.
+- SQL Server is the database engine; SSMS is an optional administration tool.
 
 ```mermaid
 erDiagram
-    ROLE ||--o{ USER : assigns
-    USER ||--o| BORROWER_PROFILE : has
+    IDENTITY_ROLE ||--o{ USER_ROLE : contains
+    APPLICATION_USER ||--o{ USER_ROLE : receives
+    IDENTITY_ROLE ||--o{ ROLE_PERMISSION : grants
+    PERMISSION ||--o{ ROLE_PERMISSION : assigned_through
+
+    APPLICATION_USER ||--o| BORROWER_PROFILE : has
     EQUIPMENT_CATEGORY ||--o{ EQUIPMENT_ITEM : classifies
+    LOCATION ||--o{ EQUIPMENT_ITEM : stores
+
     BORROWER_PROFILE ||--o{ RESERVATION : creates
     EQUIPMENT_ITEM ||--o{ RESERVATION : is_requested_in
-    USER ||--o{ RESERVATION : reviews
-    RESERVATION ||--o| RELEASE_RECORD : results_in
-    USER ||--o{ RELEASE_RECORD : releases
-    RELEASE_RECORD ||--o| RETURN_RECORD : ends_with
-    USER ||--o{ RETURN_RECORD : receives
+    APPLICATION_USER ||--o{ RESERVATION : reviews
 
-    ROLE {
-        int role_id PK
-        string name UK
-        string description
-        boolean is_active
+    RESERVATION ||--o| RELEASE_RECORD : results_in
+    APPLICATION_USER ||--o{ RELEASE_RECORD : releases
+    RELEASE_RECORD ||--o| RETURN_RECORD : ends_with
+    APPLICATION_USER ||--o{ RETURN_RECORD : receives
+    RETURN_RECORD ||--o| LATE_RETURN : may_create
+
+    APPLICATION_USER {
+        nvarchar user_id PK
+        nvarchar user_code UK
+        nvarchar first_name
+        nvarchar last_name
+        bit is_active
     }
 
-    USER {
-        int user_id PK
-        int role_id FK
-        string full_name
-        string email UK
-        string password_hash
-        boolean is_active
-        datetime created_at
-        datetime updated_at
+    IDENTITY_ROLE {
+        nvarchar role_id PK
+        nvarchar role_name UK
+    }
+
+    USER_ROLE {
+        nvarchar user_id PK, FK
+        nvarchar role_id PK, FK
+    }
+
+    PERMISSION {
+        bigint permission_id PK
+        nvarchar permission_name UK
+        nvarchar description
+    }
+
+    ROLE_PERMISSION {
+        nvarchar role_id PK, FK
+        bigint permission_id PK, FK
     }
 
     BORROWER_PROFILE {
-        int borrower_id PK
-        int user_id FK
-        string school_id UK
-        string department
-        string contact_number
-        boolean is_eligible
-        datetime created_at
-        datetime updated_at
+        bigint borrower_profile_id PK
+        nvarchar user_id FK, UK
+        nvarchar school_id UK
+        nvarchar department
+        nvarchar contact_number
+        bit is_eligible
     }
 
     EQUIPMENT_CATEGORY {
-        int category_id PK
-        string name UK
-        string description
-        boolean is_active
-        datetime created_at
-        datetime updated_at
+        bigint category_id PK
+        nvarchar category_code UK
+        nvarchar category_name UK
+        bit is_active
+    }
+
+    LOCATION {
+        bigint location_id PK
+        nvarchar location_name UK
+        bit is_active
     }
 
     EQUIPMENT_ITEM {
-        int item_id PK
-        int category_id FK
-        string item_code UK
-        string name
-        string model
-        string serial_number UK
-        string current_condition
-        string current_status
-        string storage_location
-        string image_url
-        boolean is_active
-        datetime created_at
-        datetime updated_at
+        bigint equipment_id PK
+        bigint category_id FK
+        bigint location_id FK
+        nvarchar item_code UK
+        nvarchar item_name
+        nvarchar serial_number UK
+        nvarchar condition_status
+        nvarchar item_status
+        bit is_archived
     }
 
     RESERVATION {
-        int reservation_id PK
-        int borrower_id FK
-        int item_id FK
-        int reviewed_by_user_id FK
-        string purpose
-        datetime requested_release_at
-        datetime requested_return_at
-        string status
-        string reviewer_notes
-        datetime reviewed_at
-        datetime created_at
-        datetime updated_at
+        bigint reservation_id PK
+        bigint borrower_profile_id FK
+        bigint equipment_id FK
+        nvarchar reviewed_by_user_id FK
+        datetime2 reservation_start
+        datetime2 reservation_end
+        nvarchar purpose
+        nvarchar status
+        nvarchar rejection_reason
+        datetime2 reviewed_at
     }
 
     RELEASE_RECORD {
-        int release_id PK
-        int reservation_id FK_UK
-        int released_by_user_id FK
-        datetime actual_release_at
-        string release_notes
-        datetime created_at
+        bigint release_record_id PK
+        bigint reservation_id FK, UK
+        nvarchar released_by_user_id FK
+        datetime2 actual_release_at
+        nvarchar notes
     }
 
     RETURN_RECORD {
-        int return_id PK
-        int release_id FK_UK
-        int received_by_user_id FK
-        datetime actual_return_at
-        string returned_condition
-        string resulting_item_status
-        string return_notes
-        datetime created_at
+        bigint return_record_id PK
+        bigint release_record_id FK, UK
+        nvarchar received_by_user_id FK
+        datetime2 actual_return_at
+        nvarchar returned_condition
+        nvarchar resulting_item_status
+    }
+
+    LATE_RETURN {
+        bigint late_return_id PK
+        bigint return_record_id FK, UK
+        datetime2 due_at
+        datetime2 returned_at
+        int days_late
+        nvarchar penalty_status
     }
 ```
 
-## Relationship Notes
+## Cardinality Summary
 
 | Relationship | Cardinality | Meaning |
 | --- | --- | --- |
-| Role → User | One-to-many | A role can be assigned to many user accounts; each user has one role in the first version. |
-| User → Borrower Profile | One-to-zero-or-one | Only student/faculty accounts that borrow equipment need a borrower profile. |
-| Equipment Category → Equipment Item | One-to-many | A category groups multiple physical equipment items. |
-| Borrower Profile → Reservation | One-to-many | A borrower can make many reservation requests over time. |
-| Equipment Item → Reservation | One-to-many | One item can occur in many historical reservations, but date-time conflicts must be prevented. |
-| Reservation → Release Record | One-to-zero-or-one | Only an approved reservation that is handed over creates a release record. |
-| Release Record → Return Record | One-to-zero-or-one | A released item receives one return record when the loan ends. |
+| Application User → Borrower Profile | 1:0..1 | Only borrowing accounts need a borrower profile. |
+| Role → Permission | M:N | `ROLE_PERMISSION` assigns capabilities to Identity roles. |
+| Category → Equipment Item | 1:M | Each item belongs to one category. |
+| Location → Equipment Item | 1:M | Each item has one current location. |
+| Borrower Profile → Reservation | 1:M | A borrower can submit many requests. |
+| Equipment Item → Reservation | 1:M | An item can appear in many historical reservations, but approved times cannot overlap. |
+| Reservation → Release Record | 1:0..1 | Only a fulfilled approved reservation is released. |
+| Release Record → Return Record | 1:0..1 | A release receives one return when the loan ends. |
+| Return Record → Late Return | 1:0..1 | A late-return record exists only when the item was returned past its due time. |
 
-## Data Rules Represented by the ERD
+## Important Rules
 
-- `email`, `school_id`, `item_code`, category `name`, and role `name` should be unique.
-- `serial_number` should be unique when the item has a manufacturer serial number; allow a nullable value for items without one.
-- `RELEASE_RECORD.reservation_id` is unique: a reservation can be released only once.
-- `RETURN_RECORD.release_id` is unique: a released item can be returned only once.
-- `RESERVATION.reviewed_by_user_id` is filled when a custodian or administrator approves or rejects the request.
-- Reservation date/time overlap validation is a business rule enforced by the application/database query rather than a simple foreign-key relationship.
+- `AspNetUsers` and the other standard Identity tables remain part of the physical database even when not fully shown here.
+- No custom password, password-reset, or OTP columns/tables are required.
+- Reservation start must be earlier than reservation end.
+- Approval must recheck schedule overlap in a SQL Server transaction.
+- Optional serial numbers require a filtered unique index.
+- Historical transaction rows must not be cascade-deleted.

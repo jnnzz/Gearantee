@@ -49,7 +49,7 @@ flowchart TD
 
 ---
 
-# 2. Borrower Workflow
+## 2. Borrower Workflow
 
 The borrower workflow covers searching equipment, submitting reservations, monitoring reservation status, cancelling reservations, receiving equipment, and returning equipment.
 
@@ -103,7 +103,7 @@ flowchart TD
 
 ---
 
-# 3. Equipment Search & Availability Workflow
+## 3. Equipment Search & Availability Workflow
 
 ```mermaid
 flowchart TD
@@ -128,9 +128,11 @@ flowchart TD
 
 The availability check should consider both the equipment's current status and conflicting reservation schedules.
 
+> **Version 1 data rule:** Each reservation references exactly one physical equipment item. A borrower who needs several items submits one reservation per item.
+
 ---
 
-# 4. Reservation Workflow
+## 4. Reservation Workflow
 
 ```mermaid
 flowchart TD
@@ -160,7 +162,7 @@ flowchart TD
 
 ---
 
-# 5. Reservation Approval Workflow
+## 5. Reservation Approval Workflow
 
 ```mermaid
 flowchart TD
@@ -189,7 +191,7 @@ The requirements specify that rejection should include a mandatory explanation v
 
 ---
 
-# 6. Equipment Release Workflow
+## 6. Equipment Release Workflow
 
 ```mermaid
 flowchart TD
@@ -215,7 +217,7 @@ The release transaction records the custodian, actual release timestamp, and cha
 
 ---
 
-# 7. Equipment Return Workflow
+## 7. Equipment Return Workflow
 
 ```mermaid
 flowchart TD
@@ -251,14 +253,14 @@ The system identifies late returns and records associated penalties or infractio
 
 ---
 
-# 8. Equipment Status Lifecycle
+## 8. Equipment Status Lifecycle
 
 ```mermaid
 stateDiagram-v2
     [*] --> Available
 
-    Available --> Reserved : Reservation Approved
-    Reserved --> Borrowed : Equipment Released
+    Available --> Available : Future Reservation Approved
+    Available --> Borrowed : Equipment Released
 
     Borrowed --> Available : Returned in Good Condition
     Borrowed --> UnderMaintenance : Damaged / Needs Inspection
@@ -274,14 +276,15 @@ stateDiagram-v2
 | Status | Description |
 |---|---|
 | **Available** | Equipment can be reserved or released. |
-| **Reserved** | Equipment has an approved future reservation. |
 | **Borrowed** | Equipment has been released to a borrower. |
 | **Under Maintenance** | Equipment is damaged or requires inspection/repair. |
 | **Archived** | Equipment is no longer available for new transactions. |
 
+An approved reservation blocks its scheduled time range but does not permanently change the item's current physical status to `Reserved`. The availability service combines the operational status with approved reservation ranges and active releases.
+
 ---
 
-# 9. Late Return Workflow
+## 9. Late Return Workflow
 
 ```mermaid
 flowchart TD
@@ -305,7 +308,7 @@ flowchart TD
 
 ---
 
-# 10. Borrowing History Workflow
+## 10. Borrowing History Workflow
 
 ```mermaid
 flowchart TD
@@ -334,7 +337,7 @@ The borrowing history includes completed, cancelled, and overdue transactions an
 
 ---
 
-# 11. Availability Calendar Workflow
+## 11. Availability Calendar Workflow
 
 ```mermaid
 flowchart TD
@@ -362,7 +365,7 @@ The calendar provides a daily/weekly view of equipment availability, reservation
 
 ---
 
-# 12. Administrator Workflow
+## 12. Administrator Workflow
 
 ```mermaid
 flowchart TD
@@ -403,7 +406,7 @@ The administrator functions include account creation, bulk CSV account creation,
 
 ---
 
-# 13. Complete System Workflow
+## 13. Complete System Workflow
 
 The following represents the **high-level workflow of the entire system**:
 
@@ -498,7 +501,7 @@ flowchart TD
 
 ---
 
-# 14. Core Business Process
+## 14. Core Business Process
 
 The most important business process can be summarized as:
 
@@ -561,7 +564,7 @@ Check Late Return
 
 ```text
                     ┌──────────────────────┐
-                    │        USER          │
+                    │  APPLICATION USER    │
                     └──────────┬───────────┘
                                │
                                ▼
@@ -584,3 +587,5 @@ Check Late Return
 ```
 
 **Important:** The password-reset URL/token mechanism is an authentication implementation detail and does **not** introduce a custom entity into the business ERD.
+
+ASP.NET Core Identity stores the account in `AspNetUsers` through the `ApplicationUser` model. School-specific borrowing fields and eligibility are stored separately in `BORROWER_PROFILE`.

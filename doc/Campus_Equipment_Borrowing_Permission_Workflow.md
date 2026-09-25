@@ -1,606 +1,215 @@
 # Campus Equipment Borrowing & Reservation System
-## Role-Based Permission Workflow
+## Identity Role and Permission Workflow
 
 ## 1. Overview
 
-The system uses **role-based permissions** to control which dashboards, pages, and actions an account can access.
-
-The authorization structure is:
+ASP.NET Core Identity authenticates accounts and stores users, roles, password hashes, security metadata, and user-role assignments in SQL Server. Application permissions add finer-grained control over pages and actions.
 
 ```text
-USER
-  ↓
-ROLE
-  ↓
-ROLE_PERMISSION
-  ↓
-PERMISSION
-  ↓
-Allow / Deny Action
+ApplicationUser (AspNetUsers)
+        │
+        ▼
+UserRole (AspNetUserRoles)
+        │
+        ▼
+IdentityRole (AspNetRoles)
+        │
+        ▼
+RolePermission
+        │
+        ▼
+Permission
+        │
+        ▼
+Allow or deny the action
 ```
 
-### Core concept
+The `BorrowerProfile` table is separate from authentication. It stores school ID, department, contact information, and borrowing eligibility for users who can borrow equipment.
 
-- **User** — The account that logs into the system.
-- **Role** — Defines the user's responsibility, such as Borrower, Custodian, or Administrator.
-- **Permission** — Defines a specific capability or action the user is allowed to perform.
-- **Role-Permission** — Connects a role to the permissions assigned to it.
+## 2. Roles
 
----
+| Role | Code | Responsibility |
+| --- | --- | --- |
+| Borrower | BRW | Browse equipment and submit one-item reservation requests. |
+| Custodian | CUS | Review requests and record equipment release and return. |
+| Administrator | ADM | Manage users, roles, permissions, borrower profiles, and equipment. |
 
-# 2. Roles
+These roles are seeded as ASP.NET Core Identity roles.
 
-The system has three primary roles:
-
-| Role | Code | Description |
-|---|---|---|
-| Borrower | BRW | Users who browse equipment and submit reservation requests. |
-| Custodian | CUS | Users who manage reservation requests and equipment release/return activities. |
-| Administrator | ADM | Users who manage equipment, borrower profiles, users, roles, and permissions. |
-
----
-
-# 3. Permission Matrix
-
-The Role Permissions page presents permissions as a matrix.
-
-A checked/filled box means the role has that capability.
+## 3. Permission Matrix
 
 | Capability | BRW | CUS | ADM |
-|---|:---:|:---:|:---:|
-| Browse catalog & calendar | ✓ | ✓ | ✓ |
+| --- | :---: | :---: | :---: |
+| Browse catalog and calendar | ✓ | ✓ | ✓ |
 | Submit reservation request | ✓ |  |  |
-| Approve / reject request |  | ✓ | ✓ |
-| Record release & return |  | ✓ | ✓ |
-| Maintain equipment & categories |  |  | ✓ |
+| Approve or reject request |  | ✓ | ✓ |
+| Record release and return |  | ✓ | ✓ |
+| Maintain equipment, categories, and locations |  |  | ✓ |
 | Maintain borrower profiles |  |  | ✓ |
-| Manage users & roles |  |  | ✓ |
+| Manage users, roles, and permissions |  |  | ✓ |
 | View borrowing history report |  | ✓ | ✓ |
 
-The administrator can use this matrix to configure which capabilities are assigned to each role.
+The matrix is an administrative interface over `ROLE_PERMISSION`.
 
----
-
-# 4. Database Structure
-
-The permission system is represented by three main entities:
+## 4. Canonical Database Structure
 
 ```mermaid
 erDiagram
+    APPLICATION_USER ||--o{ USER_ROLE : receives
+    IDENTITY_ROLE ||--o{ USER_ROLE : contains
+    IDENTITY_ROLE ||--o{ ROLE_PERMISSION : grants
+    PERMISSION ||--o{ ROLE_PERMISSION : assigned_through
+    APPLICATION_USER ||--o| BORROWER_PROFILE : has
 
-    USER {
-        bigint user_id PK
-        bigint role_id FK
-        string user_code UK
-        string email UK
-        string first_name
-        string last_name
-        boolean is_active
+    APPLICATION_USER {
+        nvarchar user_id PK
+        nvarchar user_code UK
+        nvarchar email UK
+        bit is_active
     }
 
-    ROLE {
-        bigint role_id PK
-        string role_name UK
-        string description
+    IDENTITY_ROLE {
+        nvarchar role_id PK
+        nvarchar role_name UK
+    }
+
+    USER_ROLE {
+        nvarchar user_id PK, FK
+        nvarchar role_id PK, FK
     }
 
     PERMISSION {
         bigint permission_id PK
-        string permission_name UK
-        string description
+        nvarchar permission_name UK
+        nvarchar description
     }
 
     ROLE_PERMISSION {
-        bigint role_id PK, FK
+        nvarchar role_id PK, FK
         bigint permission_id PK, FK
     }
 
-    ROLE ||--o{ USER : "assigned to"
-    ROLE ||--o{ ROLE_PERMISSION : "has"
-    PERMISSION ||--o{ ROLE_PERMISSION : "assigned through"
+    BORROWER_PROFILE {
+        bigint borrower_profile_id PK
+        nvarchar user_id FK, UK
+        nvarchar school_id UK
+        bit is_eligible
+    }
 ```
 
-### Relationships
+Physical Identity tables normally use the names `AspNetUsers`, `AspNetRoles`, and `AspNetUserRoles`. Other standard Identity support tables are created by Identity migrations.
 
-```text
-USER
-  │
-  │ role_id
-  ▼
-ROLE
-  │
-  │ role_id
-  ▼
-ROLE_PERMISSION
-  │
-  │ permission_id
-  ▼
-PERMISSION
-```
+There is no custom password column in the business schema. ASP.NET Core Identity manages password hashing, reset tokens, security stamps, lockout, and related security data.
 
-A user receives the permissions associated with their assigned role.
+## 5. Permission Records
 
----
-
-# 5. USER and ROLE
-
-Each user has a `role_id` foreign key.
-
-```text
-USER
---------------------------------
-user_id       PK
-role_id       FK ────────┐
-user_code     UK         │
-email         UK         │
-first_name               │
-last_name                │
-...                      │
-                         ▼
-                       ROLE
-                  ----------------
-                  role_id     PK
-                  role_name
-                  description
-```
-
-For example:
-
-```text
-Juan Dela Cruz
-      │
-      │ role_id = 1
-      ▼
-   Borrower
-```
-
-The `role_id` determines which set of permissions the user receives.
-
----
-
-# 6. ROLE and PERMISSION
-
-A role can have many permissions, and a permission can be assigned to multiple roles.
-
-Therefore, this is a **many-to-many relationship**.
-
-The `ROLE_PERMISSION` table acts as the junction table.
-
-```text
-ROLE
-  │
-  │ 1
-  │
-  │ M
-  ▼
-ROLE_PERMISSION
-  ▲
-  │ M
-  │
-  │ 1
-PERMISSION
-```
-
-Example:
-
-```text
-BORROWER
- ├── Browse catalog & calendar
- └── Submit reservation request
-
-CUSTODIAN
- ├── Browse catalog & calendar
- ├── Approve / reject request
- ├── Record release & return
- └── View borrowing history report
-
-ADMINISTRATOR
- ├── Browse catalog & calendar
- ├── Approve / reject request
- ├── Record release & return
- ├── Maintain equipment & categories
- ├── Maintain borrower profiles
- ├── Manage users & roles
- └── View borrowing history report
-```
-
----
-
-# 7. Permission Records
-
-Each capability can be stored as a permission record.
-
-Recommended permission names:
-
-| Permission | Description |
-|---|---|
-| `equipment.browse` | Browse equipment catalog and availability calendar. |
-| `reservation.create` | Submit a reservation request. |
-| `reservation.review` | Approve or reject reservation requests. |
+| Permission | Capability |
+| --- | --- |
+| `equipment.browse` | Browse the catalog and availability calendar. |
+| `reservation.create` | Submit a reservation for one equipment item. |
+| `reservation.review` | Approve or reject reservations. |
 | `transaction.release_return` | Record equipment release and return. |
-| `equipment.manage` | Create, update, archive, and maintain equipment and categories. |
+| `equipment.manage` | Maintain equipment, categories, and locations. |
 | `borrower.manage` | Maintain borrower profiles and eligibility. |
-| `user_role.manage` | Manage users, roles, and role permissions. |
-| `history.view` | View borrowing history and generate reports. |
+| `user_role.manage` | Manage accounts, roles, and role permissions. |
+| `history.view` | View borrowing history and reports. |
 
-The exact naming convention can be adjusted during implementation.
+Permission names are stable identifiers used by authorization policies. Display labels may be localized without changing these identifiers.
 
----
-
-# 8. How the Administrator Configures Permissions
-
-The administrator opens the **Role Permissions** page.
-
-```text
-Administrator Dashboard
-        │
-        ▼
-Role & Permission Management
-        │
-        ▼
-Select Role
-        │
-        ▼
-Display Permission Matrix
-        │
-        ▼
-Enable / Disable Permissions
-        │
-        ▼
-Save Changes
-```
-
-For example, the administrator selects **Custodian**:
-
-```text
-Custodian Permissions
-
-[x] Browse catalog & calendar
-[x] Approve / reject request
-[x] Record release & return
-[x] View borrowing history report
-
-[ ] Submit reservation request
-[ ] Maintain equipment & categories
-[ ] Maintain borrower profiles
-[ ] Manage users & roles
-```
-
-When the administrator saves the changes, the system updates the `ROLE_PERMISSION` records.
-
----
-
-# 9. What Happens When a User Logs In
-
-The permission checking process begins after successful authentication.
-
-```mermaid
-flowchart TD
-
-    A[User Login] --> B{Credentials Valid?}
-
-    B -->|No| C[Reject Login]
-    B -->|Yes| D[Load User Account]
-
-    D --> E[Get User Role]
-    E --> F[Get Role Permissions]
-
-    F --> G[Create Authenticated Session]
-
-    G --> H[Load Authorized Dashboard]
-    H --> I[Apply Permissions to UI]
-```
-
-Example:
-
-```text
-User
-  │
-  │ user_id = 101
-  ▼
-USER
-  │
-  │ role_id = 1
-  ▼
-ROLE
-  │
-  │ Borrower
-  ▼
-ROLE_PERMISSION
-  │
-  ├── equipment.browse
-  └── reservation.create
-```
-
-The application now knows that this user can browse equipment and create reservations.
-
----
-
-# 10. UI Permission Control
-
-Permissions can be used to determine which menu items, buttons, pages, and actions are displayed.
-
-For a Borrower:
-
-```text
-Borrower Dashboard
-
-✓ Equipment Catalog
-✓ Availability Calendar
-✓ My Reservations
-✓ Borrowing History
-
-✗ Approve Reservation
-✗ Release Equipment
-✗ Manage Equipment
-✗ Manage Users
-✗ Manage Roles
-```
-
-For a Custodian:
-
-```text
-Custodian Dashboard
-
-✓ Equipment Catalog
-✓ Availability Calendar
-✓ Reservation Requests
-✓ Release & Return
-✓ Borrowing History
-
-✗ Manage Users
-✗ Manage Roles
-✗ Maintain Equipment
-```
-
-For an Administrator:
-
-```text
-Administrator Dashboard
-
-✓ Equipment Catalog
-✓ Availability Calendar
-✓ Reservation Requests
-✓ Release & Return
-✓ Equipment Management
-✓ Borrower Management
-✓ User Management
-✓ Role & Permission Management
-✓ Borrowing Reports
-```
-
----
-
-# 11. Backend Authorization
-
-UI restrictions alone are **not sufficient**.
-
-The backend must also verify permissions whenever a protected API endpoint is accessed.
-
-```mermaid
-flowchart TD
-
-    A[User Sends API Request] --> B[Authenticate User]
-    B --> C[Identify User Role]
-    C --> D[Load / Check Permission]
-
-    D --> E{Permission Granted?}
-
-    E -->|Yes| F[Execute Request]
-    E -->|No| G[Return 403 Forbidden]
-```
-
-Example:
-
-```text
-POST /api/reservations/123/approve
-```
-
-The backend checks:
-
-```text
-Is the user authenticated?
-        │
-        ▼
-What is the user's role?
-        │
-        ▼
-Does the role have reservation.review?
-        │
-        ├── YES → Approve reservation
-        │
-        └── NO  → 403 Forbidden
-```
-
-This prevents users from bypassing the UI by directly calling protected endpoints.
-
----
-
-# 12. Permission Lifecycle
-
-The complete permission lifecycle is:
-
-```text
-1. Administrator creates/configures a role
-              ↓
-2. Administrator assigns permissions to the role
-              ↓
-3. User is assigned the role
-              ↓
-4. User logs in
-              ↓
-5. System identifies the user's role
-              ↓
-6. System determines the role's permissions
-              ↓
-7. UI displays permitted pages/actions
-              ↓
-8. User performs an action
-              ↓
-9. Backend checks the required permission
-              ↓
-10. Action is allowed or denied
-```
-
----
-
-# 13. Example: Approving a Reservation
-
-Suppose a Custodian wants to approve a reservation.
-
-```text
-Custodian
-    │
-    ▼
-Open Reservation Requests
-    │
-    ▼
-Select Reservation
-    │
-    ▼
-Click "Approve"
-    │
-    ▼
-Backend receives request
-    │
-    ▼
-Check authentication
-    │
-    ▼
-Check user's role
-    │
-    ▼
-Check reservation.review permission
-    │
-    ├───────────────┐
-    │               │
-   YES              NO
-    │               │
-    ▼               ▼
-Approve          403 Forbidden
-Reservation
-```
-
-The relevant permission is:
-
-```text
-reservation.review
-```
-
-The permission is assigned to:
-
-```text
-CUSTODIAN ✓
-ADMINISTRATOR ✓
-BORROWER ✗
-```
-
----
-
-# 14. Example: Managing Users
-
-The **Manage Users & Roles** capability is restricted to administrators.
+## 6. Administrative Configuration
 
 ```text
 Administrator
-      │
-      ▼
-user_role.manage
-      │
-      ▼
-Allowed
+    │
+    ▼
+Role and Permission Management
+    │
+    ▼
+Select an Identity role
+    │
+    ▼
+Load all permissions and current RolePermission rows
+    │
+    ▼
+Enable or disable capabilities
+    │
+    ▼
+Validate administrator permission
+    │
+    ▼
+Save RolePermission changes in a transaction
 ```
 
-A Borrower attempting the same action:
+Only a user with `user_role.manage` may change role-permission assignments. Changes should be logged with the acting user and timestamp.
 
-```text
-Borrower
-    │
-    ▼
-user_role.manage
-    │
-    ▼
-Permission not assigned
-    │
-    ▼
-403 Forbidden
+## 7. Login and Authorization Workflow
+
+```mermaid
+flowchart TD
+    A[User submits credentials] --> B[ASP.NET Core Identity validates account]
+    B --> C{Valid, active, and allowed to sign in?}
+    C -->|No| D[Reject sign-in]
+    C -->|Yes| E[Create authenticated Identity session]
+    E --> F[Load Identity roles]
+    F --> G[Resolve role permissions]
+    G --> H[Load authorized dashboard]
 ```
 
----
+`ApplicationUser.IsActive` must be checked during sign-in. Borrowing eligibility is separate: an authenticated user may be active but temporarily unable to create a reservation because `BorrowerProfile.IsEligible` is false.
 
-# 15. Important Design Principle
+## 8. UI and Backend Enforcement
 
-The system should follow **deny by default**.
+The interface may hide menu items and buttons that the current user cannot use, but UI checks are only a convenience.
+
+Every protected controller action must also enforce the required role or permission:
 
 ```text
-User requests action
+Request reaches MVC controller action
         │
         ▼
-Does user have required permission?
+Is the user authenticated and active?
+        │
+        ▼
+Does a current role grant the required permission?
         │
    ┌────┴────┐
-   │         │
-  YES        NO
-   │         │
-   ▼         ▼
- ALLOW      DENY
-            403
+  Yes        No
+   │          │
+   ▼          ▼
+Execute      Return 403
 ```
 
-A user should only be able to perform an action when their role has explicitly been granted the corresponding permission.
-
----
-
-# 16. Role Permission Architecture
-
-The overall architecture can be summarized as:
+Example:
 
 ```text
-                     ┌───────────────┐
-                     │     USER      │
-                     └───────┬───────┘
-                             │
-                             │ role_id
-                             ▼
-                     ┌───────────────┐
-                     │     ROLE      │
-                     └───────┬───────┘
-                             │
-                             │
-                             ▼
-                  ┌────────────────────┐
-                  │  ROLE_PERMISSION   │
-                  └─────────┬──────────┘
-                            │
-                            │ permission_id
-                            ▼
-                     ┌───────────────┐
-                     │  PERMISSION   │
-                     └───────┬───────┘
-                             │
-                             ▼
-                    Allowed Application
-                       Action / Page
+POST /Reservations/123/Approve
+Required permission: reservation.review
 ```
+
+The service layer must still validate reservation status, schedule conflicts, and concurrency. Authorization answers who may try the action; business validation determines whether the action is valid.
+
+## 9. Deny by Default
+
+- A missing permission means deny.
+- A hidden UI control does not authorize an endpoint.
+- Borrowers may access only their own reservations and borrowing history.
+- Custodians may review, release, and return according to their permissions.
+- Administrators may manage configuration only when the corresponding permission is assigned.
+- Deactivated users must not sign in or perform protected operations.
+
+## 10. Permission Lifecycle
+
+1. The system seeds Identity roles and application permissions.
+2. An administrator assigns permissions to a role.
+3. An administrator assigns an Identity role to a user.
+4. The user signs in through ASP.NET Core Identity.
+5. The application resolves the user's current roles and permissions.
+6. MVC navigation displays permitted functions.
+7. The user requests an action.
+8. The controller authorization policy checks the permission.
+9. The business service validates the operation.
+10. The system allows the action or returns an appropriate denial/error.
 
 ## Summary
 
-The permission system follows this principle:
-
-> **Users are assigned roles, roles are assigned permissions, and permissions determine which actions the user can perform.**
-
-```text
-USER
-  ↓
-ROLE
-  ↓
-ROLE_PERMISSION
-  ↓
-PERMISSION
-  ↓
-AUTHORIZATION
-  ↓
-ALLOW / DENY
-```
-
-The administrator controls the **role-to-permission assignments** through the Role Permissions UI, while the backend remains responsible for enforcing those permissions on protected operations.
+ASP.NET Core Identity owns authentication and role membership. The custom `PERMISSION` and `ROLE_PERMISSION` tables define application capabilities. `BORROWER_PROFILE` owns borrowing eligibility and school-specific borrower data. Backend authorization policies are the final enforcement point.

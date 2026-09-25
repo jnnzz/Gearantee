@@ -16,5 +16,8 @@ namespace ASI.Basecode.WebApp.Models
         [JsonPropertyName("password")]
         [Required(ErrorMessage = "Password is required.")]
         public string Password { get; set; }
+
+        [Display(Name = "Remember me")]
+        public bool RememberMe { get; set; }
     }
 }

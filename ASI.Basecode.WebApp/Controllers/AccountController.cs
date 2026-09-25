@@ -1,112 +1,114 @@
-﻿using ASI.Basecode.Data.Models;
-using ASI.Basecode.Services.Interfaces;
+using ASI.Basecode.Data;
+using ASI.Basecode.Data.Models;
 using ASI.Basecode.Services.Manager;
-using ASI.Basecode.Services.ServiceModels;
-using ASI.Basecode.WebApp.Authentication;
 using ASI.Basecode.WebApp.Models;
 using ASI.Basecode.WebApp.Mvc;
-using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System;
-using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
-using static ASI.Basecode.Resources.Constants.Enums;
 
 namespace ASI.Basecode.WebApp.Controllers
 {
     public class AccountController : ControllerBase<AccountController>
     {
-        private readonly SessionManager _sessionManager;
-        private readonly SignInManager _signInManager;
-        private readonly TokenValidationParametersFactory _tokenValidationParametersFactory;
-        private readonly TokenProviderOptionsFactory _tokenProviderOptionsFactory;
-        private readonly IConfiguration _appConfiguration;
-        private readonly IUserService _userService;
+        private const string InvalidLoginMessage =
+            "Invalid user code/email or password.";
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="AccountController"/> class.
-        /// </summary>
-        /// <param name="signInManager">The sign in manager.</param>
-        /// <param name="localizer">The localizer.</param>
-        /// <param name="userService">The user service.</param>
-        /// <param name="httpContextAccessor">The HTTP context accessor.</param>
-        /// <param name="loggerFactory">The logger factory.</param>
-        /// <param name="configuration">The configuration.</param>
-        /// <param name="mapper">The mapper.</param>
-        /// <param name="tokenValidationParametersFactory">The token validation parameters factory.</param>
-        /// <param name="tokenProviderOptionsFactory">The token provider options factory.</param>
+        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly SignInManager<ApplicationUser> _signInManager;
+        private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly AsiBasecodeDBContext _dbContext;
+        private readonly SessionManager _sessionManager;
+
         public AccountController(
-                            SignInManager signInManager,
-                            IHttpContextAccessor httpContextAccessor,
-                            ILoggerFactory loggerFactory,
-                            IConfiguration configuration,
-                            IMapper mapper,
-                            IUserService userService,
-                            TokenValidationParametersFactory tokenValidationParametersFactory,
-                            TokenProviderOptionsFactory tokenProviderOptionsFactory) : base(httpContextAccessor, loggerFactory, configuration, mapper)
+            UserManager<ApplicationUser> userManager,
+            SignInManager<ApplicationUser> signInManager,
+            RoleManager<IdentityRole> roleManager,
+            AsiBasecodeDBContext dbContext,
+            IHttpContextAccessor httpContextAccessor,
+            ILoggerFactory loggerFactory,
+            IConfiguration configuration)
+            : base(
+                httpContextAccessor,
+                loggerFactory,
+                configuration)
         {
-            this._sessionManager = new SessionManager(this._session);
-            this._signInManager = signInManager;
-            this._tokenProviderOptionsFactory = tokenProviderOptionsFactory;
-            this._tokenValidationParametersFactory = tokenValidationParametersFactory;
-            this._appConfiguration = configuration;
-            this._userService = userService;
+            _userManager = userManager;
+            _signInManager = signInManager;
+            _roleManager = roleManager;
+            _dbContext = dbContext;
+            _sessionManager = new SessionManager(_session);
         }
 
-        /// <summary>
-        /// Login Method
-        /// </summary>
-        /// <returns>Created response view</returns>
         [HttpGet]
         [AllowAnonymous]
-        public ActionResult Login()
+        public async Task<IActionResult> Login(string returnUrl = null)
         {
-            TempData["returnUrl"] = System.Net.WebUtility.UrlDecode(HttpContext.Request.Query["ReturnUrl"]);
-            this._sessionManager.Clear();
-            this._session.SetString("SessionId", System.Guid.NewGuid().ToString());
-            return this.View();
+            await _signInManager.SignOutAsync();
+            _sessionManager.Clear();
+            _session.SetString("SessionId", Guid.NewGuid().ToString());
+            ViewData["ReturnUrl"] = returnUrl;
+            return View();
         }
 
-        /// <summary>
-        /// Authenticate user and signs the user in when successful.
-        /// </summary>
-        /// <param name="model">The model.</param>
-        /// <param name="returnUrl">The return URL.</param>
-        /// <returns> Created response view </returns>
         [HttpPost]
         [AllowAnonymous]
-        public async Task<IActionResult> Login(LoginViewModel model, string returnUrl)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Login(
+            LoginViewModel model,
+            string returnUrl = null)
         {
-            this._session.SetString("HasSession", "Exist");
+            ViewData["ReturnUrl"] = returnUrl;
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
 
-            //User user = null;
+            var normalizedUserName = _userManager.NormalizeName(model.UserId);
+            var normalizedEmail = _userManager.NormalizeEmail(model.UserId);
+            var user = await _userManager.Users.SingleOrDefaultAsync(x =>
+                x.NormalizedUserName == normalizedUserName ||
+                x.NormalizedEmail == normalizedEmail ||
+                x.UserCode == model.UserId);
 
-            User user = new() { Id = 0, UserId = "0", Name = "Name", Password = "Password" };
-            
-            await this._signInManager.SignInAsync(user);
-            this._session.SetString("UserName", model.UserId);
+            if (user == null || !user.IsActive)
+            {
+                ModelState.AddModelError(string.Empty, InvalidLoginMessage);
+                return View(model);
+            }
+
+            var result = await _signInManager.PasswordSignInAsync(
+                user,
+                model.Password,
+                model.RememberMe,
+                lockoutOnFailure: true);
+
+            if (!result.Succeeded)
+            {
+                ModelState.AddModelError(string.Empty, InvalidLoginMessage);
+                return View(model);
+            }
+
+            _session.SetString(
+                "UserName",
+                string.IsNullOrWhiteSpace(user.DisplayName)
+                    ? user.UserCode
+                    : user.DisplayName);
+
+            if (!string.IsNullOrWhiteSpace(returnUrl) &&
+                Url.IsLocalUrl(returnUrl))
+            {
+                return LocalRedirect(returnUrl);
+            }
 
             return RedirectToAction("Index", "Home");
-
-            /*var loginResult = _userService.AuthenticateUser(model.UserId, model.Password, ref user);
-            if (loginResult == LoginResult.Success)
-            {
-                // 認証OK
-                await this._signInManager.SignInAsync(user);
-                this._session.SetString("UserName", user.Name);
-                return RedirectToAction("Index", "Home");
-            }
-            else
-            {
-                // 認証NG
-                TempData["ErrorMessage"] = "Incorrect UserId or Password";
-                return View();
-            }
-            return View();*/
         }
 
         [HttpGet]
@@ -118,33 +120,112 @@ namespace ASI.Basecode.WebApp.Controllers
 
         [HttpPost]
         [AllowAnonymous]
-        public IActionResult Register(UserViewModel model)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Register(RegisterViewModel model)
         {
-            try
+            if (!ModelState.IsValid)
             {
-                _userService.AddUser(model);
-                return RedirectToAction("Login", "Account");
+                return View(model);
             }
-            catch(InvalidDataException ex)
+
+            if (await _userManager.FindByEmailAsync(model.Email) != null ||
+                await _userManager.Users.AnyAsync(x =>
+                    x.UserCode == model.UserCode))
             {
-                TempData["ErrorMessage"] = ex.Message;
+                ModelState.AddModelError(
+                    string.Empty,
+                    "An account with that email or user code already exists.");
+                return View(model);
             }
-            catch(Exception ex)
+
+            await using var transaction =
+                await _dbContext.Database.BeginTransactionAsync();
+
+            var user = new ApplicationUser
             {
-                TempData["ErrorMessage"] = Resources.Messages.Errors.ServerError;
+                UserName = model.UserCode,
+                UserCode = model.UserCode,
+                Email = model.Email,
+                FirstName = model.FirstName,
+                LastName = model.LastName,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            var createResult = await _userManager.CreateAsync(
+                user,
+                model.Password);
+            if (!createResult.Succeeded)
+            {
+                AddIdentityErrors(createResult);
+                await transaction.RollbackAsync();
+                return View(model);
             }
+
+            if (!await _roleManager.RoleExistsAsync(
+                DomainValues.Roles.Borrower))
+            {
+                var createRoleResult = await _roleManager.CreateAsync(
+                    new IdentityRole(DomainValues.Roles.Borrower));
+                if (!createRoleResult.Succeeded)
+                {
+                    AddIdentityErrors(createRoleResult);
+                    await transaction.RollbackAsync();
+                    return View(model);
+                }
+            }
+
+            var roleResult = await _userManager.AddToRoleAsync(
+                user,
+                DomainValues.Roles.Borrower);
+            if (!roleResult.Succeeded)
+            {
+                AddIdentityErrors(roleResult);
+                await transaction.RollbackAsync();
+                return View(model);
+            }
+
+            _dbContext.BorrowerProfiles.Add(new BorrowerProfile
+            {
+                UserId = user.Id,
+                SchoolId = model.UserCode,
+                Department = model.Department,
+                ContactNumber = model.ContactNumber,
+                IsEligible = false,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            });
+            await _dbContext.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            TempData["SuccessMessage"] =
+                "Account created. An administrator must confirm borrowing eligibility.";
+            return RedirectToAction(nameof(Login));
+        }
+
+        [AllowAnonymous]
+        public IActionResult AccessDenied()
+        {
+            Response.StatusCode = StatusCodes.Status403Forbidden;
             return View();
         }
 
-        /// <summary>
-        /// Sign Out current account and return login view.
-        /// </summary>
-        /// <returns>Created response view</returns>
-        [AllowAnonymous]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> SignOutUser()
         {
-            await this._signInManager.SignOutAsync();
-            return RedirectToAction("Login", "Account");
+            await _signInManager.SignOutAsync();
+            _sessionManager.Clear();
+            return RedirectToAction(nameof(Login));
+        }
+
+        private void AddIdentityErrors(IdentityResult result)
+        {
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error.Description);
+            }
         }
     }
 }

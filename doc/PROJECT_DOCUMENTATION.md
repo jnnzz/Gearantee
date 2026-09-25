@@ -6,6 +6,15 @@ Campus Equipment is a web-based system for managing school-owned equipment such 
 
 The initial release is intentionally focused on the core borrowing workflow and does not require advanced third-party integrations.
 
+### 1.1 Implementation Architecture
+
+- **Web architecture:** ASP.NET Core MVC with controllers and Razor Views.
+- **Database:** Microsoft SQL Server accessed through Entity Framework Core and `Microsoft.EntityFrameworkCore.SqlServer`.
+- **Database administration:** SQL Server Management Studio (SSMS) may be used to inspect and administer SQL Server, but SSMS is not the database engine.
+- **Authentication:** ASP.NET Core Identity with Identity roles and policy-based permissions.
+- **Styling:** Tailwind CSS compiled into a production stylesheet under `wwwroot`, plus minimal custom CSS where required.
+- **Reservation scope:** One physical equipment item per reservation in Version 1.
+
 ## 2. User Roles
 
 | Role | Main purpose | Primary access |
@@ -30,8 +39,8 @@ The initial release is intentionally focused on the core borrowing workflow and 
 - Administrators see management and reporting functions.
 
 #### Password Reset Request
-- A user can request a password-reset link or temporary code using their registered email address.
-- The reset process verifies the user before allowing a new password to be created.
+- A user can request an expiring ASP.NET Core Identity password-reset link using their registered email address.
+- The response must not reveal whether the address exists, and Identity validates the token before accepting a new password.
 
 ### 3.2 Master Data Management
 
@@ -55,8 +64,9 @@ The initial release is intentionally focused on the core borrowing workflow and 
 
 #### Equipment Reservation
 - Borrowers search and filter available equipment by category, name, and date.
-- They select an item, intended borrowing date/time, return date/time, and purpose of use.
+- They select one item, intended borrowing date/time, return date/time, and purpose of use.
 - The system creates a reservation request and prevents conflicting reservations for the same item and time period.
+- A borrower who needs multiple items submits one reservation per item.
 - Borrowers can view the status of their submitted requests.
 
 #### Approval and Release
@@ -105,7 +115,8 @@ The initial release is intentionally focused on the core borrowing workflow and 
 | --- | --- |
 | Reservation | Pending, Approved, Rejected, Cancelled, Expired |
 | Loan | Awaiting Release, Borrowed, Returned, Overdue |
-| Equipment | Available, Reserved, Borrowed, Under Maintenance, Unavailable |
+| Equipment operational state | Available, Borrowed, Under Maintenance, Unavailable, Archived |
+| Schedule availability | Calculated from approved reservation ranges and active releases rather than stored as a permanent item status |
 | Return condition | Good, Damaged, Needs Inspection, Under Repair |
 
 ## 6. Key Business Rules
@@ -122,14 +133,17 @@ The initial release is intentionally focused on the core borrowing workflow and 
 
 | Entity | Purpose | Important fields |
 | --- | --- | --- |
-| User | Login and access control | User ID, name, email, password hash, role, active status |
-| Borrower Profile | Student/faculty eligibility record | Borrower ID, user ID, school ID, department, contact details, eligibility |
-| Role | Permission group | Role ID, name, permissions |
+| Application User (ASP.NET Core Identity) | Login and account control | Identity user ID, user code, name, email, active status; Identity owns the password hash and security fields |
+| Borrower Profile | Student/faculty borrowing record | Borrower profile ID, Identity user ID, school ID, department, contact details, eligibility |
+| Identity Role / User Role | Role assignment | Identity role ID/name and user-role association |
+| Permission / Role Permission | Fine-grained authorization | Permission name and role-permission association |
 | Equipment Category | Equipment grouping | Category ID, name, active status |
-| Equipment Item | Individual trackable item | Item ID/code, category, name/model, serial number, catalog image URL/path, condition, status, location |
-| Reservation | Requested schedule for an item | Reservation ID, borrower, item, purpose, requested release/return dates, status |
+| Location | Controlled storage/facility location | Location ID, name, active status |
+| Equipment Item | Individual trackable item | Item ID/code, category, location, name/model, serial number, image URL/path, condition, operational status |
+| Reservation | Requested schedule for exactly one item | Reservation ID, borrower profile, equipment item, purpose, requested release/return dates, status, reviewer |
 | Release Record | Confirmation of handover | Release ID, reservation, custodian, actual release time, notes |
 | Return Record | Confirmation of return and inspection | Return ID, release/reservation, custodian, actual return time, condition, notes |
+| Late Return | Recorded overdue outcome | Late-return ID, return record, due/returned times, days late, penalty status |
 
 ## 8. Suggested Screens
 
@@ -150,4 +164,4 @@ The initial release is intentionally focused on the core borrowing workflow and 
 
 ## 9. Scope for the First Website Version
 
-The first website should implement the functions documented above with responsive web pages, role-based access, and a database-backed audit trail. Out of scope unless later requested: online payment/penalties, external school-information-system synchronization, barcode scanning, email/SMS notifications, and multi-campus inventory transfers.
+The first website should implement these functions with ASP.NET Core MVC and Razor Views, a responsive Tailwind CSS interface, role/permission-protected access, and a SQL Server-backed audit trail. Out of scope unless later requested: online payment/penalties, external school-information-system synchronization, barcode scanning, SMS notifications, and multi-campus inventory transfers. Password-reset email through the approved school SMTP server remains in scope.
