@@ -11,7 +11,7 @@ An ASP.NET Core MVC application for managing school equipment reservations, appr
 - Microsoft SQL Server with Entity Framework Core
 - SQL Server Management Studio (SSMS) as an optional administration tool
 - Tailwind CSS with minimal custom CSS
-- MailKit and school SMTP for password-reset email
+- Brevo transactional email API for password-reset OTP delivery
 - FullCalendar for daily/weekly availability
 
 The canonical database design is documented in [the ERD and data dictionary](doc/Campus_Equipment_Borrowing_ERD_Data_Dictionary.md).
@@ -52,22 +52,32 @@ dotnet tool restore
 Keep secrets out of committed JSON files. Use .NET user secrets for local development:
 
 ```powershell
-dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=localhost;Database=Gearantee;Trusted_Connection=True;TrustServerCertificate=True" --project .\ASI.Basecode.WebApp
-dotnet user-secrets set "Smtp:Host" "smtp.example.edu" --project .\ASI.Basecode.WebApp
-dotnet user-secrets set "Smtp:Username" "noreply@example.edu" --project .\ASI.Basecode.WebApp
-dotnet user-secrets set "Smtp:Password" "replace-with-protected-secret" --project .\ASI.Basecode.WebApp
+dotnet user-secrets --project .\ASI.Basecode.WebApp\ASI.Basecode.WebApp.csproj set "ConnectionStrings:DefaultConnection" "Server=(localdb)\MSSQLLocalDB;Database=GearanteeDev;Trusted_Connection=True;TrustServerCertificate=True"
+dotnet user-secrets --project .\ASI.Basecode.WebApp\ASI.Basecode.WebApp.csproj set "Brevo:ApiKey" "YOUR_ACTUAL_BREVO_API_KEY"
+dotnet user-secrets --project .\ASI.Basecode.WebApp\ASI.Basecode.WebApp.csproj set "Brevo:SenderEmail" "your-verified-email@example.com"
 ```
 
-Production connection strings and SMTP credentials belong in protected IIS, Azure, or environment configuration.
+Production connection strings and Brevo credentials belong in protected IIS, Azure, or environment configuration. Use `Brevo__ApiKey` and `Brevo__SenderEmail` as production environment variable names.
 
 ## Database Setup
 
-The initial canonical migration is committed under `ASI.Basecode.Data/Migrations`. Apply it with:
+The initial canonical migration is committed under `ASI.Basecode.Data/Migrations`. Apply it with this one-line command:
 
 ```powershell
-dotnet ef database update `
-  --project .\ASI.Basecode.Data\ASI.Basecode.Data.csproj `
-  --startup-project .\ASI.Basecode.WebApp\ASI.Basecode.WebApp.csproj
+dotnet ef database update --project .\ASI.Basecode.Data\ASI.Basecode.Data.csproj --startup-project .\ASI.Basecode.WebApp\ASI.Basecode.WebApp.csproj --context AsiBasecodeDBContext
+```
+
+In Visual Studio Package Manager Console, set `ASI.Basecode.Data` as the Default project and `ASI.Basecode.WebApp` as the Startup Project, then run:
+
+```powershell
+Update-Database -Project ASI.Basecode.Data -StartupProject ASI.Basecode.WebApp -Context AsiBasecodeDBContext
+```
+
+For future model changes, create and apply a named migration:
+
+```powershell
+dotnet ef migrations add AddYourFeatureName --project .\ASI.Basecode.Data\ASI.Basecode.Data.csproj --startup-project .\ASI.Basecode.WebApp\ASI.Basecode.WebApp.csproj --context AsiBasecodeDBContext
+dotnet ef database update --project .\ASI.Basecode.Data\ASI.Basecode.Data.csproj --startup-project .\ASI.Basecode.WebApp\ASI.Basecode.WebApp.csproj --context AsiBasecodeDBContext
 ```
 
 Review generated migrations before applying them. Back up production SQL Server databases and test restoration before deployment.
@@ -127,9 +137,9 @@ Implemented:
 - Role-permission claims and authorization policies
 - Idempotent role/permission seeding with optional secure administrator creation
 - Database health endpoint at `/health/database`
+- Password-reset OTP flow with Brevo email delivery
 
 Still planned:
 
 - Tailwind CSS migration
-- Forgot-password email flow
 - Role-specific dashboards and the equipment/reservation workflows

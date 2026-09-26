@@ -36,9 +36,9 @@ Database: <default>
 Run this query once:
 
 ```sql
-IF DB_ID(N'AsiBasecodeDB') IS NULL
+IF DB_ID(N'GearanteeDev') IS NULL
 BEGIN
-    CREATE DATABASE [AsiBasecodeDB];
+    CREATE DATABASE [GearanteeDev];
 END
 ```
 
@@ -51,10 +51,54 @@ ASI.Basecode.WebApp\appsettings.Development.json
 It points to:
 
 ```text
-Server=(localdb)\MSSQLLocalDB;Database=AsiBasecodeDB
+Server=(localdb)\MSSQLLocalDB;Database=GearanteeDev
 ```
 
-## 3. Build the solution
+## 3. Apply the EF Core database schema
+
+The repository already contains the initial migration. Creating `GearanteeDev` only creates an empty database, so apply the migration to create the Identity and application tables.
+
+If you cloned the repository, restore the local EF CLI tool once before running the commands:
+
+```powershell
+dotnet tool restore
+```
+
+From the repository root, run this as one command:
+
+```powershell
+dotnet ef database update --project ".\ASI.Basecode.Data\ASI.Basecode.Data.csproj" --startup-project ".\ASI.Basecode.WebApp\ASI.Basecode.WebApp.csproj" --context AsiBasecodeDBContext
+```
+
+The same operation in Visual Studio Package Manager Console is:
+
+```powershell
+Update-Database -Project ASI.Basecode.Data -StartupProject ASI.Basecode.WebApp -Context AsiBasecodeDBContext
+```
+
+Set `ASI.Basecode.WebApp` as the Startup Project and `ASI.Basecode.Data` as the Package Manager Console Default project. Keep all parameters on the same command line.
+
+When you add or change an EF Core model, create a named migration and then apply it:
+
+```powershell
+dotnet ef migrations add AddYourFeatureName --project ".\ASI.Basecode.Data\ASI.Basecode.Data.csproj" --startup-project ".\ASI.Basecode.WebApp\ASI.Basecode.WebApp.csproj" --context AsiBasecodeDBContext
+dotnet ef database update --project ".\ASI.Basecode.Data\ASI.Basecode.Data.csproj" --startup-project ".\ASI.Basecode.WebApp\ASI.Basecode.WebApp.csproj" --context AsiBasecodeDBContext
+```
+
+Do not create another initial migration when the existing migration has already been applied.
+
+## 4. Configure password-reset email for local development
+
+The password-reset flow sends a six-digit OTP through Brevo. Keep the API key and verified sender email outside the repository by using .NET User Secrets:
+
+```powershell
+dotnet user-secrets --project ".\ASI.Basecode.WebApp\ASI.Basecode.WebApp.csproj" set "Brevo:ApiKey" "YOUR_ACTUAL_BREVO_API_KEY"
+dotnet user-secrets --project ".\ASI.Basecode.WebApp\ASI.Basecode.WebApp.csproj" set "Brevo:SenderEmail" "your-verified-email@example.com"
+```
+
+The sender email must be registered and verified in Brevo. Restart the application after changing User Secrets.
+
+## 5. Build the solution
 
 From the repository root:
 
@@ -62,7 +106,7 @@ From the repository root:
 dotnet build .\ASI.Basecode.sln
 ```
 
-## 4. Run the website
+## 6. Run the website
 
 ```powershell
 $env:ASPNETCORE_ENVIRONMENT = "Development"
@@ -81,11 +125,9 @@ Press `Ctrl+C` to stop the application.
 
 ## Important database note
 
-The repository currently has no EF Core `Migrations` folder. Creating `AsiBasecodeDB` creates an empty database only; it does not create the application tables.
+The repository includes an EF Core `Migrations` folder. Creating `GearanteeDev` creates an empty database only; apply the committed migration using the command in section 3 to create the application tables.
 
 If the application reports that a table such as `Users` does not exist, the database schema must first be created through an EF migration or an approved SQL schema script.
-
-Do not run `dotnet ef database update` until migrations have been added to the repository.
 
 ## Daily workflow
 
@@ -106,7 +148,7 @@ sqllocaldb start MSSQLLocalDB
 
 ### Database cannot be opened
 
-Confirm that the database name is exactly `AsiBasecodeDB` and that the server is:
+Confirm that the database name is exactly `GearanteeDev` and that the server is:
 
 ```text
 (localdb)\MSSQLLocalDB
