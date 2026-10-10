@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace ASI.Basecode.WebApp.Models
+namespace ASI.Basecode.Services.ServiceModels.UserAdministration
 {
     public sealed record UserImportError(int Row, string Field, string Message);
     public sealed record UserImportRow(int RowNumber, CreateUserViewModel Account);

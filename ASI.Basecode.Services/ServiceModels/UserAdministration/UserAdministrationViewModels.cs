@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
-namespace ASI.Basecode.WebApp.Models
+namespace ASI.Basecode.Services.ServiceModels.UserAdministration
 {
     public class UserAccountsIndexViewModel
     {

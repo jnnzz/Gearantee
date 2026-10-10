@@ -1,6 +1,6 @@
 using System;
 
-namespace ASI.Basecode.WebApp.Services
+namespace ASI.Basecode.Services.Services
 {
     public enum PasswordResetOtpAttemptStatus
     {

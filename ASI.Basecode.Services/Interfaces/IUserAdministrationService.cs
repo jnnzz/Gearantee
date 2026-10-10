@@ -1,7 +1,7 @@
-using ASI.Basecode.WebApp.Models;
+using ASI.Basecode.Services.ServiceModels.UserAdministration;
 using System.Threading.Tasks;
 
-namespace ASI.Basecode.WebApp.Services
+namespace ASI.Basecode.Services.Interfaces
 {
     public interface IUserAdministrationService
     {

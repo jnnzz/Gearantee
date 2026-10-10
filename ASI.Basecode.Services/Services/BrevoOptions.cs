@@ -1,4 +1,4 @@
-namespace ASI.Basecode.WebApp.Services
+namespace ASI.Basecode.Services.Services
 {
     public sealed class BrevoOptions
     {

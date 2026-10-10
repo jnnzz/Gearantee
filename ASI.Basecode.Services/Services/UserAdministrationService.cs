@@ -1,6 +1,7 @@
 using ASI.Basecode.Data;
 using ASI.Basecode.Data.Models;
-using ASI.Basecode.WebApp.Models;
+using ASI.Basecode.Services.Interfaces;
+using ASI.Basecode.Services.ServiceModels.UserAdministration;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
@@ -12,7 +13,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace ASI.Basecode.WebApp.Services
+namespace ASI.Basecode.Services.Services
 {
     public partial class UserAdministrationService : IUserAdministrationService
     {

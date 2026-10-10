@@ -5,10 +5,11 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using ASI.Basecode.Services.Interfaces;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace ASI.Basecode.WebApp.Services
+namespace ASI.Basecode.Services.Services
 {
     public sealed class BrevoEmailSender : IBrevoEmailSender
     {

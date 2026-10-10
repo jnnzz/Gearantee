@@ -1,4 +1,4 @@
-using ASI.Basecode.WebApp.Models;
+using ASI.Basecode.Services.ServiceModels.UserAdministration;
 using Microsoft.VisualBasic.FileIO;
 using System;
 using System.Collections.Generic;
@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace ASI.Basecode.WebApp.Services
+namespace ASI.Basecode.Services.Services
 {
     public static class UserImportCsv
     {

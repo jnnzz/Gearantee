@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace ASI.Basecode.WebApp.Services
+namespace ASI.Basecode.Services.Interfaces
 {
     public interface IPasswordResetOtpStore
     {

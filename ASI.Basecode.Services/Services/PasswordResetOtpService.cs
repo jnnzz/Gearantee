@@ -1,11 +1,12 @@
 using ASI.Basecode.Data.Models;
+using ASI.Basecode.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace ASI.Basecode.WebApp.Services
+namespace ASI.Basecode.Services.Services
 {
     public sealed class PasswordResetOtpService
     {

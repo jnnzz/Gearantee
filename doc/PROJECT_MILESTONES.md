@@ -341,6 +341,7 @@ Shared rows count for each assigned member.
 | 9/29/2026 | Removed Bootstrap/template styling and added Tailwind build assets | Laroco | — |
 | 9/30/2026 | Addressed dashboard PR review findings and added regression tests | Laroco | #21 |
 | 10/1/2026 | Replaced the equipment location lookup with required `VARCHAR(200)` item text and a data-copy migration | Laroco | — |
+| 10/10/2026 | Moved password-reset, Brevo email, user-administration, and CSV import services plus their shared service models from `ASI.Basecode.WebApp` to `ASI.Basecode.Services` | Bansag | — |
 
 ## Open questions
 
