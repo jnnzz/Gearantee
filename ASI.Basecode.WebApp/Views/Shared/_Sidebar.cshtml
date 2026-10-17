@@ -70,7 +70,7 @@
         }
         @if (isCustodian && User.HasClaim("permission", DomainValues.Permissions.ReservationReview))
         {
-            <span class="nav-item nav-item-disabled">@await Html.PartialAsync("Icons/_Icon", "review")<span class="flex-1">Approval &amp; release</span><span class="soon-tag">Soon</span></span>
+            <a asp-controller="ReservationReview" asp-action="Index" class="nav-item @(currentController == "ReservationReview" ? "nav-item-active" : "")" aria-current="@(currentController == "ReservationReview" ? "page" : null)">@await Html.PartialAsync("Icons/_Icon", "review")<span>Approval &amp; release</span></a>
         }
         @if ((isCustodian || isAdmin) && User.HasClaim("permission", DomainValues.Permissions.TransactionReleaseReturn))
         {

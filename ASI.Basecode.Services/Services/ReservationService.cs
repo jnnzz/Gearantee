@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Text.Json;
 
 namespace ASI.Basecode.Services.Services
 {
@@ -16,6 +17,18 @@ namespace ASI.Basecode.Services.Services
     {
         public const int PageSize = 20;
         private const int PurposeMaxLength = 1000;
+        private const int ReasonMaxLength = 1000;
+        private const int NotesMaxLength = 1000;
+
+        private const string DeniedMessage =
+            "You no longer have permission to review reservations. Reload the page and try again.";
+
+        private const string ChangedWhileReviewing =
+            "This reservation changed while you were reviewing it. Reload the page to see its current status.";
+
+        private const string ApprovedAction = "ReservationApproved";
+        private const string RejectedAction = "ReservationRejected";
+        private const string ReleasedAction = "EquipmentReleased";
 
         private static readonly string[] StatusTabs =
         {
@@ -339,6 +352,436 @@ namespace ASI.Basecode.Services.Services
             };
         }
 
+        public ReservationReviewIndexViewModel GetReviewQueue(string status, string search, int page)
+        {
+            var nowUtc = _timeProvider.GetUtcNow().UtcDateTime;
+            ExpireStalePendingForAll(nowUtc);
+
+            var model = new ReservationReviewIndexViewModel
+            {
+                StatusFilter = NormalizeStatus(status) ?? string.Empty,
+                Search = search?.Trim() ?? string.Empty
+            };
+
+            var queue = _reservationRepository.GetReservations().AsNoTracking();
+
+            var counts = queue
+                .GroupBy(reservation => reservation.Status)
+                .Select(group => new { Status = group.Key, Count = group.Count() })
+                .ToDictionary(group => group.Status, group => group.Count);
+
+            var term = model.Search.ToLowerInvariant();
+            if (!string.IsNullOrEmpty(term))
+            {
+                queue = queue.Where(reservation =>
+                    reservation.EquipmentItem.ItemCode.ToLower().Contains(term) ||
+                    reservation.EquipmentItem.ItemName.ToLower().Contains(term) ||
+                    reservation.BorrowerProfile.SchoolId.ToLower().Contains(term) ||
+                    reservation.BorrowerProfile.User.FirstName.ToLower().Contains(term) ||
+                    reservation.BorrowerProfile.User.LastName.ToLower().Contains(term));
+            }
+
+            if (!string.IsNullOrEmpty(model.StatusFilter))
+            {
+                queue = queue.Where(reservation => reservation.Status == model.StatusFilter);
+            }
+
+            model.TotalCount = queue.Count();
+            model.TotalPages = Math.Max(1, (int)Math.Ceiling(model.TotalCount / (double)PageSize));
+            model.Page = Math.Clamp(page, 1, model.TotalPages);
+
+            model.Items = Project(queue
+                    .OrderBy(reservation => reservation.ReservationStart)
+                    .ThenBy(reservation => reservation.ReservationId)
+                    .Skip((model.Page - 1) * PageSize)
+                    .Take(PageSize))
+                .ToList()
+                .Select(row => ToReviewListItem(new ReservationReviewListItemViewModel(), row, nowUtc))
+                .ToList();
+
+            model.Tabs.Add(new ReservationStatusTab { Label = "All", Count = counts.Values.Sum() });
+            foreach (var tabStatus in StatusTabs)
+            {
+                model.Tabs.Add(new ReservationStatusTab
+                {
+                    Value = tabStatus,
+                    Label = tabStatus,
+                    Count = counts.TryGetValue(tabStatus, out var count) ? count : 0
+                });
+            }
+
+            return model;
+        }
+
+        public ReservationReviewDetailsViewModel RetrieveForReview(long reservationId)
+        {
+            var nowUtc = _timeProvider.GetUtcNow().UtcDateTime;
+            ExpireStalePendingForAll(nowUtc);
+
+            var row = Project(_reservationRepository.GetReservations()
+                    .AsNoTracking()
+                    .Where(reservation => reservation.ReservationId == reservationId))
+                .FirstOrDefault();
+            if (row == null)
+            {
+                return null;
+            }
+
+            return ToReviewDetails(new ReservationReviewDetailsViewModel(), row, nowUtc);
+        }
+
+        public ReservationResult ApproveReservation(string actorUserId, long reservationId)
+        {
+            if (!CanReview(actorUserId, DomainValues.Permissions.ReservationReview))
+            {
+                return ReservationResult.Denied(DeniedMessage);
+            }
+
+            var nowUtc = _timeProvider.GetUtcNow().UtcDateTime;
+
+            using (var transaction = _db.Database.BeginTransaction(IsolationLevel.Serializable))
+            {
+                var state = LoadReviewState(reservationId);
+                if (state == null)
+                {
+                    return ReservationResult.Missing();
+                }
+
+                if (state.Status != DomainValues.ReservationStatuses.Pending)
+                {
+                    return ReservationResult.Fail(DecisionRefusal("approve", state.Status));
+                }
+
+                // The item lock keeps this decision serialized with submissions and inventory
+                // changes, and the recheck below uses the same availability rule as submission.
+                var item = EquipmentItemConcurrencyLock.LoadForUpdate(_db, state.EquipmentId);
+                if (item == null)
+                {
+                    return ReservationResult.Fail("This item is archived, so its request can't be approved.");
+                }
+
+                var isBooked = _reservationRepository.GetReservations()
+                    .Where(reservation => reservation.EquipmentId == state.EquipmentId)
+                    .Any(ReservationAvailability.Blocks(state.ReservationStart, state.ReservationEnd, nowUtc));
+                if (isBooked)
+                {
+                    return ReservationResult.Fail("This item is already booked or on loan during that window, so the request can't be approved.");
+                }
+
+                var approved = _reservationRepository.GetReservations()
+                    .Where(reservation =>
+                        reservation.ReservationId == reservationId &&
+                        reservation.Status == DomainValues.ReservationStatuses.Pending)
+                    .ExecuteUpdate(setters => setters
+                        .SetProperty(reservation => reservation.Status, DomainValues.ReservationStatuses.Approved)
+                        .SetProperty(reservation => reservation.ReviewedByUserId, actorUserId)
+                        .SetProperty(reservation => reservation.ReviewedAt, nowUtc)
+                        .SetProperty(reservation => reservation.UpdatedAt, nowUtc));
+                if (approved == 0)
+                {
+                    return ReservationResult.Fail(ChangedWhileReviewing);
+                }
+
+                AddAudit(actorUserId, state.BorrowerUserId, ApprovedAction, new { ReservationId = reservationId });
+                _db.SaveChanges();
+                transaction.Commit();
+            }
+
+            return ReservationResult.Success(
+                "Reservation approved. The borrower can pick the item up.",
+                reservationId);
+        }
+
+        public ReservationResult RejectReservation(string actorUserId, long reservationId, string reason)
+        {
+            if (!CanReview(actorUserId, DomainValues.Permissions.ReservationReview))
+            {
+                return ReservationResult.Denied(DeniedMessage);
+            }
+
+            var trimmed = reason?.Trim();
+            if (string.IsNullOrEmpty(trimmed))
+            {
+                return ReservationResult.Fail("Tell the borrower why the request is being rejected.");
+            }
+
+            if (trimmed.Length > ReasonMaxLength)
+            {
+                return ReservationResult.Fail($"The reason must be {ReasonMaxLength} characters or fewer.");
+            }
+
+            var nowUtc = _timeProvider.GetUtcNow().UtcDateTime;
+
+            using (var transaction = _db.Database.BeginTransaction(IsolationLevel.Serializable))
+            {
+                var state = LoadReviewState(reservationId);
+                if (state == null)
+                {
+                    return ReservationResult.Missing();
+                }
+
+                if (state.Status != DomainValues.ReservationStatuses.Pending)
+                {
+                    return ReservationResult.Fail(DecisionRefusal("reject", state.Status));
+                }
+
+                // No inventory change here, so the conditional update alone settles a race with
+                // another custodian decision on the same request.
+                var rejected = _reservationRepository.GetReservations()
+                    .Where(reservation =>
+                        reservation.ReservationId == reservationId &&
+                        reservation.Status == DomainValues.ReservationStatuses.Pending)
+                    .ExecuteUpdate(setters => setters
+                        .SetProperty(reservation => reservation.Status, DomainValues.ReservationStatuses.Rejected)
+                        .SetProperty(reservation => reservation.RejectionReason, trimmed)
+                        .SetProperty(reservation => reservation.ReviewedByUserId, actorUserId)
+                        .SetProperty(reservation => reservation.ReviewedAt, nowUtc)
+                        .SetProperty(reservation => reservation.UpdatedAt, nowUtc));
+                if (rejected == 0)
+                {
+                    return ReservationResult.Fail(ChangedWhileReviewing);
+                }
+
+                AddAudit(actorUserId, state.BorrowerUserId, RejectedAction, new
+                {
+                    ReservationId = reservationId,
+                    Reason = trimmed
+                });
+                _db.SaveChanges();
+                transaction.Commit();
+            }
+
+            return ReservationResult.Success("Reservation rejected.", reservationId);
+        }
+
+        public ReservationResult ReleaseEquipment(string actorUserId, long reservationId, string notes)
+        {
+            if (!CanReview(actorUserId, DomainValues.Permissions.TransactionReleaseReturn))
+            {
+                return ReservationResult.Denied(DeniedMessage);
+            }
+
+            var trimmedNotes = notes?.Trim();
+            if (trimmedNotes?.Length > NotesMaxLength)
+            {
+                return ReservationResult.Fail($"The notes must be {NotesMaxLength} characters or fewer.");
+            }
+
+            var nowUtc = _timeProvider.GetUtcNow().UtcDateTime;
+
+            using (var transaction = _db.Database.BeginTransaction(IsolationLevel.Serializable))
+            {
+                var state = LoadReviewState(reservationId);
+                if (state == null)
+                {
+                    return ReservationResult.Missing();
+                }
+
+                if (state.Status != DomainValues.ReservationStatuses.Approved)
+                {
+                    return ReservationResult.Fail(
+                        state.Status == DomainValues.ReservationStatuses.Pending
+                            ? "Approve this request before recording the release."
+                            : "Only an approved reservation that hasn't been released can be handed over.");
+                }
+
+                if (state.HasRelease)
+                {
+                    return ReservationResult.Fail("This item has already been released for this reservation.");
+                }
+
+                var item = EquipmentItemConcurrencyLock.LoadForUpdate(_db, state.EquipmentId);
+                if (item == null)
+                {
+                    return ReservationResult.Fail("This item is archived, so its release can't be recorded.");
+                }
+
+                if (!ReservationAvailability.IsReservableStatus(item.ItemStatus))
+                {
+                    return ReservationResult.Fail($"This item is marked {item.ItemStatus}, so it can't be released.");
+                }
+
+                // One physical item can only be out once: refuse while another unreturned loan
+                // exists for the same item.
+                var onLoanElsewhere = _reservationRepository.GetReservations()
+                    .Any(reservation =>
+                        reservation.EquipmentId == state.EquipmentId &&
+                        reservation.ReservationId != reservationId &&
+                        reservation.ReleaseRecord != null &&
+                        reservation.ReleaseRecord.ReturnRecord == null);
+                if (onLoanElsewhere)
+                {
+                    return ReservationResult.Fail("This item is still on loan to another borrower, so it can't be released again yet.");
+                }
+
+                _db.ReleaseRecords.Add(new ReleaseRecord
+                {
+                    ReservationId = reservationId,
+                    ReleasedByUserId = actorUserId,
+                    ActualReleaseAt = nowUtc,
+                    Notes = string.IsNullOrEmpty(trimmedNotes) ? null : trimmedNotes,
+                    CreatedAt = nowUtc
+                });
+
+                item.ItemStatus = DomainValues.EquipmentStatuses.Borrowed;
+                item.UpdatedAt = nowUtc;
+
+                AddAudit(actorUserId, state.BorrowerUserId, ReleasedAction, new { ReservationId = reservationId });
+
+                try
+                {
+                    _db.SaveChanges();
+                }
+                catch (DbUpdateException)
+                {
+                    // ReleaseRecord.ReservationId is unique, so a double release is refused by the
+                    // database even when two custodians submit at the same moment.
+                    transaction.Rollback();
+                    return ReservationResult.Fail("This item has already been released for this reservation.");
+                }
+
+                transaction.Commit();
+            }
+
+            return ReservationResult.Success(
+                "Release recorded. The item is now marked as borrowed.",
+                reservationId);
+        }
+
+        /// <summary>
+        /// Database-backed authorization for custodian decisions. The controller also requires the
+        /// role and the policy, but those are evaluated against the sign-in cookie, whose claims
+        /// are not refreshed when a role's permissions change. Mirrors CategoryService.
+        /// </summary>
+        private bool CanReview(string actorUserId, string permissionName)
+        {
+            if (string.IsNullOrWhiteSpace(actorUserId))
+            {
+                return false;
+            }
+
+            var actor = _db.Users.AsNoTracking().SingleOrDefault(user => user.Id == actorUserId);
+            if (actor == null || !actor.IsActive)
+            {
+                return false;
+            }
+
+            return (from userRole in _db.UserRoles.AsNoTracking()
+                    join role in _db.Roles.AsNoTracking() on userRole.RoleId equals role.Id
+                    join rolePermission in _db.RolePermissions.AsNoTracking()
+                        on role.Id equals rolePermission.RoleId
+                    join permission in _db.Permissions.AsNoTracking()
+                        on rolePermission.PermissionId equals permission.PermissionId
+                    where userRole.UserId == actorUserId &&
+                          role.Name == DomainValues.Roles.Custodian &&
+                          permission.PermissionName == permissionName
+                    select permission.PermissionId)
+                .Any();
+        }
+
+        private ReviewState LoadReviewState(long reservationId)
+        {
+            return _reservationRepository.GetReservations()
+                .AsNoTracking()
+                .Where(reservation => reservation.ReservationId == reservationId)
+                .Select(reservation => new ReviewState
+                {
+                    Status = reservation.Status,
+                    EquipmentId = reservation.EquipmentId,
+                    ReservationStart = reservation.ReservationStart,
+                    ReservationEnd = reservation.ReservationEnd,
+                    BorrowerUserId = reservation.BorrowerProfile.UserId,
+                    HasRelease = reservation.ReleaseRecord != null
+                })
+                .FirstOrDefault();
+        }
+
+        private static string DecisionRefusal(string decision, string status) =>
+            status switch
+            {
+                DomainValues.ReservationStatuses.Approved => $"This request was already approved, so there's nothing to {decision}.",
+                DomainValues.ReservationStatuses.Rejected => $"This request was already rejected, so there's nothing to {decision}.",
+                DomainValues.ReservationStatuses.Cancelled => $"The borrower cancelled this request, so there's nothing to {decision}.",
+                DomainValues.ReservationStatuses.Expired => $"This request expired before it was reviewed, so there's nothing to {decision}.",
+                _ => $"This request can't be {decision}d in its current state."
+            };
+
+        /// <summary>
+        /// The queue must not offer a request whose start has already passed, so the same lazy
+        /// expiry the borrower screens use is applied across every borrower.
+        /// </summary>
+        private void ExpireStalePendingForAll(DateTime nowUtc)
+        {
+            _reservationRepository.GetReservations()
+                .Where(reservation =>
+                    reservation.Status == DomainValues.ReservationStatuses.Pending &&
+                    reservation.ReservationStart <= nowUtc)
+                .ExecuteUpdate(setters => setters
+                    .SetProperty(reservation => reservation.Status, DomainValues.ReservationStatuses.Expired)
+                    .SetProperty(reservation => reservation.UpdatedAt, nowUtc));
+        }
+
+        private static ReservationReviewListItemViewModel ToReviewListItem(
+            ReservationReviewListItemViewModel item,
+            ReservationRow row,
+            DateTime nowUtc)
+        {
+            ToListItem(item, row, nowUtc);
+
+            item.BorrowerName = string.Join(" ", new[] { row.BorrowerFirstName, row.BorrowerLastName }
+                .Where(part => !string.IsNullOrWhiteSpace(part)));
+            item.SchoolId = row.SchoolId ?? string.Empty;
+            item.Department = row.Department ?? string.Empty;
+            item.Purpose = row.Purpose ?? string.Empty;
+            item.CanApprove = row.Status == DomainValues.ReservationStatuses.Pending;
+            item.CanReject = row.Status == DomainValues.ReservationStatuses.Pending;
+            item.CanRelease = row.Status == DomainValues.ReservationStatuses.Approved && !row.HasRelease;
+            return item;
+        }
+
+        private static ReservationReviewDetailsViewModel ToReviewDetails(
+            ReservationReviewDetailsViewModel item,
+            ReservationRow row,
+            DateTime nowUtc)
+        {
+            ToReviewListItem(item, row, nowUtc);
+
+            var reviewerName = string.Join(" ", new[] { row.ReviewerFirstName, row.ReviewerLastName }
+                .Where(part => !string.IsNullOrWhiteSpace(part)));
+
+            item.Brand = row.Brand;
+            item.Model = row.Model;
+            item.Location = row.Location;
+            item.ImageUrl = row.ImageUrl;
+            item.RejectionReason = row.RejectionReason;
+            item.ReviewerName = reviewerName.Length > 0 ? reviewerName : null;
+            item.ReviewedAtLocal = ToLocal(row.ReviewedAt);
+            item.ReleasedAtLocal = ToLocal(row.ReleasedAt);
+            item.ReleaseNotes = row.ReleaseNotes;
+            return item;
+        }
+
+        private void AddAudit(string actorUserId, string targetUserId, string action, object details)
+        {
+            _db.AdministrationAuditEvents.Add(new AdministrationAuditEvent
+            {
+                ActorUserId = actorUserId,
+                TargetUserId = targetUserId,
+                Action = action,
+                DetailsJson = JsonSerializer.Serialize(details),
+                OccurredAt = DateTime.UtcNow
+            });
+        }
+
+        private sealed class ReviewState
+        {
+            public string Status { get; set; }
+            public long EquipmentId { get; set; }
+            public DateTime ReservationStart { get; set; }
+            public DateTime ReservationEnd { get; set; }
+            public string BorrowerUserId { get; set; }
+            public bool HasRelease { get; set; }
+        }
         /// <summary>Why a reservation can't be cancelled, or null when it can (D4).</summary>
         private static string CancelRefusal(string status, bool hasRelease, bool isReturned)
         {
@@ -424,6 +867,13 @@ namespace ASI.Basecode.Services.Services
                     : (DateTime?)null,
                 ReturnedCondition = reservation.ReleaseRecord != null && reservation.ReleaseRecord.ReturnRecord != null
                     ? reservation.ReleaseRecord.ReturnRecord.ReturnedCondition
+                    : null,
+                BorrowerFirstName = reservation.BorrowerProfile.User.FirstName,
+                BorrowerLastName = reservation.BorrowerProfile.User.LastName,
+                SchoolId = reservation.BorrowerProfile.SchoolId,
+                Department = reservation.BorrowerProfile.Department,
+                ReleaseNotes = reservation.ReleaseRecord != null
+                    ? reservation.ReleaseRecord.Notes
                     : null
             });
         }
@@ -494,6 +944,11 @@ namespace ASI.Basecode.Services.Services
             public DateTime? ReleasedAt { get; set; }
             public DateTime? ReturnedAt { get; set; }
             public string ReturnedCondition { get; set; }
+            public string BorrowerFirstName { get; set; }
+            public string BorrowerLastName { get; set; }
+            public string SchoolId { get; set; }
+            public string Department { get; set; }
+            public string ReleaseNotes { get; set; }
         }
 
         private sealed class BorrowerProfileSummary

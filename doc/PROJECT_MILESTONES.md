@@ -30,10 +30,10 @@ The tracker contains 44 leaf features. Group headings such as 2.00 and 4.00 are 
 
 | Status | Count |
 | --- | --- |
-| Done | 5 |
-| In Review | 32 |
+| Done | 8 |
+| In Review | 33 |
 | In Progress | 2 |
-| Not Started | 5 |
+| Not Started | 1 |
 | Blocked | 0 |
 
 ### By member
@@ -45,7 +45,7 @@ Shared rows count for each assigned member.
 | Member 1 — Gesim | 6 (1.00, 20–23, 56) | 1 |
 | Member 2 — Bansag | 13 (1.00, 9–12, 25–28, 52–55) | 1 |
 | Member 3 — Laroco | 12 (1.00, 3, 5–7, 14–18, 49–50) | 5 |
-| Member 4 — Cancencia | 7 (30–32, 39–42) | 0 |
+| Member 4 — Cancencia | 7 (30–32, 39–42) | 3 |
 | Member 5 — Cataraja | 9 (34–37, 44–47, 56) | 0 |
 
 ## WBS Feature Tracker
@@ -81,19 +81,19 @@ Shared rows count for each assigned member.
 | 27.00 | Update Equipment Item | Bansag | 10/3/2026 | 10/6/2026 | 3 | 10/9/2026 | | In Review | #27 | M3 |
 | 28.00 | Delete Equipment Items | Bansag | 10/3/2026 | 10/6/2026 | 3 | 10/9/2026 | | In Review | #27 | M3 |
 | **29.00** | **Master Data: Borrower Profile Management** | | | | | | | | | |
-| 30.00 | View Borrower's Records | Cancencia | 9/29/2026 | 10/2/2026 | 3 | 10/3/2026 | | In Review | #31 | M3 |
-| 31.00 | Update Borrower's Records | Cancencia | 9/29/2026 | 10/2/2026 | 3 | 10/3/2026 | | In Review | #31 | M3 |
-| 32.00 | Update Eligibility Status | Cancencia | 9/29/2026 | 10/1/2026 | 2 | 10/3/2026 | | In Review | #31 | M3 |
+| 30.00 | View Borrower's Records | Cancencia | 9/29/2026 | 10/2/2026 | 3 | 10/3/2026 | 10/17/2026 | Done | #31 | M3 |
+| 31.00 | Update Borrower's Records | Cancencia | 9/29/2026 | 10/2/2026 | 3 | 10/3/2026 | 10/17/2026 | Done | #31 | M3 |
+| 32.00 | Update Eligibility Status | Cancencia | 9/29/2026 | 10/1/2026 | 2 | 10/3/2026 | 10/17/2026 | Done | #31 | M3 |
 | **33.00** | **Transactions: Equipment Reservation** | | | | | | | | | |
 | 34.00 | Search & View Available Items Page | Cataraja | 10/6/2026 | 10/7/2026 | 1 | 10/7/2026 | | In Review | #26 | M4 |
 | 35.00 | Create and Submit Reservation Request | Cataraja | 10/6/2026 | 10/8/2026 | 2 | 10/7/2026 | | In Review | #26 | M4 |
 | 36.00 | View Reservation Status | Cataraja | 10/6/2026 | 10/8/2026 | 2 | 10/7/2026 | | In Review | #26 | M4 |
 | 37.00 | Cancel Reservation | Cataraja | 10/6/2026 | 10/8/2026 | 2 | 10/7/2026 | | In Review | #26 | M4 |
 | **38.00** | **Transactions: Approval and Release** | | | | | | | | | |
-| 39.00 | View Reservation Requests | Cancencia | 10/9/2026 | 10/11/2026 | 2 | | | Not Started | | M5 |
-| 40.00 | Approve Reservation Requests | Cancencia | 10/9/2026 | 10/10/2026 | 1 | | | Not Started | | M5 |
-| 41.00 | Reject Reservation Requests | Cancencia | 10/9/2026 | 10/10/2026 | 1 | | | Not Started | | M5 |
-| 42.00 | Record Equipment Release | Cancencia | 10/9/2026 | 10/11/2026 | 2 | | | Not Started | | M5 |
+| 39.00 | View Reservation Requests | Cancencia | 10/9/2026 | 10/11/2026 | 2 | 10/17/2026 | | In Review | #<the number> | M5 |
+| 40.00 | Approve Reservation Requests | Cancencia | 10/9/2026 | 10/10/2026 | 1 | 10/17/2026 | | In Review | #<the number> | M5 |
+| 41.00 | Reject Reservation Requests | Cancencia | 10/9/2026 | 10/10/2026 | 1 | 10/17/2026 | | In Review | #<the number> | M5 |
+| 42.00 | Record Equipment Release | Cancencia | 10/9/2026 | 10/11/2026 | 2 | 10/17/2026 | | In Review | #<the number> | M5 |
 | **43.00** | **Transactions: Return and Condition Check** | | | | | | | | | |
 | 44.00 | Record Returned Item | Cataraja | 10/11/2026 | 10/13/2026 | 2 | 10/17/2026 | | In Review | #32 | M5 |
 | 45.00 | Update Item Condition Status | Cataraja | 10/11/2026 | 10/13/2026 | 2 | 10/17/2026 | | In Review | #32 | M5 |
@@ -398,6 +398,9 @@ The first version is complete when borrowers can securely reserve one available 
 | 10/14/2026 | Moved WBS 52.00–55.00 to In Review for PR #29; completed local build/test verification, generated Tailwind CSS, and updated the vulnerable XML cryptography dependency | Bansag |
 | 10/14/2026 | Started WBS 49.00–50.00 availability calendar and equipment/category/location filters | Laroco |
 | 10/14/2026 | Moved WBS 30.00–32.00 to In Review for PR #31; added borrower-profile service and authorization tests | Canencia |
+| 10/17/2026 | Started WBS 39.00–42.00 reservation approval and release: custodian review queue, approve/reject with a required reason, and equipment release recorded under the item lock | Cancencia |
+| 10/17/2026 | Merged `staging` (PR #31) into the review branch; WBS 30.00–32.00 verified and moved to Done | Cancencia |
 | 10/17/2026 | Started WBS 44.00–47.00: custodian return desk with On loan/Overdue/Returned/Late tabs, return time and receiver, condition and resulting item status (damaged items never auto-Available), automatic late-return records with whole days late, back-dated returns that require a reason note, and SQL Server race tests | Cataraja |
 | 10/17/2026 | Moved WBS 44.00–47.00 to In Review for PR #32; fixed a SQL Server deadlock when two returns are recorded at once and added opt-in SQL Server race tests | Cataraja |
 | 10/17/2026 | Addressed PR #32 review AUTH-01 for WBS 44.00–47.00 (still In Review): the return permission re-check now runs inside the return transaction under the shared administration lock (Shared mode, before the equipment lock); added SQL Server revocation race tests | Cataraja |
+| 10/17/2026 | Moved WBS 39.00–42.00 to In Review for PR #<the number>: custodian review queue, approve/reject with a required reason, and equipment release recorded under the item lock; 20 new tests | Cancencia |
