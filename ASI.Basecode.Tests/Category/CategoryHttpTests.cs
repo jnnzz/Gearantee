@@ -1,5 +1,8 @@
-using ASI.Basecode.Data;
+﻿using ASI.Basecode.Data;
+using ASI.Basecode.Data.Interfaces;
 using ASI.Basecode.Data.Models;
+using ASI.Basecode.Data.Repositories;
+using ASI.Basecode.Resources.Constants;
 using ASI.Basecode.Services.Interfaces;
 using ASI.Basecode.Services.ServiceModels.Category;
 using ASI.Basecode.Services.Services;
@@ -526,6 +529,8 @@ namespace ASI.Basecode.Tests.Category
             services.AddIdentityCore<ApplicationUser>().AddRoles<IdentityRole>()
                 .AddEntityFrameworkStores<SqliteDashboardDbContext>().AddDefaultTokenProviders();
             services.AddScoped<ICategoryService, CategoryService>();
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
+            services.AddScoped<IEquipmentItemRepository, EquipmentItemRepository>();
             services.AddScoped<IEquipmentItemService, EquipmentItemService>();
         }
 

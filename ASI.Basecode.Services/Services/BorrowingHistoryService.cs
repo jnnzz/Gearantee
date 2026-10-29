@@ -1,5 +1,7 @@
-using ASI.Basecode.Data;
+﻿using ASI.Basecode.Data;
+using ASI.Basecode.Data.Interfaces;
 using ASI.Basecode.Data.Models;
+using ASI.Basecode.Resources.Constants;
 using ASI.Basecode.Services.Interfaces;
 using ASI.Basecode.Services.ServiceModels.BorrowingHistory;
 using ASI.Basecode.Services.Utilities;
@@ -34,10 +36,10 @@ namespace ASI.Basecode.Services.Services
         private readonly TimeProvider _timeProvider;
 
         public BorrowingHistoryService(
-            AsiBasecodeDBContext db,
+            IUnitOfWork unitOfWork,
             TimeProvider timeProvider)
         {
-            _db = db;
+            _db = unitOfWork.Context;
             _timeProvider = timeProvider;
         }
 
@@ -237,7 +239,6 @@ namespace ASI.Basecode.Services.Services
                         (reservation.BorrowerProfile.User.LastName ?? "")).Contains(search) ||
                     (reservation.BorrowerProfile.User.UserCode != null &&
                         reservation.BorrowerProfile.User.UserCode.Contains(search)) ||
-                    reservation.BorrowerProfile.SchoolId.Contains(search) ||
                     reservation.EquipmentItem.ItemName.Contains(search) ||
                     reservation.EquipmentItem.ItemCode.Contains(search));
             }
@@ -249,8 +250,7 @@ namespace ASI.Basecode.Services.Services
                     ((reservation.BorrowerProfile.User.FirstName ?? "") + " " +
                         (reservation.BorrowerProfile.User.LastName ?? "")).Contains(borrower) ||
                     (reservation.BorrowerProfile.User.UserCode != null &&
-                        reservation.BorrowerProfile.User.UserCode.Contains(borrower)) ||
-                    reservation.BorrowerProfile.SchoolId.Contains(borrower));
+                        reservation.BorrowerProfile.User.UserCode.Contains(borrower)));
             }
 
             if (!string.IsNullOrWhiteSpace(filter.Item))
@@ -395,7 +395,7 @@ namespace ASI.Basecode.Services.Services
                     BorrowerName = ((reservation.BorrowerProfile.User.FirstName ?? "") + " " +
                         (reservation.BorrowerProfile.User.LastName ?? "")).Trim(),
                     UserCode = reservation.BorrowerProfile.User.UserCode,
-                    SchoolId = reservation.BorrowerProfile.SchoolId,
+                    SchoolId = reservation.BorrowerProfile.User.UserCode,
                     ItemCode = reservation.EquipmentItem.ItemCode,
                     ItemName = reservation.EquipmentItem.ItemName,
                     CategoryName = reservation.EquipmentItem.Category.CategoryName,

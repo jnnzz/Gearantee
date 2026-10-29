@@ -1,6 +1,6 @@
-using ASI.Basecode.Data;
+﻿using ASI.Basecode.Data;
 using ASI.Basecode.Data.Models;
-using ASI.Basecode.Services.Utilities;
+using ASI.Basecode.Resources.Constants;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -11,10 +11,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace ASI.Basecode.WebApp.Data
+namespace ASI.Basecode.Data.Seeding
 {
     public static class DatabaseSeeder
     {
+        private static readonly TimeZoneInfo ManilaTimeZone =
+            TimeZoneInfo.FindSystemTimeZoneById("Asia/Manila");
+
         private static readonly IReadOnlyDictionary<string, string> PermissionDescriptions =
             new Dictionary<string, string>
             {
@@ -301,7 +304,10 @@ namespace ASI.Basecode.WebApp.Data
                 }
             }
 
-            await using var transaction = await dbContext.Database.BeginTransactionAsync();
+            var strategy = dbContext.Database.CreateExecutionStrategy();
+            await strategy.ExecuteAsync(async () =>
+            {
+                await using var transaction = await dbContext.Database.BeginTransactionAsync();
             var profile = await dbContext.BorrowerProfiles
                 .SingleOrDefaultAsync(item => item.UserId == user.Id);
             if (profile == null)
@@ -309,7 +315,6 @@ namespace ASI.Basecode.WebApp.Data
                 profile = new BorrowerProfile
                 {
                     UserId = user.Id,
-                    SchoolId = "DEMO-001",
                     Department = "Information Technology",
                     ContactNumber = "000-000-0000",
                     IsEligible = true,
@@ -359,7 +364,11 @@ namespace ASI.Basecode.WebApp.Data
             if (!hasDemoReservations)
             {
                 var now = DateTime.UtcNow;
-                var (todayStart, todayEnd) = ManilaClock.TodayUtcRange();
+                // Same "Philippine business day" window the seeded loans are expected to fall in.
+                var todayLocal = TimeZoneInfo.ConvertTimeFromUtc(now, ManilaTimeZone).Date;
+                var todayStart = TimeZoneInfo.ConvertTimeToUtc(
+                    DateTime.SpecifyKind(todayLocal, DateTimeKind.Unspecified), ManilaTimeZone);
+                var todayEnd = todayStart.AddDays(1);
                 var pendingOne = DemoReservation(profile, pendingItem, now.AddDays(1), now.AddDays(1).AddHours(3), "Pending", "DEMO: Pending laptop request");
                 var pendingTwo = DemoReservation(profile, secondProjector, now.AddDays(2), now.AddDays(2).AddHours(2), "Pending", "DEMO: Pending projector request");
                 var pendingThree = DemoReservation(profile, pendingItem, now.AddDays(5), now.AddDays(5).AddHours(3), "Pending", "DEMO: Second pending laptop request");
@@ -432,7 +441,8 @@ namespace ASI.Basecode.WebApp.Data
                 await dbContext.SaveChangesAsync();
             }
 
-            await transaction.CommitAsync();
+                await transaction.CommitAsync();
+            });
             logger.LogInformation(
                 "Development demo data is ready for {UserCode}. The demo account has Borrower, Custodian, and Administrator roles.",
                 user.UserCode);

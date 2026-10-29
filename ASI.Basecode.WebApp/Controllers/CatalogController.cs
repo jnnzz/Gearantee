@@ -1,4 +1,5 @@
-using ASI.Basecode.Data.Models;
+﻿using ASI.Basecode.Data.Models;
+using ASI.Basecode.Resources.Constants;
 using ASI.Basecode.Services.Interfaces;
 using ASI.Basecode.Services.ServiceModels.Catalog;
 using ASI.Basecode.Services.Utilities;
@@ -61,7 +62,6 @@ namespace ASI.Basecode.WebApp.Controllers
             ViewData["Eyebrow"] = User.IsInRole(DomainValues.Roles.Administrator) ? "Administrator workspace"
                 : User.IsInRole(DomainValues.Roles.Custodian) ? "Custodian workspace"
                 : "Borrower workspace";
-            ViewData["PageDate"] = ManilaClock.NowLocal.ToString("ddd d MMM yyyy");
         }
     }
 }

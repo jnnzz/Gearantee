@@ -54,7 +54,11 @@
                 <legend class="font-display text-lg font-semibold">Borrower profile</legend>
                 <p class="mb-3 text-xs text-gray-500">Required whenever the Borrower role is assigned. Eligibility remains a separate decision.</p>
                 <div class="form-grid grid gap-4 sm:grid-cols-2">
-                    <div><label asp-for="SchoolId" class="mb-1 block text-sm font-medium"></label><input asp-for="SchoolId" class="input" /><span asp-validation-for="SchoolId" class="field-validation-error"></span></div>
+                    <div>
+                        <span class="mb-1 block text-sm font-medium">School ID</span>
+                        <p class="input bg-gray-100 text-gray-600">@Model.UserCode</p>
+                        <p class="mt-1 text-xs text-gray-500">Derived from the user code and not editable here.</p>
+                    </div>
                     <div><label asp-for="Department" class="mb-1 block text-sm font-medium"></label><input asp-for="Department" class="input" /><span asp-validation-for="Department" class="field-validation-error"></span></div>
                     <div><label asp-for="ContactNumber" class="mb-1 block text-sm font-medium"></label><input asp-for="ContactNumber" class="input" /><span asp-validation-for="ContactNumber" class="field-validation-error"></span></div>
                 </div>
@@ -87,7 +91,7 @@
         (() => {
             const roleBoxes = document.querySelectorAll('input[name="SelectedRoles"]');
             const profile = document.getElementById("borrower-profile-fields");
-            const requiredFields = [document.getElementById("SchoolId"), document.getElementById("Department")];
+            const requiredFields = [document.getElementById("Department")];
             const syncProfile = () => {
                 const borrower = Array.from(roleBoxes).some(box => box.checked && box.value === "Borrower");
                 profile.classList.toggle("hidden", !borrower);

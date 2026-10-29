@@ -25,6 +25,7 @@ namespace ASI.Basecode.Tests.Reservations
                 new ReservationRepository(unitOfWork),
                 new EquipmentItemRepository(unitOfWork),
                 new BorrowerProfileRepository(unitOfWork),
+                new AuditService(unitOfWork),
                 new FixedTimeProvider(nowUtc));
         }
 

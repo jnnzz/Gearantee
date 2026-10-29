@@ -1,6 +1,8 @@
-using ASI.Basecode.Services.Utilities;
+﻿using ASI.Basecode.Services.Utilities;
 using ASI.Basecode.Data;
+using ASI.Basecode.Data.Interfaces;
 using ASI.Basecode.Data.Models;
+using ASI.Basecode.Resources.Constants;
 using ASI.Basecode.Services.Interfaces;
 using ASI.Basecode.Services.ServiceModels.Category;
 using Microsoft.EntityFrameworkCore;
@@ -16,13 +18,15 @@ namespace ASI.Basecode.Services.Services
     {
         private const int PageSize = PaginationDefaults.PageSize;
         private readonly AsiBasecodeDBContext _db;
+        private readonly IUnitOfWork _unitOfWork;
 
         public CategoryService(
-            AsiBasecodeDBContext db,
+            IUnitOfWork unitOfWork,
             ILoggerFactory loggerFactory)
             : base(loggerFactory)
         {
-            _db = db;
+            _db = unitOfWork.Context;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<bool> CanManageAsync(string actorUserId)
@@ -115,7 +119,7 @@ namespace ASI.Basecode.Services.Services
             try
             {
                 _db.EquipmentCategories.Add(category);
-                await _db.SaveChangesAsync();
+                await _unitOfWork.SaveChangesAsync();
                 _logger.LogInformation("Equipment category {Code} ('{Name}') created by user {UserId}", code, name, actorUserId);
                 return CategoryResult.Success($"Category '{category.CategoryName}' was created successfully.", category.CategoryId);
             }
@@ -190,7 +194,7 @@ namespace ASI.Basecode.Services.Services
 
             try
             {
-                await _db.SaveChangesAsync();
+                await _unitOfWork.SaveChangesAsync();
                 _logger.LogInformation("Equipment category {CategoryId} updated by user {UserId}", category.CategoryId, actorUserId);
                 return CategoryResult.Success($"Category '{category.CategoryName}' updated successfully.", category.CategoryId);
             }
@@ -222,7 +226,7 @@ namespace ASI.Basecode.Services.Services
             category.IsActive = isActive;
             category.UpdatedAt = DateTime.UtcNow;
 
-            await _db.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
             _logger.LogInformation("Equipment category {CategoryId} activation changed to {IsActive} by user {UserId}", categoryId, isActive, actorUserId);
             var state = isActive ? "activated" : "deactivated";
             return CategoryResult.Success($"Category '{category.CategoryName}' was {state} successfully.", category.CategoryId);

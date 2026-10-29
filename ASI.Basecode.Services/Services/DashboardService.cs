@@ -1,5 +1,7 @@
-using ASI.Basecode.Data;
+﻿using ASI.Basecode.Data;
+using ASI.Basecode.Data.Interfaces;
 using ASI.Basecode.Data.Models;
+using ASI.Basecode.Resources.Constants;
 using ASI.Basecode.Services.Interfaces;
 using ASI.Basecode.Services.ServiceModels.Dashboard;
 using ASI.Basecode.Services.Utilities;
@@ -23,7 +25,7 @@ namespace ASI.Basecode.Services.Services
                 ItemName = reservation.EquipmentItem.ItemName,
                 BorrowerName = (reservation.BorrowerProfile.User.FirstName + " " +
                     reservation.BorrowerProfile.User.LastName).Trim(),
-                SchoolId = reservation.BorrowerProfile.SchoolId,
+                SchoolId = reservation.BorrowerProfile.User.UserCode,
                 Department = reservation.BorrowerProfile.Department,
                 ContactNumber = reservation.BorrowerProfile.ContactNumber,
                 StartUtc = reservation.ReservationStart,
@@ -59,12 +61,12 @@ namespace ASI.Basecode.Services.Services
         private readonly TimeProvider _timeProvider;
 
         public DashboardService(
-            AsiBasecodeDBContext db,
+            IUnitOfWork unitOfWork,
             ILoggerFactory loggerFactory,
             TimeProvider timeProvider)
             : base(loggerFactory)
         {
-            _db = db;
+            _db = unitOfWork.Context;
             _timeProvider = timeProvider;
         }
 
@@ -389,7 +391,7 @@ namespace ASI.Basecode.Services.Services
                 .Select(overdue => new AttentionItem
                 {
                     Title = $"Overdue loan {overdue.LoanCode}",
-                    Detail = $"{overdue.BorrowerName} · {overdue.ItemName} · {overdue.DaysOverdue} day(s) late.",
+                    Detail = $"{overdue.BorrowerName} Â· {overdue.ItemName} Â· {overdue.DaysOverdue} day(s) late.",
                     Href = "/Returns/Index",
                     IsAvailable = false
                 })

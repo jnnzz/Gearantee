@@ -1,6 +1,7 @@
 using ASI.Basecode.Data.Interfaces;
+using ASI.Basecode.Data.Locks;
 using ASI.Basecode.Data.Models;
-using Basecode.Data.Repositories;
+using ASI.Basecode.Data.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using System;
@@ -11,9 +12,14 @@ namespace ASI.Basecode.Data.Repositories
 {
     public class ReservationRepository : BaseRepository, IReservationRepository
     {
-        private const int SubmissionLockTimeoutMs = 15000;
+        private readonly IApplicationLockManager _applicationLocks;
 
-        public ReservationRepository(IUnitOfWork unitOfWork) : base(unitOfWork) { }
+        public ReservationRepository(IUnitOfWork unitOfWork)
+            : base(unitOfWork)
+        {
+            _applicationLocks = new ApplicationLockManager(
+                (AsiBasecodeDBContext)unitOfWork.Database);
+        }
 
         public IQueryable<Reservation> GetReservations()
         {
@@ -49,23 +55,11 @@ namespace ASI.Basecode.Data.Repositories
                 // form a cycle with inventory updates. Retain a narrower lock for the duplicate
                 // check; both locks release when the transaction ends.
                 var borrowerResource = $"Gearantee.ReservationSubmitBorrower:{borrowerProfileId}";
-                AcquireApplicationLock(borrowerResource);
+                _applicationLocks.AcquireExclusive(borrowerResource);
 
                 var resource = $"Gearantee.ReservationSubmit:{borrowerProfileId}:{equipmentId}";
-                AcquireApplicationLock(resource);
+                _applicationLocks.AcquireExclusive(resource);
             }
-        }
-
-        private void AcquireApplicationLock(string resource)
-        {
-            Context.Database.ExecuteSqlInterpolated(
-                $@"DECLARE @lockResult int;
-EXEC @lockResult = sys.sp_getapplock
-    @Resource = {resource},
-    @LockMode = 'Exclusive',
-    @LockOwner = 'Transaction',
-    @LockTimeout = {SubmissionLockTimeoutMs};
-IF @lockResult < 0 THROW 51000, 'Could not acquire the reservation submission lock.', 1;");
         }
     }
 }

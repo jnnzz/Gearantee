@@ -1,4 +1,5 @@
-using ASI.Basecode.Data;
+﻿using ASI.Basecode.Data;
+using ASI.Basecode.WebApp.Configuration;
 using ASI.Basecode.WebApp.Extensions.Configuration;
 using ASI.Basecode.Services.Services;
 using Microsoft.AspNetCore.Builder;
@@ -39,7 +40,14 @@ namespace ASI.Basecode.WebApp
             {
                 options.UseSqlServer(
                     Configuration.GetConnectionString("DefaultConnection"),
-                    sqlServerOptions => sqlServerOptions.CommandTimeout(120));
+                    sqlServerOptions =>
+                    {
+                        sqlServerOptions.CommandTimeout(120);
+                        sqlServerOptions.EnableRetryOnFailure(
+                            maxRetryCount: 5,
+                            maxRetryDelay: TimeSpan.FromSeconds(30),
+                            errorNumbersToAdd: null);
+                    });
             });
 
             ConfigureIdentityAndAuthorization();

@@ -1,4 +1,5 @@
-using ASI.Basecode.Data.Models;
+﻿using ASI.Basecode.Data.Models;
+using ASI.Basecode.Resources.Constants;
 using ASI.Basecode.Services.Interfaces;
 using ASI.Basecode.Services.ServiceModels.AvailabilityCalendar;
 using ASI.Basecode.Services.Utilities;
@@ -102,7 +103,6 @@ namespace ASI.Basecode.WebApp.Controllers
         {
             ViewData["Title"] = "Availability calendar";
             ViewData["Eyebrow"] = "Reports";
-            ViewData["PageDate"] = ManilaClock.NowLocal.ToString("ddd d MMM yyyy");
         }
     }
 }

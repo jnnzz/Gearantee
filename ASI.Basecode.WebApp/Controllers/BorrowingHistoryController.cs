@@ -1,4 +1,5 @@
-using ASI.Basecode.Data.Models;
+﻿using ASI.Basecode.Data.Models;
+using ASI.Basecode.Resources.Constants;
 using ASI.Basecode.Services.Interfaces;
 using ASI.Basecode.Services.ServiceModels.BorrowingHistory;
 using ASI.Basecode.Services.Services;
@@ -123,7 +124,6 @@ namespace ASI.Basecode.WebApp.Controllers
         {
             ViewData["Title"] = title;
             ViewData["Eyebrow"] = "Reports";
-            ViewData["PageDate"] = ManilaClock.NowLocal.ToString("ddd d MMM yyyy");
         }
     }
 }

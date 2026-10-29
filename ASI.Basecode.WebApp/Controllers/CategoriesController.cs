@@ -1,9 +1,13 @@
-using ASI.Basecode.Data.Models;
+﻿using ASI.Basecode.Data.Models;
+using ASI.Basecode.Resources.Constants;
 using ASI.Basecode.Services.Interfaces;
 using ASI.Basecode.Services.ServiceModels.Category;
 using ASI.Basecode.Services.ServiceModels.EquipmentItem;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Linq;
 using System.Security.Claims;
@@ -15,20 +19,22 @@ namespace ASI.Basecode.WebApp.Controllers
         Roles = DomainValues.Roles.Administrator,
         Policy = DomainValues.Permissions.EquipmentManage)]
     [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
-    public class CategoriesController : Controller
+    public class CategoriesController : Mvc.ControllerBase<CategoriesController>
     {
         private readonly ICategoryService _categoryService;
         private readonly IEquipmentItemService _equipmentItemService;
 
         public CategoriesController(
             ICategoryService categoryService,
-            IEquipmentItemService equipmentItemService)
+            IEquipmentItemService equipmentItemService,
+            IHttpContextAccessor httpContextAccessor,
+            ILoggerFactory loggerFactory,
+            IConfiguration configuration)
+            : base(httpContextAccessor, loggerFactory, configuration)
         {
             _categoryService = categoryService;
             _equipmentItemService = equipmentItemService;
         }
-
-        private string UserId => User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         [HttpGet]
         public async Task<IActionResult> Index(
@@ -71,7 +77,6 @@ namespace ASI.Basecode.WebApp.Controllers
 
             ViewData["Title"] = "Equipments & categories";
             ViewData["Eyebrow"] = "Master data";
-            ViewData["PageDate"] = DateTime.Now.ToString("MMM d, yyyy");
             ViewData["SuccessMessage"] = TempData["SuccessMessage"];
             ViewData["ErrorMessage"] = TempData["ErrorMessage"];
 

@@ -1,5 +1,6 @@
-using ASI.Basecode.Data;
+﻿using ASI.Basecode.Data;
 using ASI.Basecode.Data.Models;
+using ASI.Basecode.Resources.Constants;
 using ASI.Basecode.Services.ServiceModels.BorrowingHistory;
 using ASI.Basecode.Services.Services;
 using ASI.Basecode.Services.Utilities;
@@ -157,7 +158,7 @@ namespace ASI.Basecode.Tests.BorrowingHistory
                 userA.Id,
                 onlyOwnHistory: true);
             Assert.Single(ownRows.Items);
-            Assert.Equal(profileA.SchoolId, ownRows.Items[0].SchoolId);
+            Assert.Equal(userA.UserCode, ownRows.Items[0].SchoolId);
 
             var otherBorrowerSearch = await service.GetHistoryAsync(
                 new BorrowingHistoryFilterViewModel { Search = "STUDENT-B" },
@@ -175,7 +176,7 @@ namespace ASI.Basecode.Tests.BorrowingHistory
             }
 
             Assert.Single(stream);
-            Assert.Equal(profileA.SchoolId, stream[0].SchoolId);
+            Assert.Equal(userA.UserCode, stream[0].SchoolId);
         }
 
         [Fact]
@@ -241,7 +242,7 @@ namespace ASI.Basecode.Tests.BorrowingHistory
 
         private static BorrowingHistoryService Service(
             AsiBasecodeDBContext db,
-            DateTime nowUtc) => new(db, new FixedTimeProvider(nowUtc));
+            DateTime nowUtc) => new(new UnitOfWork(db), new FixedTimeProvider(nowUtc));
 
         private static DateTime Utc(int year, int month, int day, int hour) =>
             new(year, month, day, hour, 0, 0, DateTimeKind.Utc);

@@ -1,6 +1,7 @@
-using ASI.Basecode.Data;
+﻿using ASI.Basecode.Data;
 using ASI.Basecode.Data.Interfaces;
 using ASI.Basecode.Data.Models;
+using ASI.Basecode.Resources.Constants;
 using ASI.Basecode.Data.Repositories;
 using ASI.Basecode.Services.Interfaces;
 using ASI.Basecode.Services.Services;
@@ -125,10 +126,13 @@ namespace ASI.Basecode.Tests.Returns
                     builder.WebHost.UseUrls("http://127.0.0.1:0");
                     builder.Services.AddDbContext<SqliteDashboardDbContext>(options => options.UseSqlite(site._sqlite.Connection));
                     builder.Services.AddScoped<AsiBasecodeDBContext>(provider => provider.GetRequiredService<SqliteDashboardDbContext>());
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
                     builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
                     builder.Services.AddScoped<IReturnRecordRepository, ReturnRecordRepository>();
-                    builder.Services.AddScoped<IReservationRepository, ReservationRepository>();
-                    builder.Services.AddScoped<IReturnRecordService, ReturnRecordService>();
+builder.Services.AddScoped<IReservationRepository, ReservationRepository>();
+builder.Services.AddScoped<IEquipmentItemRepository, EquipmentItemRepository>();
+builder.Services.AddScoped<IAuditService, AuditService>();
+builder.Services.AddScoped<IReturnRecordService, ReturnRecordService>();
                     builder.Services.AddSingleton<TimeProvider>(new FixedTimeProvider(Now));
                     builder.Services.AddHttpContextAccessor();
                     builder.Services.AddControllersWithViews().AddApplicationPart(typeof(ReturnRecordController).Assembly);

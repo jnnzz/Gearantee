@@ -21,14 +21,13 @@
                     </select>
                 </div>
                 <fieldset id="borrower-fields" class="contents">
-                    <div><label asp-for="SchoolId" class="mb-1 block text-sm font-medium"></label><input asp-for="SchoolId" class="input" autocomplete="off" /><span asp-validation-for="SchoolId" class="field-validation-error"></span></div>
                     <div><label asp-for="Department" class="mb-1 block text-sm font-medium"></label><input asp-for="Department" class="input" /><span asp-validation-for="Department" class="field-validation-error"></span></div>
                     <div><label asp-for="ContactNumber" class="mb-1 block text-sm font-medium"></label><input asp-for="ContactNumber" class="input" autocomplete="tel" /><span asp-validation-for="ContactNumber" class="field-validation-error"></span></div>
                 </fieldset>
                 <div><label asp-for="Password" class="mb-1 block text-sm font-medium"></label><input asp-for="Password" class="input" autocomplete="new-password" /><span asp-validation-for="Password" class="field-validation-error"></span><p class="mt-1 text-xs text-gray-500">At least 8 characters with upper/lowercase, a number, and a symbol.</p></div>
                 <div><label asp-for="ConfirmPassword" class="mb-1 block text-sm font-medium"></label><input asp-for="ConfirmPassword" class="input" autocomplete="new-password" /><span asp-validation-for="ConfirmPassword" class="field-validation-error"></span></div>
             </div>
-            <p class="mt-4 text-xs leading-5 text-gray-500">Borrower accounts start with borrowing eligibility disabled. An administrator must approve eligibility separately.</p>
+            <p class="mt-4 text-xs leading-5 text-gray-500">Borrower accounts start with borrowing eligibility disabled. An administrator must approve eligibility separately. The borrower's school ID is the user code entered above.</p>
             <div class="form-actions">
                 <a asp-action="Index" class="btn-secondary">Cancel</a>
                 <button type="submit" class="btn-primary">Create account</button>
@@ -42,7 +41,7 @@
     <script>
         (() => {
             const role = document.getElementById("initial-role");
-            const fields = [document.getElementById("SchoolId"), document.getElementById("Department")];
+            const fields = [document.getElementById("Department")];
             const syncBorrowerFields = () => {
                 const borrower = role.value === "Borrower";
                 for (const field of fields) {

@@ -1,4 +1,6 @@
-namespace ASI.Basecode.Data.Models
+﻿using ASI.Basecode.Resources.Constants;
+
+namespace ASI.Basecode.Resources.Constants
 {
     public static class DomainValues
     {

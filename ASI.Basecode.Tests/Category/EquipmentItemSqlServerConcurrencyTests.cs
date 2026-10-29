@@ -1,5 +1,6 @@
-using ASI.Basecode.Data;
+﻿using ASI.Basecode.Data;
 using ASI.Basecode.Data.Models;
+using ASI.Basecode.Resources.Constants;
 using ASI.Basecode.Data.Repositories;
 using ASI.Basecode.Services.ServiceModels.EquipmentItem;
 using ASI.Basecode.Services.ServiceModels.Reservations;
@@ -65,8 +66,9 @@ namespace ASI.Basecode.Tests.Category
                 var inventoryTask = Task.Run(async () =>
                 {
                     await using var db = new AsiBasecodeDBContext(inventoryOptions);
-                    var categories = new CategoryService(db, loggerFactory);
-                    var service = new EquipmentItemService(db, categories, loggerFactory);
+                    var categories = new CategoryService(new UnitOfWork(db), loggerFactory);
+                    var service = new EquipmentItemService(
+                        new UnitOfWork(db), categories, new EquipmentItemRepository(new UnitOfWork(db)), loggerFactory);
                     if (archiveInventoryItem)
                     {
                         return await service.SetArchivedAsync(adminId, equipmentId, true);
@@ -101,6 +103,7 @@ namespace ASI.Basecode.Tests.Category
                             new ReservationRepository(unitOfWork),
                             new EquipmentItemRepository(unitOfWork),
                             new BorrowerProfileRepository(unitOfWork),
+                            new AuditService(unitOfWork),
                             new ReservationTestHelpers.FixedTimeProvider(nowUtc));
                         return service.SubmitReservation(new ReservationCreateViewModel
                         {
@@ -194,7 +197,6 @@ namespace ASI.Basecode.Tests.Category
             var profile = new BorrowerProfile
             {
                 User = borrower,
-                SchoolId = "RACE-SCHOOL-" + Guid.NewGuid().ToString("N")[..8],
                 Department = "Concurrency Tests",
                 IsEligible = true
             };

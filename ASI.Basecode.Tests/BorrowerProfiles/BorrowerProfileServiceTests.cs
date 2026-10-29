@@ -1,5 +1,7 @@
-using ASI.Basecode.Data;
+﻿using ASI.Basecode.Data;
+using ASI.Basecode.Data.Interfaces;
 using ASI.Basecode.Data.Models;
+using ASI.Basecode.Resources.Constants;
 using ASI.Basecode.Services.Interfaces;
 using ASI.Basecode.Services.ServiceModels;
 using ASI.Basecode.Services.Services;
@@ -225,7 +227,7 @@ namespace ASI.Basecode.Tests.BorrowerProfiles
             Assert.Equal("0917-333-3333", stored.ContactNumber);
 
             // Everything the update form must never be able to reach.
-            Assert.Equal("S-300", stored.SchoolId);
+            Assert.Equal("S-300", seeded.User.UserName);
             Assert.Equal(seeded.User.Id, stored.UserId);
             Assert.True(stored.IsEligible);
             Assert.Equal(originalStamp, stored.CreatedAt);
@@ -382,7 +384,7 @@ namespace ASI.Basecode.Tests.BorrowerProfiles
             Assert.False(stored.IsEligible);
             Assert.Equal("College of Education", stored.Department);
             Assert.Equal("0917-500-5000", stored.ContactNumber);
-            Assert.Equal("S-500", stored.SchoolId);
+            Assert.Equal("S-500", seeded.User.UserName);
 
             result = await service.UpdateEligibilityAsync(admin.Id, seeded.Profile.BorrowerProfileId, true);
             Assert.True(result.Succeeded, result.Message);
@@ -803,6 +805,45 @@ namespace ASI.Basecode.Tests.BorrowerProfiles
                 validateAllProperties: true));
         }
 
+        [Fact]
+        public async Task UpdateEligibilityAsync_AfterUncommittedSaveOnSharedContext_PersistsThroughFreshContext()
+        {
+            using var database = new SqliteDb();
+            using var provider = CreateProvider(database);
+            await using var scope = provider.CreateAsyncScope();
+            var db = scope.ServiceProvider.GetRequiredService<AsiBasecodeDBContext>();
+            var admin = await SeedAuthorizedAdministratorAsync(scope);
+            var seeded = await SeedProfileAsync(
+                scope, "S-950", "Ivy", "Lopez", "Science", null, isEligible: true);
+            var service = scope.ServiceProvider.GetRequiredService<IBorrowerProfileService>();
+
+            // Simulate an attempt that saved IsEligible=false but never committed: the shared
+            // context keeps the uncommitted value tracked, like a retried transaction.
+            await using (var failedAttempt = await db.Database.BeginTransactionAsync(
+                System.Data.IsolationLevel.Serializable))
+            {
+                var tracked = await db.BorrowerProfiles.SingleAsync(
+                    item => item.BorrowerProfileId == seeded.Profile.BorrowerProfileId);
+                tracked.IsEligible = false;
+                await db.SaveChangesAsync();
+                await failedAttempt.RollbackAsync();
+            }
+
+            Assert.Contains(
+                db.ChangeTracker.Entries<BorrowerProfile>(),
+                entry => !entry.Entity.IsEligible);
+
+            var result = await service.UpdateEligibilityAsync(
+                admin.Id, seeded.Profile.BorrowerProfileId, isEligible: false);
+
+            Assert.True(result.Succeeded, result.Message);
+            // The retry must rebuild state and write the value; it must not trust the stale
+            // tracked IsEligible=false and report success without touching the database.
+            using var verify = database.Create();
+            Assert.False((await verify.BorrowerProfiles.AsNoTracking()
+                .SingleAsync(item => item.BorrowerProfileId == seeded.Profile.BorrowerProfileId)).IsEligible);
+        }
+
         // --------------------------------------------------------------- helpers
 
         private static async Task<(ApplicationUser User, BorrowerProfile Profile)> SeedProfileAsync(
@@ -822,7 +863,6 @@ namespace ASI.Basecode.Tests.BorrowerProfiles
             var profile = new BorrowerProfile
             {
                 UserId = user.Id,
-                SchoolId = schoolId,
                 Department = department,
                 ContactNumber = contactNumber,
                 IsEligible = isEligible,
@@ -924,14 +964,11 @@ namespace ASI.Basecode.Tests.BorrowerProfiles
             string firstName,
             string lastName)
         {
-            var suffix = Guid.NewGuid().ToString("N")[..8];
-            var account = (schoolId + "-" + suffix).Replace(" ", string.Empty);
-
             var user = new ApplicationUser
             {
-                UserName = account,
-                UserCode = account,
-                Email = account.ToLowerInvariant() + "@test.local",
+                UserName = schoolId,
+                UserCode = schoolId,
+                Email = schoolId.ToLowerInvariant() + "@test.local",
                 FirstName = firstName,
                 LastName = lastName,
                 IsActive = true,
@@ -956,10 +993,12 @@ namespace ASI.Basecode.Tests.BorrowerProfiles
                     .AddInterceptors(provider.GetRequiredService<AuditFailureInterceptor>()));
             services.AddScoped<AsiBasecodeDBContext>(provider =>
                 provider.GetRequiredService<SqliteDashboardDbContext>());
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddIdentityCore<ApplicationUser>()
                 .AddRoles<IdentityRole>()
                 .AddEntityFrameworkStores<SqliteDashboardDbContext>()
                 .AddDefaultTokenProviders();
+            services.AddScoped<IAuditService, AuditService>();
             services.AddScoped<IBorrowerProfileService, BorrowerProfileService>();
             return services.BuildServiceProvider();
         }

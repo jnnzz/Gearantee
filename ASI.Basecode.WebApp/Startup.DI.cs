@@ -1,5 +1,6 @@
-
+﻿
 using ASI.Basecode.Data;
+// OTP store moved to Data
 using ASI.Basecode.Data.Interfaces;
 using ASI.Basecode.Data.Repositories;
 using ASI.Basecode.Services.Interfaces;
@@ -21,6 +22,8 @@ namespace ASI.Basecode.WebApp
             _services.TryAddSingleton<IActionContextAccessor, ActionContextAccessor>();
             _services.TryAddSingleton<TimeProvider>(TimeProvider.System);
             _services.AddScoped<IUnitOfWork, UnitOfWork>();
+            _services.AddScoped<IAccountService, AccountService>();
+            _services.AddScoped<IAuditService, AuditService>();
 
             _services.Configure<BrevoOptions>(
                 Configuration.GetSection(BrevoOptions.SectionName));
@@ -37,11 +40,11 @@ namespace ASI.Basecode.WebApp
                 });
 
             _services.AddScoped<IPasswordResetOtpStore, IdentityPasswordResetOtpStore>();
-            _services.AddScoped<PasswordResetOtpService>();
+            _services.AddScoped<IPasswordResetOtpService, PasswordResetOtpService>();
             _services.AddScoped<IDashboardService, DashboardService>();
             _services.AddScoped<IUserAdministrationService, UserAdministrationService>();
 
-            // WBS 30.00–32.00: Borrower Profile Management
+            // WBS 30.00â€“32.00: Borrower Profile Management
             _services.AddScoped<IBorrowerProfileService, BorrowerProfileService>();
 
             _services.AddScoped<ICategoryService, CategoryService>();

@@ -1,5 +1,7 @@
-using ASI.Basecode.Data;
+﻿using ASI.Basecode.Data;
+using ASI.Basecode.Data.Interfaces;
 using ASI.Basecode.Data.Models;
+using ASI.Basecode.Resources.Constants;
 using ASI.Basecode.Services.Interfaces;
 using ASI.Basecode.Services.ServiceModels.Category;
 using ASI.Basecode.Services.Services;
@@ -403,6 +405,7 @@ namespace ASI.Basecode.Tests.Category
                 options.UseSqlite(database.Connection));
             services.AddScoped<AsiBasecodeDBContext>(provider =>
                 provider.GetRequiredService<SqliteDashboardDbContext>());
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddIdentityCore<ApplicationUser>()
                 .AddRoles<IdentityRole>()
                 .AddEntityFrameworkStores<SqliteDashboardDbContext>()

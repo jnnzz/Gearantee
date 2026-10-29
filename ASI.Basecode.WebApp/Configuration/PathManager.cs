@@ -1,6 +1,6 @@
 ﻿using System.IO;
 
-namespace ASI.Basecode.Data
+namespace ASI.Basecode.WebApp.Configuration
 {
     /// <summary>
     /// Path Manager

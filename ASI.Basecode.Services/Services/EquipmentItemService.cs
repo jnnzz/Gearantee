@@ -1,6 +1,8 @@
-using ASI.Basecode.Services.Utilities;
+﻿using ASI.Basecode.Services.Utilities;
 using ASI.Basecode.Data;
+using ASI.Basecode.Data.Interfaces;
 using ASI.Basecode.Data.Models;
+using ASI.Basecode.Resources.Constants;
 using ASI.Basecode.Services.Interfaces;
 using ASI.Basecode.Services.ServiceModels.EquipmentItem;
 using Microsoft.EntityFrameworkCore;
@@ -31,16 +33,21 @@ namespace ASI.Basecode.Services.Services
         };
 
         private readonly AsiBasecodeDBContext _db;
+        private readonly IUnitOfWork _unitOfWork;
         private readonly ICategoryService _categoryService;
+        private readonly IEquipmentItemRepository _equipmentItemRepository;
 
         public EquipmentItemService(
-            AsiBasecodeDBContext db,
+            IUnitOfWork unitOfWork,
             ICategoryService categoryService,
+            IEquipmentItemRepository equipmentItemRepository,
             ILoggerFactory loggerFactory)
             : base(loggerFactory)
         {
-            _db = db;
+            _db = unitOfWork.Context;
+            _unitOfWork = unitOfWork;
             _categoryService = categoryService;
+            _equipmentItemRepository = equipmentItemRepository;
         }
 
         public async Task<EquipmentItemIndexViewModel> GetEquipmentItemsAsync(
@@ -260,7 +267,7 @@ namespace ASI.Basecode.Services.Services
             try
             {
                 _db.EquipmentItems.Add(item);
-                await _db.SaveChangesAsync();
+                await _unitOfWork.SaveChangesAsync();
                 _logger.LogInformation(
                     "Equipment item {EquipmentId} created by administrator {UserId}",
                     item.EquipmentId,
@@ -295,10 +302,17 @@ namespace ASI.Basecode.Services.Services
             // before checking reservations or changing state. Reservation creation and
             // approval must use EquipmentItemConcurrencyLock in their own Serializable
             // transaction before validating and writing the reservation.
+            return await _db.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
+            {
+            // The execution strategy re-runs this delegate after a transient fault using the
+            // same DbContext. Drop any tracked state left by a failed attempt so the retry
+            // reads the committed database values instead of reusing uncommitted changes.
+            _db.ChangeTracker.Clear();
+
             await using var transaction = await _db.Database.BeginTransactionAsync(IsolationLevel.Serializable);
 
-            var item = await EquipmentItemConcurrencyLock.LoadForUpdateAsync(
-                _db, model.EquipmentId);
+            var item = await _equipmentItemRepository.LoadForUpdateAsync(
+                model.EquipmentId);
             if (item == null)
             {
                 return EquipmentItemOperationResult.NotFound();
@@ -352,7 +366,7 @@ namespace ASI.Basecode.Services.Services
 
             try
             {
-                await _db.SaveChangesAsync();
+                await _unitOfWork.SaveChangesAsync();
                 await transaction.CommitAsync();
                 _logger.LogInformation(
                     "Equipment item {EquipmentId} updated by administrator {UserId}",
@@ -369,6 +383,7 @@ namespace ASI.Basecode.Services.Services
                 return EquipmentItemOperationResult.Failure(
                     "An item with this code or serial number already exists.");
             }
+            });
         }
 
         public async Task<EquipmentItemOperationResult> SetArchivedAsync(
@@ -382,10 +397,20 @@ namespace ASI.Basecode.Services.Services
             }
 
             // Archive must use the same serializable lock/check/write boundary as Edit.
+            return await _db.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
+            {
+            // The execution strategy re-runs this delegate after a transient fault using the
+            // same DbContext. Reload from committed state on every attempt: otherwise an
+            // attempt that saved IsArchived=true but failed to commit leaves the value tracked,
+            // and the retry reports "already archived" without writing anything. Re-reading
+            // also resolves an uncertain commit correctly, because the retry inspects the
+            // actual stored value before deciding whether a write is needed.
+            _db.ChangeTracker.Clear();
+
             await using var transaction = await _db.Database.BeginTransactionAsync(IsolationLevel.Serializable);
 
-            var item = await EquipmentItemConcurrencyLock.LoadForUpdateAsync(
-                _db, equipmentId, includeArchived: true);
+            var item = await _equipmentItemRepository.LoadForUpdateAsync(
+                equipmentId, includeArchived: true);
             if (item == null)
             {
                 return EquipmentItemOperationResult.NotFound();
@@ -414,7 +439,7 @@ namespace ASI.Basecode.Services.Services
 
             item.IsArchived = isArchived;
             item.UpdatedAt = DateTime.UtcNow;
-            await _db.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
             await transaction.CommitAsync();
 
             var action = isArchived ? "archived" : "restored to active inventory";
@@ -426,6 +451,7 @@ namespace ASI.Basecode.Services.Services
             return EquipmentItemOperationResult.Success(
                 $"Equipment item '{item.ItemName}' was {action}.",
                 item.EquipmentId);
+            });
         }
 
         private async Task<IReadOnlyList<EquipmentCategoryOptionViewModel>> LoadCategoryOptionsAsync(

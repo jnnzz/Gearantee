@@ -7,9 +7,9 @@
     <h2 class="mt-5 font-display text-3xl font-semibold text-ink">Access denied</h2>
     <p class="mt-2 text-sm leading-6 text-gray-500">You do not have permission to perform this action.</p>
     @if (User.Identity?.IsAuthenticated == true &&
-        !User.IsInRole(ASI.Basecode.Data.Models.DomainValues.Roles.Administrator) &&
-        !User.IsInRole(ASI.Basecode.Data.Models.DomainValues.Roles.Custodian) &&
-        !User.IsInRole(ASI.Basecode.Data.Models.DomainValues.Roles.Borrower))
+        !User.IsInRole(ASI.Basecode.Resources.Constants.DomainValues.Roles.Administrator) &&
+        !User.IsInRole(ASI.Basecode.Resources.Constants.DomainValues.Roles.Custodian) &&
+        !User.IsInRole(ASI.Basecode.Resources.Constants.DomainValues.Roles.Borrower))
     {
         <form asp-controller="Account" asp-action="SignOutUser" method="post" class="mt-6">
             @Html.AntiForgeryToken()

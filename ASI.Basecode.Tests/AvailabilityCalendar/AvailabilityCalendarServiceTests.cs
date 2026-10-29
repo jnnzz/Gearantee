@@ -1,4 +1,5 @@
-using ASI.Basecode.Data.Models;
+﻿using ASI.Basecode.Data.Models;
+using ASI.Basecode.Resources.Constants;
 using ASI.Basecode.Services.ServiceModels.AvailabilityCalendar;
 using ASI.Basecode.Services.Services;
 using ASI.Basecode.Services.Utilities;
@@ -56,7 +57,7 @@ namespace ASI.Basecode.Tests.AvailabilityCalendar
                 new DateTimeOffset(end));
 
             Assert.Equal(new[] { "BORROWED", "OVERDUE", "RESERVED" },
-                data.Events.Select(item => item.Title.Split(" · ")[0]).OrderBy(code => code));
+                data.Events.Select(item => item.Title.Split(" Â· ")[0]).OrderBy(code => code));
             Assert.Equal(new[] { "Borrowed", "Overdue", "Reserved" },
                 data.Events.Select(item => item.Status).OrderBy(status => status));
             Assert.Equal(Now, data.Events.Single(item => item.Status == "Overdue").Start.UtcDateTime);

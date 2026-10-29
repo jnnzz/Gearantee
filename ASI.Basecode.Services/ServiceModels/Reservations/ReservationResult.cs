@@ -1,13 +1,13 @@
+using ASI.Basecode.Services.Common;
+
 namespace ASI.Basecode.Services.ServiceModels.Reservations
 {
     /// <summary>
     /// Outcome of an action on a reservation: a borrower action (submit, cancel) or a
     /// custodian decision (approve, reject, release).
     /// </summary>
-    public class ReservationResult
+    public class ReservationResult : ServiceResult
     {
-        public bool Succeeded { get; set; }
-        public string Message { get; set; } = string.Empty;
         public long? ReservationId { get; set; }
 
         /// <summary>True when the reservation doesn't exist or isn't the caller's; the controller returns 404.</summary>

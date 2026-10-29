@@ -1,13 +1,11 @@
-using ASI.Basecode.Data;
-using ASI.Basecode.Data.Models;
-using ASI.Basecode.Services.Interfaces;
+﻿using ASI.Basecode.Data.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace ASI.Basecode.Services.Services
+namespace ASI.Basecode.Data
 {
     public sealed class IdentityPasswordResetOtpStore : IPasswordResetOtpStore
     {

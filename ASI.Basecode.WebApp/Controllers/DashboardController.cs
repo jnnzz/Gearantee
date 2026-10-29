@@ -1,4 +1,5 @@
-using ASI.Basecode.Data.Models;
+﻿using ASI.Basecode.Data.Models;
+using ASI.Basecode.Resources.Constants;
 using ASI.Basecode.Services.Interfaces;
 using ASI.Basecode.Services.ServiceModels.Dashboard;
 using ASI.Basecode.Services.Utilities;
@@ -81,7 +82,6 @@ namespace ASI.Basecode.WebApp.Controllers
             ViewData["Title"] = $"Good {greeting}, {model.DisplayName}";
             ViewData["Eyebrow"] = "Borrower workspace";
             ViewData["Workspace"] = "Borrower workspace";
-            ViewData["PageDate"] = localNow.ToString("ddd d MMM yyyy");
             return View(model);
         }
 
@@ -105,7 +105,6 @@ namespace ASI.Basecode.WebApp.Controllers
             ViewData["Title"] = "Equipment desk";
             ViewData["Eyebrow"] = "Custodian workspace";
             ViewData["Workspace"] = "Custodian workspace";
-            ViewData["PageDate"] = localNow.ToString("ddd d MMM yyyy");
             return View(model);
         }
 
@@ -129,7 +128,6 @@ namespace ASI.Basecode.WebApp.Controllers
             ViewData["Title"] = "System overview";
             ViewData["Eyebrow"] = "Administrator workspace";
             ViewData["Workspace"] = "Administrator workspace";
-            ViewData["PageDate"] = localNow.ToString("ddd d MMM yyyy");
             return View(model);
         }
     }

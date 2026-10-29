@@ -1,13 +1,15 @@
-using ASI.Basecode.Data;
+﻿using ASI.Basecode.Data;
+// OTP store moved to Data
 using ASI.Basecode.Data.Interfaces;
 using ASI.Basecode.Data.Models;
+using ASI.Basecode.Resources.Constants;
 using ASI.Basecode.Data.Repositories;
 using ASI.Basecode.Services.Interfaces;
 using ASI.Basecode.Services.Services;
 using ASI.Basecode.Tests.Dashboard;
 using ASI.Basecode.WebApp.Authorization;
 using ASI.Basecode.WebApp.Controllers;
-using ASI.Basecode.WebApp.Data;
+using ASI.Basecode.Data.Seeding;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.DataProtection;
@@ -84,6 +86,7 @@ namespace ASI.Basecode.Tests.UiMigration
             services.AddSingleton(TimeProvider.System);
             services.AddDbContext<SqliteDashboardDbContext>(options => options.UseSqlite(site.sqlite.Connection));
             services.AddScoped<AsiBasecodeDBContext>(provider => provider.GetRequiredService<SqliteDashboardDbContext>());
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddIdentity<ApplicationUser, IdentityRole>(options =>
             {
                 options.User.RequireUniqueEmail = true;
@@ -111,10 +114,12 @@ namespace ASI.Basecode.Tests.UiMigration
                 new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build())))
                 .AddApplicationPart(typeof(DashboardController).Assembly).AddRazorRuntimeCompilation();
             services.AddScoped<IUnitOfWork, UnitOfWork>();
+            services.AddScoped<IAccountService, AccountService>();
             services.AddScoped<IEquipmentItemRepository, EquipmentItemRepository>();
             services.AddScoped<IBorrowerProfileRepository, BorrowerProfileRepository>();
             services.AddScoped<IReservationRepository, ReservationRepository>();
             services.AddScoped<IReturnRecordRepository, ReturnRecordRepository>();
+            services.AddScoped<IAuditService, AuditService>();
             services.AddScoped<IDashboardService, DashboardService>();
             services.AddScoped<IUserAdministrationService, UserAdministrationService>();
             services.AddScoped<IBorrowerProfileService, BorrowerProfileService>();
@@ -126,7 +131,7 @@ namespace ASI.Basecode.Tests.UiMigration
             services.AddScoped<IReturnRecordService, ReturnRecordService>();
             services.AddScoped<IBorrowingHistoryService, BorrowingHistoryService>();
             services.AddScoped<IPasswordResetOtpStore, IdentityPasswordResetOtpStore>();
-            services.AddScoped<PasswordResetOtpService>();
+            services.AddScoped<IPasswordResetOtpService, PasswordResetOtpService>();
             services.AddSingleton<IBrevoEmailSender, NoExternalEmail>();
             site.App = builder.Build();
             site.App.UseDeveloperExceptionPage();

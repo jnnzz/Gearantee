@@ -1,4 +1,6 @@
+﻿using ASI.Basecode.Data;
 using ASI.Basecode.Data.Models;
+using ASI.Basecode.Resources.Constants;
 using ASI.Basecode.Services.ServiceModels.Dashboard;
 using ASI.Basecode.Services.Services;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -36,8 +38,8 @@ namespace ASI.Basecode.Tests.Dashboard
 
             Assert.Equal(1, model.PendingCount);
             Assert.Equal(1, model.ActiveLoanCount);
-            Assert.All(model.RecentRequests, row => Assert.Equal(profileA.SchoolId, row.SchoolId));
-            Assert.All(model.CurrentLoans, row => Assert.Equal(profileA.SchoolId, row.SchoolId));
+            Assert.All(model.RecentRequests, row => Assert.Equal(userA.UserCode, row.SchoolId));
+            Assert.All(model.CurrentLoans, row => Assert.Equal(userA.UserCode, row.SchoolId));
         }
 
         [Fact]
@@ -227,7 +229,7 @@ namespace ASI.Basecode.Tests.Dashboard
         private static DashboardService Service(
             SqliteDashboardDbContext db,
             DateTime nowUtc) => new(
-                db,
+                new UnitOfWork(db),
                 NullLoggerFactory.Instance,
                 new FixedTimeProvider(nowUtc));
 

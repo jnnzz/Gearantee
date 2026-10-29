@@ -1,4 +1,5 @@
-using ASI.Basecode.Data.Models;
+﻿using ASI.Basecode.Data.Models;
+using ASI.Basecode.Resources.Constants;
 using ASI.Basecode.Services.Interfaces;
 using ASI.Basecode.Services.ServiceModels.Returns;
 using ASI.Basecode.Services.Utilities;
@@ -48,7 +49,7 @@ namespace ASI.Basecode.WebApp.Controllers
             var returnRecord = _returnRecordService.RetrieveReturnRecord(id);
             if (returnRecord == null) return NotFound();
 
-            SetPageData($"Return · {returnRecord.ReservationCode}");
+            SetPageData($"Return Â· {returnRecord.ReservationCode}");
             ViewData["SuccessMessage"] = TempData["SuccessMessage"];
             return View(returnRecord);
         }
@@ -121,7 +122,6 @@ namespace ASI.Basecode.WebApp.Controllers
             ViewData["Eyebrow"] = User.IsInRole(DomainValues.Roles.Administrator) && !User.IsInRole(DomainValues.Roles.Custodian)
                 ? "Administrator workspace"
                 : "Custodian workspace";
-            ViewData["PageDate"] = ManilaClock.NowLocal.ToString("ddd d MMM yyyy");
         }
     }
 }

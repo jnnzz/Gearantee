@@ -1,9 +1,9 @@
-using ASI.Basecode.Data.Models;
+﻿using ASI.Basecode.Data.Models;
 using Microsoft.AspNetCore.Identity;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace ASI.Basecode.Services.Interfaces
+namespace ASI.Basecode.Data
 {
     public interface IPasswordResetOtpStore
     {

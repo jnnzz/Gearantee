@@ -1,3 +1,5 @@
+using ASI.Basecode.Services.Common;
+
 namespace ASI.Basecode.Services.ServiceModels
 {
     /// <summary>
@@ -5,7 +7,7 @@ namespace ASI.Basecode.Services.ServiceModels
     /// so the controller can tell "saved" apart from "someone else changed this row",
     /// "no such row" and "you may no longer do this" instead of collapsing everything into a bool.
     /// </summary>
-    public sealed class BorrowerProfileResult
+    public sealed class BorrowerProfileResult : ServiceResult
     {
         private BorrowerProfileResult(
             bool succeeded,
@@ -21,13 +23,11 @@ namespace ASI.Basecode.Services.ServiceModels
             Message = message;
         }
 
-        public bool Succeeded { get; }
         public bool IsStale { get; }
         public bool IsMissing { get; }
 
         /// <summary>The actor is no longer an active administrator holding borrower.manage.</summary>
         public bool IsDenied { get; }
-        public string Message { get; }
 
         public static BorrowerProfileResult Success(string message) =>
             new BorrowerProfileResult(true, false, false, false, message);

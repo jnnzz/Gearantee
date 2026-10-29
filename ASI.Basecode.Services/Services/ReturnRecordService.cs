@@ -1,6 +1,8 @@
-using ASI.Basecode.Data;
+﻿using ASI.Basecode.Data;
 using ASI.Basecode.Data.Interfaces;
+using ASI.Basecode.Data.Locks;
 using ASI.Basecode.Data.Models;
+using ASI.Basecode.Resources.Constants;
 using ASI.Basecode.Services.Interfaces;
 using ASI.Basecode.Services.ServiceModels.Returns;
 using ASI.Basecode.Services.Utilities;
@@ -27,18 +29,23 @@ namespace ASI.Basecode.Services.Services
         private readonly AsiBasecodeDBContext _db;
         private readonly IReturnRecordRepository _returnRecordRepository;
         private readonly IReservationRepository _reservationRepository;
+        private readonly IEquipmentItemRepository _equipmentItemRepository;
         private readonly TimeProvider _timeProvider;
+        private readonly IApplicationLockManager _applicationLocks;
 
         public ReturnRecordService(
             IUnitOfWork unitOfWork,
             IReturnRecordRepository returnRecordRepository,
             IReservationRepository reservationRepository,
+            IEquipmentItemRepository equipmentItemRepository,
             TimeProvider timeProvider)
         {
-            _db = (AsiBasecodeDBContext)unitOfWork.Database;
+            _db = unitOfWork.Context;
             _returnRecordRepository = returnRecordRepository;
             _reservationRepository = reservationRepository;
+            _equipmentItemRepository = equipmentItemRepository;
             _timeProvider = timeProvider;
+            _applicationLocks = new ApplicationLockManager(_db);
         }
 
         public ReturnRecordIndexViewModel GetReturnRecords(string tab, int page)
@@ -156,7 +163,7 @@ namespace ASI.Basecode.Services.Services
             var releasedMinute = loan.ReleasedAt.AddTicks(-(loan.ReleasedAt.Ticks % TimeSpan.TicksPerMinute));
             if (returnedUtc < releasedMinute)
             {
-                return ReturnRecordResult.Fail($"The return time can't be before the item was released ({ManilaClock.ToLocal(loan.ReleasedAt):d MMM yyyy · HH:mm}).");
+                return ReturnRecordResult.Fail($"The return time can't be before the item was released ({ManilaClock.ToLocal(loan.ReleasedAt):d MMM yyyy Â· HH:mm}).");
             }
 
             // Back-dating stays possible but must be explained
@@ -165,6 +172,17 @@ namespace ASI.Basecode.Services.Services
                 return ReturnRecordResult.Fail($"This return is dated more than {ReturnInspection.BackdateGraceMinutes} minutes ago. Add an inspection note explaining why it's being recorded late.");
             }
 
+            // Lock order: equipment item row lock; no ReturnRecord range read here (avoids deadlocks)
+            var strategy = _db.Database.CreateExecutionStrategy();
+            return strategy.Execute(() =>
+            {
+            // Rebuild state per attempt: a rolled-back attempt can leave the tracked item or
+            // the new return record behind, which would corrupt the retry.
+            _db.ChangeTracker.Clear();
+
+            // Build a fresh return record (and its late-return child) on every attempt. A
+            // rolled-back insert keeps its database-generated ID, so reusing the object would
+            // replay it as an explicit identity insert on retry.
             var newReturnRecord = new ReturnRecord
             {
                 ReleaseRecordId = model.ReleaseRecordId,
@@ -189,17 +207,24 @@ namespace ASI.Basecode.Services.Services
                 };
             }
 
-            // Lock order: admin lock, then item row lock; no ReturnRecord range read here (deadlocks)
             DbUpdateException saveFailure = null;
             using (var transaction = _db.Database.BeginTransaction(IsolationLevel.Serializable))
             {
-                AcquireAdministrationReadLock();
+                // Take the administration lock in shared mode before the permission check.
+                // Permission/role changes take it exclusively, so a revocation either lands
+                // before this return is authorized or waits until it commits; it can never
+                // slip in between the check and the write.
+                if (_db.Database.IsSqlServer())
+                {
+                    _applicationLocks.AcquireShared(AdministrationLock.ResourceName);
+                }
+
                 if (!CanRecordReturns(userId))
                 {
                     return ReturnRecordResult.Fail(NoPermissionMessage);
                 }
 
-                var lockedItem = EquipmentItemConcurrencyLock.LoadForUpdate(_db, loan.EquipmentId, includeArchived: true);
+                var lockedItem = _equipmentItemRepository.LoadForUpdate(loan.EquipmentId, includeArchived: true);
                 if (lockedItem == null)
                 {
                     return ReturnRecordResult.Missing();
@@ -233,14 +258,12 @@ namespace ASI.Basecode.Services.Services
                 ExceptionDispatchInfo.Capture(saveFailure).Throw();
             }
 
-            return new ReturnRecordResult
-            {
-                Succeeded = true,
-                ReturnRecordId = newReturnRecord.ReturnRecordId,
-                Message = daysLate > 0
+            return ReturnRecordResult.Success(
+                daysLate > 0
                     ? $"Return recorded. The item came back {daysLate} day{(daysLate == 1 ? "" : "s")} late, so a late return was logged."
-                    : "Return recorded."
-            };
+                    : "Return recorded.",
+                newReturnRecord.ReturnRecordId);
+            });
         }
 
         public ReturnRecordDetailsViewModel RetrieveReturnRecord(long returnRecordId)
@@ -273,23 +296,6 @@ namespace ASI.Basecode.Services.Services
                 .Where(reservation => reservation.ReleaseRecord != null && reservation.ReleaseRecord.ReturnRecord == null);
         }
 
-        // Shared mode: permission changes (Exclusive) wait for in-flight returns and vice versa
-        private void AcquireAdministrationReadLock()
-        {
-            if (!_db.Database.IsSqlServer())
-            {
-                return;
-            }
-
-            _db.Database.ExecuteSqlInterpolated(
-                $@"DECLARE @lockResult int;
-EXEC @lockResult = sys.sp_getapplock
-    @Resource = {AdministrationLock.ResourceName},
-    @LockMode = 'Shared',
-    @LockOwner = 'Transaction',
-    @LockTimeout = 15000;
-IF @lockResult < 0 THROW 51000, 'Could not acquire the user administration lock.', 1;");
-        }
 
         // DB-backed check; cookie claims aren't refreshed when grants change
         private bool CanRecordReturns(string userId)
@@ -331,7 +337,7 @@ IF @lockResult < 0 THROW 51000, 'Could not acquire the user administration lock.
                 Location = reservation.EquipmentItem.Location,
                 BorrowerFirstName = reservation.BorrowerProfile.User.FirstName,
                 BorrowerLastName = reservation.BorrowerProfile.User.LastName,
-                SchoolId = reservation.BorrowerProfile.SchoolId,
+                SchoolId = reservation.BorrowerProfile.User.UserCode,
                 Status = reservation.Status,
                 ReleasedAt = reservation.ReleaseRecord.ActualReleaseAt,
                 DueAt = reservation.ReservationEnd
@@ -351,7 +357,7 @@ IF @lockResult < 0 THROW 51000, 'Could not acquire the user administration lock.
                 Location = record.ReleaseRecord.Reservation.EquipmentItem.Location,
                 BorrowerFirstName = record.ReleaseRecord.Reservation.BorrowerProfile.User.FirstName,
                 BorrowerLastName = record.ReleaseRecord.Reservation.BorrowerProfile.User.LastName,
-                SchoolId = record.ReleaseRecord.Reservation.BorrowerProfile.SchoolId,
+                SchoolId = record.ReleaseRecord.Reservation.BorrowerProfile.User.UserCode,
                 Status = record.ReleaseRecord.Reservation.Status,
                 ReleasedAt = record.ReleaseRecord.ActualReleaseAt,
                 DueAt = record.ReleaseRecord.Reservation.ReservationEnd,
