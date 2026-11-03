@@ -73,6 +73,32 @@ namespace ASI.Basecode.Tests.UiMigration
         }
 
         [Fact]
+        public async Task Catalog_discards_legacy_date_filters_and_calendar_accepts_equipment_search()
+        {
+            await using var site = await UiAcceptanceSite.CreateAsync();
+            using var borrower = site.NewClient();
+            await site.LoginAsync(borrower, "UI-BORROWER");
+
+            var redirect = await borrower.GetAsync("/Catalog/Index?Search=demo&page=3&From=bad&To=2026-11-03");
+            Assert.Equal(HttpStatusCode.Redirect, redirect.StatusCode);
+            var location = redirect.Headers.Location.ToString();
+            Assert.Contains("Search=demo", location, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("From=", location, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("page=", location, StringComparison.OrdinalIgnoreCase);
+            var catalog = await borrower.GetStringAsync(redirect.Headers.Location);
+            Assert.DoesNotContain("datetime-local", catalog);
+
+            var calendar = await borrower.GetStringAsync("/AvailabilityCalendar/Index?Search=DEMO&View=overview");
+            Assert.Contains("id=\"availability-overview\"", calendar);
+            Assert.Contains("value=\"DEMO\"", calendar);
+            var oldView = await borrower.GetStringAsync("/AvailabilityCalendar/Index?View=timeGridDay");
+            Assert.Contains("data-initial-view=\"timeGridDay\"", oldView);
+            Assert.DoesNotContain("id=\"availability-overview\"", oldView);
+            var invalid = await borrower.GetAsync($"/AvailabilityCalendar/Events?Search={new string('x', 101)}&start=2026-11-02T00:00:00Z&end=2026-11-03T00:00:00Z");
+            Assert.Equal(HttpStatusCode.BadRequest, invalid.StatusCode);
+        }
+
+        [Fact]
         public async Task Flash_messages_are_encoded_once_then_consumed_for_viewdata_and_tempdata_flows()
         {
             await using var site = await UiAcceptanceSite.CreateAsync();

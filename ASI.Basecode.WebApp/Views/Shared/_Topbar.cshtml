@@ -2,7 +2,6 @@
     var controller = ViewContext.RouteData.Values["controller"]?.ToString();
     var action = ViewContext.RouteData.Values["action"]?.ToString();
     var hideDate = controller == "Dashboard" && action == "Borrower";
-    var title = controller == "Reservation" && action == "Index" ? "My borrowing history" : ViewData["Title"];
 }
 <header class="workspace-topbar">
     <div class="flex items-center justify-between gap-4">
@@ -12,7 +11,7 @@
             </button>
             <div class="min-w-0">
                 <p class="eyebrow">@ViewData["Eyebrow"]</p>
-                <h1 class="workspace-title">@title</h1>
+                <h1 class="workspace-title">@ViewData["Title"]</h1>
             </div>
         </div>
         <div class="topbar-tools">

@@ -5,15 +5,20 @@
 }
 
 
-<section aria-labelledby="reservations-heading" class="min-w-0">
+<section aria-label="Borrowing history results" class="role-page min-w-0">
     <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
-            <h2 id="reservations-heading" class="font-display text-2xl font-semibold">My reservations</h2>
             <p class="mt-1 text-xs text-gray-500">Newest requests first · times are Philippine time</p>
         </div>
-        @if (User.HasClaim("permission", DomainValues.Permissions.ReservationCreate))
+        @if (User.HasClaim("permission", DomainValues.Permissions.HistoryView) &&
+            !User.IsInRole(DomainValues.Roles.Administrator) && !User.IsInRole(DomainValues.Roles.Custodian))
         {
-            <a asp-controller="Catalog" asp-action="Index" class="btn-primary min-h-10">+ New reservation</a>
+            <a asp-controller="BorrowingHistory" asp-action="Index" class="btn-secondary">Borrowing report</a>
+        }
+        @if (User.HasClaim("permission", DomainValues.Permissions.ReservationCreate) &&
+            User.HasClaim("permission", DomainValues.Permissions.EquipmentBrowse))
+        {
+            <a asp-controller="Catalog" asp-action="Index" class="btn-primary min-h-10">Browse equipment</a>
         }
     </div>
 

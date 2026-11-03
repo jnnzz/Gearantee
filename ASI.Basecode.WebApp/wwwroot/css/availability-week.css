@@ -1,0 +1,46 @@
+.calendar-page #availability-filters.filter-panel--compact {
+    display: flex;
+    align-items: end;
+}
+.calendar-page #availability-filters label {
+    display: block;
+    margin-bottom: .25rem;
+    font-size: .8rem;
+}
+.equipment-week {
+    width: 100%;
+    min-width: 66rem;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: .85rem;
+}
+.equipment-week :is(th, td) {
+    padding: .65rem;
+    border-bottom: 1px solid var(--color-gray-200);
+    border-right: 1px solid var(--color-gray-200);
+    vertical-align: top;
+    text-align: left;
+}
+.equipment-week td {
+    width: 11%;
+}
+.equipment-week th:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    min-width: 13rem;
+    background: var(--ui-surface);
+}
+.equipment-week tbody th p,
+.equipment-week details p {
+    margin: .3rem 0;
+    font-size: .75rem;
+    font-weight: 400;
+    color: var(--color-gray-500);
+}
+.equipment-week details + details {
+    margin-top: .35rem;
+}
+.equipment-week summary {
+    cursor: pointer;
+}

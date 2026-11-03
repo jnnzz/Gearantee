@@ -334,6 +334,11 @@ Shared rows count for each assigned member.
 
 | Date | Work | Owner | PR |
 | --- | --- | --- | --- |
+| 11/3/2026 | Fixed equipment schedule links so they follow the active calendar date and Day or Week view. | Unassigned | — |
+| 11/3/2026 | Fixed detailed calendar block counts so they refresh for the visible range when switching between Week and Day. | Unassigned | — |
+| 11/3/2026 | Clarified that both availability calendar views show current scheduling blocks and directed users to borrowing history for completed loans. | Unassigned | — |
+| 11/3/2026 | Fixed the Assignment B calendar review findings. The time grid opens past dates, and calendar input and navigation stay within complete weeks supported by the API. | Unassigned | — |
+| 11/3/2026 | Implemented Assignment B on `feat/student-calendar-refinement` from Assignment A commit `100b465`. Refined borrower catalog, history, and reservation presentation. Added a shared equipment week with server-side search and retained the detailed booking grid. Targeted checks passed with 123 tests and 11 opt-in skips. See `doc/UI_MIGRATION.md` for browser evidence and limits. | Unassigned | — |
 | 11/3/2026 | Applied theme-aware link colors to the password toggle and recovery controls. Stylesheet build and asset guard passed. | Unassigned | — |
 | 11/3/2026 | Fixed unreadable login validation messages by using the shared danger background and text colors. Stylesheet build and asset checks passed. | Unassigned | — |
 | 11/2/2026 | Fixed the subsequent Ponytail dark-mode contrast finding: Users/Edit School ID uses theme-aware body text, and the shared file-selection button uses the theme-aware link color. Rebuilt CSS/utility guard passed; 6 MVC UI tests passed, 1 interactive skipped. Browser light/dark contrast assertions passed: School ID 9.11:1 / 9.61:1; upload button 6.15:1 / 7.51:1. No business rules or production data changed. Details: `doc/SHARED_UI.md`. | Unassigned | — |
@@ -390,6 +395,11 @@ The first version is complete when borrowers can securely reserve one available 
 
 | Date | Change | By |
 | --- | --- | --- |
+| 11/3/2026 | Recorded the Assignment B schedule link fix under Additional work. | Codex |
+| 11/3/2026 | Recorded the detailed calendar block count fix under Additional work. | Codex |
+| 11/3/2026 | Recorded the Assignment B calendar wording fix under Additional work. | Codex |
+| 11/3/2026 | Recorded the Assignment B calendar date fixes under Additional work. | Codex |
+| 11/3/2026 | Recorded Assignment B under Additional work. The 44 WBS leaf rows still total 8 Done, 33 In Review, 2 In Progress, and 1 Not Started. | Codex |
 | 11/3/2026 | Recorded the password control contrast fix under Additional work. | Codex |
 | 11/3/2026 | Recorded the login error banner contrast fix under Additional work. | Codex |
 | 11/2/2026 | Completed the School ID/upload-button contrast repair under Additional work. Recounted all 44 WBS leaf rows: 8 Done, 33 In Review, 2 In Progress, 1 Not Started. No WBS dates, owners, feature statuses or milestone checkboxes changed. | Codex |

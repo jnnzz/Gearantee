@@ -1,4 +1,4 @@
-﻿using ASI.Basecode.Data.Models;
+using ASI.Basecode.Data.Models;
 using ASI.Basecode.Resources.Constants;
 using ASI.Basecode.Services.Interfaces;
 using ASI.Basecode.Services.ServiceModels.AvailabilityCalendar;
@@ -36,14 +36,17 @@ namespace ASI.Basecode.WebApp.Controllers
         {
             filter ??= new AvailabilityCalendarFilterViewModel();
             if (!string.IsNullOrEmpty(filter.Date) &&
-                !DateOnly.TryParseExact(filter.Date, "yyyy-MM-dd", CultureInfo.InvariantCulture,
-                    DateTimeStyles.None, out _))
+                (!DateOnly.TryParseExact(filter.Date, "yyyy-MM-dd", CultureInfo.InvariantCulture,
+                    DateTimeStyles.None, out _) ||
+                 string.CompareOrdinal(filter.Date, AvailabilityCalendarFilterViewModel.MinDate) < 0 ||
+                 string.CompareOrdinal(filter.Date, AvailabilityCalendarFilterViewModel.MaxDate) > 0))
             {
                 ModelState.AddModelError(nameof(filter.Date), "The calendar date is invalid.");
             }
 
             if (!ModelState.IsValid)
             {
+                if (filter.Search?.Length > 100) filter.Search = null;
                 filter.CategoryId = filter.CategoryId > 0 ? filter.CategoryId : null;
                 filter.EquipmentId = filter.EquipmentId > 0 ? filter.EquipmentId : null;
                 if (filter.Location?.Length > 200)

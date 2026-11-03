@@ -64,7 +64,7 @@
         {
             <a asp-controller="Users" asp-action="Index" class="nav-item @(currentController == "Users" ? "nav-item-active" : "")" aria-current="@(currentController == "Users" ? "page" : null)">@await Html.PartialAsync("Icons/_Icon", "users")<span>Users &amp; roles</span></a>
         }
-        @if (User.HasClaim("permission", DomainValues.Permissions.HistoryView))
+        @if (User.HasClaim("permission", DomainValues.Permissions.HistoryView) && (!isBorrower || isAdmin || isCustodian))
         {
             <a asp-controller="BorrowingHistory" asp-action="Index" class="nav-item @(currentController == "BorrowingHistory" ? "nav-item-active" : "")" aria-current="@(currentController == "BorrowingHistory" ? "page" : null)">@await Html.PartialAsync("Icons/_Icon", "report")<span>Borrowing reports</span></a>
         }
