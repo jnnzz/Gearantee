@@ -205,6 +205,22 @@ namespace ASI.Basecode.Services.Services
             };
         }
 
+        public async Task<string> GetImageUrlAsync(
+            string actorUserId,
+            long equipmentId)
+        {
+            if (!await _categoryService.CanManageAsync(actorUserId))
+            {
+                return null;
+            }
+
+            return await _db.EquipmentItems
+                .AsNoTracking()
+                .Where(item => item.EquipmentId == equipmentId)
+                .Select(item => item.ImageUrl)
+                .SingleOrDefaultAsync();
+        }
+
         public async Task<EquipmentItemOperationResult> CreateAsync(
             string actorUserId,
             EquipmentItemFormViewModel model)
