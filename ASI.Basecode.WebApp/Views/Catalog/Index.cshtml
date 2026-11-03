@@ -75,7 +75,7 @@
                 <article class="catalog-card">
                     @if (!string.IsNullOrWhiteSpace(item.ImageUrl))
                     {
-                        <img src="@item.ImageUrl" alt="@item.ItemName" class="aspect-[16/9] w-full bg-white object-contain" />
+                        <img src="@item.ImageUrl" alt="@item.ItemName" class="aspect-[4/3] w-full bg-white object-cover" />
                     }
                     else
                     {
