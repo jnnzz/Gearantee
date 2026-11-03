@@ -3,9 +3,11 @@ using ASI.Basecode.Data.Interfaces;
 using ASI.Basecode.Data.Models;
 using ASI.Basecode.Data.Repositories;
 using ASI.Basecode.Resources.Constants;
+using ASI.Basecode.Services.Configuration;
 using ASI.Basecode.Services.Interfaces;
 using ASI.Basecode.Services.ServiceModels.Category;
 using ASI.Basecode.Services.Services;
+using ASI.Basecode.Tests.Common;
 using ASI.Basecode.Tests.Dashboard;
 using ASI.Basecode.WebApp.Controllers;
 using Microsoft.AspNetCore.Authentication;
@@ -532,6 +534,15 @@ namespace ASI.Basecode.Tests.Category
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddScoped<IEquipmentItemRepository, EquipmentItemRepository>();
             services.AddScoped<IEquipmentItemService, EquipmentItemService>();
+            services.Configure<SupabaseOptions>(options =>
+            {
+                options.Url = "https://test-project.supabase.co";
+                options.Bucket = "equipment-images";
+                options.ServiceRoleKey = "test-service-role-key";
+            });
+            services.AddSingleton<FakeImageStorageService>();
+            services.AddScoped<IImageStorageService>(
+                provider => provider.GetRequiredService<FakeImageStorageService>());
         }
 
         public static async Task<CategoryTestEnvironment> CreateAsync()
@@ -604,6 +615,7 @@ namespace ASI.Basecode.Tests.Category
         public CategoryTestEnvironment Environment { get; private set; }
         public WebApplication App { get; private set; }
         public HttpClient Client { get; private set; }
+        public FakeImageStorageService ImageStorage { get; private set; }
 
         public static async Task<CategoryHttpSite> CreateAsync()
         {
@@ -626,6 +638,7 @@ namespace ASI.Basecode.Tests.Category
                     policy => policy.RequireClaim("permission", DomainValues.Permissions.EquipmentManage)));
 
                 site.App = builder.Build();
+                site.ImageStorage = site.App.Services.GetRequiredService<FakeImageStorageService>();
                 site.App.UseDeveloperExceptionPage();
                 site.App.UseRouting();
                 site.App.UseAuthentication();

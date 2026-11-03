@@ -4,8 +4,10 @@ using ASI.Basecode.Data.Interfaces;
 using ASI.Basecode.Data.Models;
 using ASI.Basecode.Resources.Constants;
 using ASI.Basecode.Data.Repositories;
+using ASI.Basecode.Services.Configuration;
 using ASI.Basecode.Services.Interfaces;
 using ASI.Basecode.Services.Services;
+using ASI.Basecode.Tests.Common;
 using ASI.Basecode.Tests.Dashboard;
 using ASI.Basecode.WebApp.Authorization;
 using ASI.Basecode.WebApp.Controllers;
@@ -132,6 +134,13 @@ namespace ASI.Basecode.Tests.UiMigration
             services.AddScoped<IBorrowingHistoryService, BorrowingHistoryService>();
             services.AddScoped<IPasswordResetOtpStore, IdentityPasswordResetOtpStore>();
             services.AddScoped<IPasswordResetOtpService, PasswordResetOtpService>();
+            services.Configure<SupabaseOptions>(options =>
+            {
+                options.Url = "https://test-project.supabase.co";
+                options.Bucket = "equipment-images";
+                options.ServiceRoleKey = "test-service-role-key";
+            });
+            services.AddSingleton<IImageStorageService, FakeImageStorageService>();
             services.AddSingleton<IBrevoEmailSender, NoExternalEmail>();
             site.App = builder.Build();
             site.App.UseDeveloperExceptionPage();
