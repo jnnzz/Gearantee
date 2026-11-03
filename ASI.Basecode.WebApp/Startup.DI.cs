@@ -3,6 +3,7 @@ using ASI.Basecode.Data;
 // OTP store moved to Data
 using ASI.Basecode.Data.Interfaces;
 using ASI.Basecode.Data.Repositories;
+using ASI.Basecode.Services.Configuration;
 using ASI.Basecode.Services.Interfaces;
 using ASI.Basecode.Services.Services;
 using Microsoft.AspNetCore.Http;
@@ -27,6 +28,8 @@ namespace ASI.Basecode.WebApp
 
             _services.Configure<BrevoOptions>(
                 Configuration.GetSection(BrevoOptions.SectionName));
+            _services.Configure<SupabaseOptions>(
+                Configuration.GetSection(SupabaseOptions.SectionName));
 
             _services.AddHttpClient<IBrevoEmailSender, BrevoEmailSender>(
                 (serviceProvider, client) =>
@@ -37,6 +40,22 @@ namespace ASI.Basecode.WebApp
 
                     client.BaseAddress = new Uri(
                         options.BaseUrl.TrimEnd('/') + "/");
+                });
+
+            _services.AddHttpClient<IImageStorageService, SupabaseImageStorageService>(
+                (serviceProvider, client) =>
+                {
+                    var options = serviceProvider
+                        .GetRequiredService<IOptions<SupabaseOptions>>()
+                        .Value;
+
+                    if (!string.IsNullOrWhiteSpace(options.Url))
+                    {
+                        client.BaseAddress = new Uri(
+                            options.Url.TrimEnd('/') + "/");
+                    }
+
+                    client.Timeout = TimeSpan.FromSeconds(30);
                 });
 
             _services.AddScoped<IPasswordResetOtpStore, IdentityPasswordResetOtpStore>();
