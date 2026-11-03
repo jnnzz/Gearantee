@@ -1,5 +1,15 @@
 # UI migration — phases 0–6
 
+## Assignment A follow-up — November 2, 2026
+
+Review correction: resolved the dark-mode contrast finding by migrating late-return/403/Error badges and Reject/Cancel actions to the shared danger styles. Added a regression verified failing before the fix; focused UI checks now pass (6 passed, 1 interactive skip). Browser-measured light/dark badge and hovered-button contrast exceeds 4.5:1. See `doc/SHARED_UI.md` for measurements and scope.
+
+Implemented shared UI/login refinement on `feat/shared-ui-login-refinement` from `develop@2c1293b`. See `doc/SHARED_UI.md` for the reusable component/message/theme contract and verification record.
+
+Added Light/Dark/System with stored preference and safe fallback, consistent Barlow controls, semantic badges, required-label metadata and conditional marker synchronization, local Toastr with encoded/consumed flash messages across all roles, coordinated borrower navigation/date and Users filter-search changes, and removal of login Remember me/Create one controls. The user authorized a new editable campus-equipment SVG for login instead of the unspecified picture. Existing model/action/permission/security and transaction contracts remain; the only calendar-script change is its Borrowed appearance color.
+
+Release regression: **380 passed, 26 opt-in skipped, 0 failed**; three JavaScript behavior tests passed. Production CSS and its new utility guard passed. Real-MVC SQLite browser checks covered all three roles, action toasts, theme/font/required controls and desktop/tablet/phone/short-landscape layouts. SQL concurrency, live email, production load and 200% browser zoom were not checked. B/C/D's module changes and final whole-system acceptance remain separate.
+
 Continuation authorized October 25, 2026 and implemented October 26, 2026 on the same branch and checkout. Phases 4–5 and the phase 6 UI consistency checks are complete. A pre-existing CSV export failure was initially reported separately, then fixed under the user's subsequent explicit authorization on October 26. The only additional controller change is asynchronous CSV writer disposal; services, Identity, permission gates, database schema, form/script contracts, calendar engine and 10-record pagination are preserved. The separate local login-copy edit is preserved. On October 27, the user authorized reverting the separate relaxed lockout settings to the original production policy; see the follow-up below.
 
 Date: October 24, 2026. Branch: `feat/ui-design-migration`. Baseline: `6803c83d6a2aea89e684ca991fa67868fc593d59` (staging).

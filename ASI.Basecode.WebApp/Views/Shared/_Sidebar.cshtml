@@ -5,6 +5,7 @@
     var isBorrower = User.IsInRole(DomainValues.Roles.Borrower);
     var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
     var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+    var catalogActive = currentController == "Catalog" || (currentController == "Reservation" && currentAction == "Create");
     var workspace = currentAction switch
     {
         "Borrower" => "Borrower workspace",
@@ -20,7 +21,7 @@
 }
 <aside id="app-sidebar" class="workspace-sidebar fixed inset-y-0 left-0 z-40 flex -translate-x-full flex-col transition-transform duration-200 lg:translate-x-0" aria-label="Main navigation">
     <a asp-controller="Dashboard" asp-action="Index" class="sidebar-brand" aria-label="Gearantee dashboard">
-        <img src="~/img/gearantee-logo.png" alt="Gearantee — Campus equipment borrowing and reservation system" />
+        @await Html.PartialAsync("_BrandLogo")
     </a>
     <div class="sidebar-card">
     <p class="eyebrow sidebar-workspace-label">@workspace</p>
@@ -31,15 +32,11 @@
 
         @if (User.HasClaim("permission", DomainValues.Permissions.EquipmentBrowse))
         {
-            <a asp-controller="Catalog" asp-action="Index" class="nav-item @(currentController == "Catalog" ? "nav-item-active" : "")" aria-current="@(currentController == "Catalog" ? "page" : null)">@await Html.PartialAsync("Icons/_Icon", "equipment")<span>Equipment catalog</span></a>
-        }
-        @if (isBorrower && User.HasClaim("permission", DomainValues.Permissions.ReservationCreate))
-        {
-            <a asp-controller="Catalog" asp-action="Index" class="nav-item @(currentController == "Reservation" && currentAction == "Create" ? "nav-item-active" : "")" aria-current="@(currentController == "Reservation" && currentAction == "Create" ? "page" : null)">@await Html.PartialAsync("Icons/_Icon", "calendar")<span>New reservation</span></a>
+            <a asp-controller="Catalog" asp-action="Index" class="nav-item @(catalogActive ? "nav-item-active" : "")" aria-current="@(catalogActive ? "page" : null)">@await Html.PartialAsync("Icons/_Icon", "equipment")<span>Equipment catalog</span></a>
         }
         @if (isBorrower)
         {
-            <a asp-controller="Reservation" asp-action="Index" class="nav-item @(currentController == "Reservation" && currentAction != "Create" ? "nav-item-active" : "")" aria-current="@(currentController == "Reservation" && currentAction != "Create" ? "page" : null)">@await Html.PartialAsync("Icons/_Icon", "review")<span>My reservations</span></a>
+            <a asp-controller="Reservation" asp-action="Index" class="nav-item @(currentController == "Reservation" && currentAction != "Create" ? "nav-item-active" : "")" aria-current="@(currentController == "Reservation" && currentAction != "Create" ? "page" : null)">@await Html.PartialAsync("Icons/_Icon", "review")<span>My borrowing history</span></a>
         }
         @if (User.HasClaim("permission", DomainValues.Permissions.EquipmentBrowse))
         {
@@ -69,7 +66,7 @@
         }
         @if (User.HasClaim("permission", DomainValues.Permissions.HistoryView))
         {
-            <a asp-controller="BorrowingHistory" asp-action="Index" class="nav-item @(currentController == "BorrowingHistory" ? "nav-item-active" : "")" aria-current="@(currentController == "BorrowingHistory" ? "page" : null)">@await Html.PartialAsync("Icons/_Icon", "report")<span>Borrowing history</span></a>
+            <a asp-controller="BorrowingHistory" asp-action="Index" class="nav-item @(currentController == "BorrowingHistory" ? "nav-item-active" : "")" aria-current="@(currentController == "BorrowingHistory" ? "page" : null)">@await Html.PartialAsync("Icons/_Icon", "report")<span>Borrowing reports</span></a>
         }
     </nav>
 

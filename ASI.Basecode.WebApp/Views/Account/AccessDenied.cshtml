@@ -3,7 +3,7 @@
 }
 
 <div class="error-card">
-    <span class="inline-flex bg-ink px-2.5 py-1 font-sans text-[11px] font-medium tracking-[0.04em] text-white">403</span>
+    <span class="status-badge status-danger">403</span>
     <h2 class="mt-5 font-display text-3xl font-semibold text-ink">Access denied</h2>
     <p class="mt-2 text-sm leading-6 text-gray-500">You do not have permission to perform this action.</p>
     @if (User.Identity?.IsAuthenticated == true &&

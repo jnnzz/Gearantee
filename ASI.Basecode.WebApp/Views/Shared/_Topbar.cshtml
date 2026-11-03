@@ -1,3 +1,9 @@
+@{
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString();
+    var action = ViewContext.RouteData.Values["action"]?.ToString();
+    var hideDate = controller == "Dashboard" && action == "Borrower";
+    var title = controller == "Reservation" && action == "Index" ? "My borrowing history" : ViewData["Title"];
+}
 <header class="workspace-topbar">
     <div class="flex items-center justify-between gap-4">
         <div class="flex min-w-0 items-start gap-3">
@@ -6,19 +12,15 @@
             </button>
             <div class="min-w-0">
                 <p class="eyebrow">@ViewData["Eyebrow"]</p>
-                <h1 class="workspace-title">@ViewData["Title"]</h1>
+                <h1 class="workspace-title">@title</h1>
             </div>
         </div>
-        <div class="hidden items-center gap-4 md:flex">
-            @if (ViewContext.RouteData.Values["controller"]?.ToString() == "Users")
+        <div class="topbar-tools">
+            @if (!hideDate)
             {
-                <form asp-controller="Users" asp-action="Index" method="get" class="header-search flex items-center gap-2 text-sm text-gray-500">
-                    <label class="sr-only" for="accounts-header-search">Search user accounts</label>
-                    <svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.4"/><path d="m16 16 4.2 4.2"/></svg>
-                    <input id="accounts-header-search" name="search" value="@(Context.Request.Query["search"].ToString())" type="search" placeholder="Search accounts" class="w-44 bg-transparent outline-none placeholder:text-gray-500" />
-                </form>
+                <p class="header-date whitespace-nowrap text-xs text-gray-500">@ViewData["PageDate"]</p>
             }
-            <p class="header-date whitespace-nowrap text-xs text-gray-500">@ViewData["PageDate"]</p>
+            <partial name="_ThemePicker" />
         </div>
     </div>
 </header>

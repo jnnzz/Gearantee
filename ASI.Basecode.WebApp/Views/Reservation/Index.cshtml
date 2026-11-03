@@ -1,19 +1,9 @@
 @model ASI.Basecode.Services.ServiceModels.Reservations.ReservationIndexViewModel
 @using ASI.Basecode.WebApp.Models.Dashboard
 @{
-    var successMessage = ViewData["SuccessMessage"] as string;
-    var errorMessage = ViewData["ErrorMessage"] as string;
     var activeTab = Model.Tabs.FirstOrDefault(tab => tab.Value == Model.StatusFilter);
 }
 
-@if (!string.IsNullOrWhiteSpace(successMessage))
-{
-    <div class="notice" role="status">@successMessage</div>
-}
-@if (!string.IsNullOrWhiteSpace(errorMessage))
-{
-    <div class="notice" role="alert">@errorMessage</div>
-}
 
 <section aria-labelledby="reservations-heading" class="min-w-0">
     <div class="mb-4 flex flex-wrap items-center justify-between gap-3">

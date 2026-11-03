@@ -3,8 +3,6 @@
 @using ASI.Basecode.Services.Utilities
 @using ASI.Basecode.WebApp.Models.Dashboard
 @{
-    var successMessage = ViewData["SuccessMessage"] as string;
-    var errorMessage = ViewData["ErrorMessage"] as string;
     var showsReturns = Model.Tab == ReturnRecordService.ReturnedTab || Model.Tab == ReturnRecordService.LateTab;
     var emptyState = Model.Tab switch
     {
@@ -15,14 +13,6 @@
     };
 }
 
-@if (!string.IsNullOrWhiteSpace(successMessage))
-{
-    <div class="mb-5 border-l-4 border-primary bg-white px-4 py-3 text-sm" role="status">@successMessage</div>
-}
-@if (!string.IsNullOrWhiteSpace(errorMessage))
-{
-    <div class="mb-5 border-l-4 border-ink bg-white px-4 py-3 text-sm" role="alert">@errorMessage</div>
-}
 
 <section aria-labelledby="returns-heading" class="role-page">
     <div class="mb-4">

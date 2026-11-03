@@ -16,6 +16,7 @@
 
             <form id="login-form" asp-action="Login" asp-controller="Account" method="post">
                 <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
+                <input type="hidden" name="RememberMe" value="false" />
                 <div asp-validation-summary="ModelOnly" class="validation-summary-errors" role="alert"></div>
 
                 <div class="login-field">
@@ -41,20 +42,12 @@
                 </div>
 
                 <div class="login-options">
-                    <label class="login-remember">
-                        <input asp-for="RememberMe" />
-                        <span>Remember me</span>
-                    </label>
                     <a href="/Account/ForgotPassword">Forgot password?</a>
                 </div>
 
                 <button id="login-submit" class="btn-primary w-full py-3 text-sm disabled:cursor-wait disabled:opacity-60" type="submit">Sign in</button>
             </form>
 
-            <p class="login-register">
-                No account?
-                <a asp-controller="Account" asp-action="Register">Create one</a>
-            </p>
         </section>
     </div>
 </div>
@@ -62,11 +55,6 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script>
-        const successMessage = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(TempData["SuccessMessage"]));
-        if (successMessage) {
-            toastr.success(successMessage);
-        }
-
         const passwordInput = document.getElementById("Password");
         const passwordToggle = document.getElementById("toggle-password");
         const loginForm = document.getElementById("login-form");

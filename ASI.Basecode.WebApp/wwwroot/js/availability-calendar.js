@@ -82,7 +82,7 @@
 
     function eventColor(status) {
         if (status === "Overdue") return { backgroundColor: "#B42318", borderColor: "#B42318" };
-        if (status === "Borrowed") return { backgroundColor: "#8A5A00", borderColor: "#8A5A00" };
+        if (status === "Borrowed") return { backgroundColor: "#315B84", borderColor: "#315B84" };
         return { backgroundColor: "#4A6F94", borderColor: "#4A6F94" };
     }
 
