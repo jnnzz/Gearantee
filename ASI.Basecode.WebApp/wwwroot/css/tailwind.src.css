@@ -496,8 +496,9 @@ html[data-theme="dark"] {
 .ui-refresh .btn-danger { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; gap: .5rem; padding: .7rem 1rem; border: 1px solid #aa2e25; border-radius: .85rem; background: #aa2e25; color: #fff; font-weight: 600; }
 .ui-refresh .btn-danger:hover:not(:disabled) { background: #85251e; }
 .ui-refresh .btn-text { border: 0; background: transparent; color: var(--ui-link); font-weight: 600; }
+.ui-refresh .text-link { color: var(--ui-link); }
 .ui-refresh :is(a, button):focus-visible { outline: 2px solid var(--ui-link); outline-offset: 3px; }
-.ui-refresh .input:focus { border-color: var(--ui-link); outline: 2px solid var(--color-tint); outline-offset: 1px; }
+.ui-refresh .input:focus { border-color: var(--ui-link); outline: 2px solid var(--ui-link); outline-offset: 1px; }
 .ui-refresh .input-validation-error { border-color: var(--ui-danger-text); }
 .ui-refresh .field-validation-error { color: var(--ui-danger-text); }
 .ui-refresh .validation-summary-errors { border-color: var(--ui-danger-text); background: var(--ui-danger-bg); color: var(--ui-danger-text); }

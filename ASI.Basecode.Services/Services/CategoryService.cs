@@ -111,7 +111,9 @@ namespace ASI.Basecode.Services.Services
                 CategoryCode = code,
                 CategoryName = name,
                 Description = string.IsNullOrWhiteSpace(model.Description) ? null : model.Description.Trim(),
-                IsActive = model.IsActive,
+                // New categories are available by default. Status is controlled only
+                // through SetCategoryActiveAsync, never through metadata forms.
+                IsActive = true,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };
@@ -189,7 +191,9 @@ namespace ASI.Basecode.Services.Services
             category.CategoryCode = code;
             category.CategoryName = name;
             category.Description = string.IsNullOrWhiteSpace(model.Description) ? null : model.Description.Trim();
-            category.IsActive = model.IsActive;
+            // Deliberately preserve the persisted status. A stale or forged metadata
+            // form must not activate/deactivate a category; SetCategoryActiveAsync is
+            // the only status-changing path.
             category.UpdatedAt = DateTime.UtcNow;
 
             try

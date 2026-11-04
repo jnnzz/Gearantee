@@ -142,7 +142,7 @@ namespace ASI.Basecode.Tests.Category
         }
 
         [Fact]
-        public async Task UpdateAsync_ChangesAndClearsCatalogImage()
+        public async Task UpdateAsync_ChangesImageAndOnlyClearsItWhenExplicitlyRequested()
         {
             using var database = new SqliteDb();
             using var provider = CreateProvider(database);
@@ -163,6 +163,12 @@ namespace ASI.Basecode.Tests.Category
                 .SingleAsync(row => row.EquipmentId == item.EquipmentId)).ImageUrl);
 
             model.ImageUrl = " ";
+            var noImageChange = await service.UpdateAsync(admin.Id, model);
+            Assert.True(noImageChange.Succeeded, noImageChange.Message);
+            Assert.Equal("/img/new.jpg", (await db.EquipmentItems.AsNoTracking()
+                .SingleAsync(row => row.EquipmentId == item.EquipmentId)).ImageUrl);
+
+            model.RemoveImage = true;
             var clear = await service.UpdateAsync(admin.Id, model);
             Assert.True(clear.Succeeded, clear.Message);
             Assert.Null((await db.EquipmentItems.AsNoTracking()

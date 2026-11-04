@@ -8,7 +8,6 @@
 <section class="role-page">
 <div class="page-intro mb-4 flex flex-wrap items-center justify-between gap-3">
     <div>
-        <h2 class="font-display text-2xl font-semibold">Borrower profiles</h2>
         <p class="mt-1 text-xs text-gray-500">@Model.TotalCount record@(Model.TotalCount == 1 ? "" : "s") · eligibility controls who can submit reservation requests</p>
     </div>
 </div>
@@ -50,16 +49,16 @@
                     <td class="px-3 py-3 text-gray-700">@borrower.Department</td>
                     <td class="px-3 py-3 text-gray-700">@borrower.ContactNumber</td>
                     <td class="px-3 py-3">
-                        <span class="inline-flex border px-2 py-1 text-[11px] @(borrower.IsEligible ? "border-primary text-primary-strong" : "border-gray-200 text-gray-500")">@(borrower.IsEligible ? "Eligible" : "Not eligible")</span>
+                        <partial name="Components/_StatusBadge" model="@(borrower.IsEligible ? "Eligible" : "Ineligible")" />
                     </td>
                     <td class="px-3 py-3 text-right">
                         <div class="flex items-center justify-end gap-3">
-                            <a asp-action="Edit" asp-route-id="@borrower.BorrowerProfileId" class="text-xs font-semibold text-primary-strong underline underline-offset-4">Edit</a>
+                            <a asp-action="Edit" asp-route-id="@borrower.BorrowerProfileId" class="text-link">Edit</a>
                             <form asp-action="UpdateEligibility" method="post" class="inline">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="id" value="@borrower.BorrowerProfileId" />
                                 <input type="hidden" name="isEligible" value="@(!borrower.IsEligible ? "true" : "false")" />
-                                <button type="submit" class="text-xs font-semibold text-primary-strong underline underline-offset-4">@(borrower.IsEligible ? "Mark ineligible" : "Mark eligible")</button>
+                                <button type="submit" class="btn-text min-h-10 px-2 text-xs">@(borrower.IsEligible ? "Mark ineligible" : "Mark eligible")</button>
                             </form>
                         </div>
                     </td>

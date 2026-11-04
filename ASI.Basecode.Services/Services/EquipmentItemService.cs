@@ -193,6 +193,7 @@ namespace ASI.Basecode.Services.Services
                 ItemName = item.ItemName,
                 Description = item.Description,
                 ImageUrl = item.ImageUrl,
+                CurrentImageUrl = item.ImageUrl,
                 Brand = item.Brand,
                 ModelName = item.Model,
                 SerialNumber = item.SerialNumber,
@@ -280,7 +281,8 @@ namespace ASI.Basecode.Services.Services
             {
                 _logger.LogError(exception, "Database error registering equipment item.");
                 return EquipmentItemOperationResult.Failure(
-                    "An item with this code or serial number already exists.");
+                    "An item with this code or serial number already exists.",
+                    persistenceFailure: true);
             }
         }
 
@@ -355,7 +357,15 @@ namespace ASI.Basecode.Services.Services
             item.ItemCode = normalized.ItemCode;
             item.ItemName = normalized.ItemName;
             item.Description = normalized.Description;
-            item.ImageUrl = normalized.ImageUrl;
+            var previousImageUrl = item.ImageUrl;
+            if (model.RemoveImage)
+            {
+                item.ImageUrl = null;
+            }
+            else if (normalized.ImageUrl != null)
+            {
+                item.ImageUrl = normalized.ImageUrl;
+            }
             item.Brand = normalized.Brand;
             item.Model = normalized.ModelName;
             item.SerialNumber = normalized.SerialNumber;
@@ -374,14 +384,16 @@ namespace ASI.Basecode.Services.Services
                     actorUserId);
                 return EquipmentItemOperationResult.Success(
                     $"Equipment item '{item.ItemName}' was updated.",
-                    item.EquipmentId);
+                    item.EquipmentId,
+                    previousImageUrl);
             }
             catch (DbUpdateException exception)
             {
                 _logger.LogError(exception,
                     "Database error updating equipment item {EquipmentId}", item.EquipmentId);
                 return EquipmentItemOperationResult.Failure(
-                    "An item with this code or serial number already exists.");
+                    "An item with this code or serial number already exists.",
+                    persistenceFailure: true);
             }
             });
         }

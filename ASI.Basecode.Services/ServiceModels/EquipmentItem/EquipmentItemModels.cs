@@ -63,6 +63,13 @@ namespace ASI.Basecode.Services.ServiceModels.EquipmentItem
         [Display(Name = "Catalog image URL")]
         public string ImageUrl { get; set; }
 
+        // UploadedImageUrl is a server-generated managed path retained when a form
+        // returns validation errors. CurrentImageUrl is display-only and is reloaded
+        // from the database on every edit request.
+        public string UploadedImageUrl { get; set; }
+        public string CurrentImageUrl { get; set; }
+        public bool RemoveImage { get; set; }
+
         [StringLength(150, ErrorMessage = "Brand cannot exceed 150 characters.")]
         public string Brand { get; set; }
 
@@ -106,14 +113,28 @@ namespace ASI.Basecode.Services.ServiceModels.EquipmentItem
         public bool Succeeded { get; private set; }
         public bool Forbidden { get; private set; }
         public bool Missing { get; private set; }
+        public bool PersistenceFailure { get; private set; }
         public string Message { get; private set; }
         public long EquipmentId { get; private set; }
 
-        public static EquipmentItemOperationResult Success(string message, long id) =>
-            new() { Succeeded = true, Message = message, EquipmentId = id };
+        public string PreviousImageUrl { get; private set; }
 
-        public static EquipmentItemOperationResult Failure(string message) =>
-            new() { Message = message };
+        public static EquipmentItemOperationResult Success(
+            string message,
+            long id,
+            string previousImageUrl = null) =>
+            new()
+            {
+                Succeeded = true,
+                Message = message,
+                EquipmentId = id,
+                PreviousImageUrl = previousImageUrl
+            };
+
+        public static EquipmentItemOperationResult Failure(
+            string message,
+            bool persistenceFailure = false) =>
+            new() { Message = message, PersistenceFailure = persistenceFailure };
 
         public static EquipmentItemOperationResult AccessDenied() =>
             new() { Forbidden = true, Message = "You do not have permission to manage equipment items." };
