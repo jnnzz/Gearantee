@@ -1,10 +1,13 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using DocumentFormat.OpenXml.Packaging;
+using DocumentFormat.OpenXml.Spreadsheet;
 using Xunit;
 
 namespace ASI.Basecode.Tests.UiMigration
@@ -81,6 +84,18 @@ namespace ASI.Basecode.Tests.UiMigration
             Assert.Contains("repeat(auto-fit, minmax(min(100%, 150px), 1fr))", inventoryStyles);
 
             foreach (var path in custodianPaths) await Check(custodian, path);
+            var reviewSearch = await Check(custodian, "/ReservationReview/Index?search=NO_MATCH_UI_FIXTURE");
+            Assert.Contains("No matching requests", reviewSearch);
+            Assert.Single(Regex.Matches(reviewSearch, "<h1\\b", RegexOptions.IgnoreCase));
+            var returnSearch = await Check(custodian, "/ReturnRecord/Index?tab=Overdue&search=NO_MATCH_UI_FIXTURE");
+            Assert.Contains("No matching records", returnSearch);
+            Assert.Contains("name=\"tab\" value=\"Overdue\"", returnSearch);
+            Assert.Single(Regex.Matches(returnSearch, "<h1\\b", RegexOptions.IgnoreCase));
+            var historyHtml = await Check(admin, "/BorrowingHistory/Index?Search=NO_MATCH_UI_FIXTURE");
+            Assert.Contains("More filters", historyHtml);
+            Assert.Contains("Download Excel", historyHtml);
+            Assert.Contains("Download CSV", historyHtml);
+            Assert.Single(Regex.Matches(historyHtml, "<h1\\b", RegexOptions.IgnoreCase));
             foreach (var path in new[] { "/Dashboard/Borrower", "/Catalog/Index", $"/Catalog/Details?id={site.AvailableItemId}", "/Reservation/Index", $"/Reservation/Create?equipmentId={site.AvailableItemId}", "/AvailabilityCalendar/Index" })
                 await Check(borrower, path);
             foreach (var client in new[] { custodian, borrower })
@@ -114,6 +129,36 @@ namespace ASI.Basecode.Tests.UiMigration
         }
 
         [Fact]
+        public async Task Excel_export_is_a_readable_attachment_and_uses_the_requested_report_filter()
+        {
+            await using var site = await UiAcceptanceSite.CreateAsync();
+            using var admin = site.NewClient();
+            await site.LoginAsync(admin, "UI-ADMIN");
+
+            using var response = await admin.GetAsync("/BorrowingHistory/ExportExcel?Search=DEMO-LAP-001");
+
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Equal(
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                response.Content.Headers.ContentType.MediaType);
+            Assert.Equal("attachment", response.Content.Headers.ContentDisposition.DispositionType);
+            Assert.EndsWith(".xlsx", response.Content.Headers.ContentDisposition.FileName.Trim('"'));
+
+            var bytes = await response.Content.ReadAsByteArrayAsync();
+            using var stream = new MemoryStream(bytes);
+            using var workbook = SpreadsheetDocument.Open(stream, false);
+            var workbookPart = workbook.WorkbookPart;
+            var sheet = Assert.Single(workbookPart.Workbook.Sheets.Elements<Sheet>());
+            var worksheet = (WorksheetPart)workbookPart.GetPartById(sheet.Id.Value);
+            var rows = worksheet.Worksheet.Elements<SheetData>().Single().Elements<Row>().ToArray();
+
+            Assert.Equal("Reservation", rows[0].Elements<Cell>().First().InlineString.InnerText);
+            Assert.True(rows.Length > 1);
+            Assert.All(rows.Skip(1), row =>
+                Assert.Contains("DEMO-LAP-001", string.Join(" ", row.Elements<Cell>().Select(cell => cell.InlineString?.InnerText))));
+        }
+
+        [Fact]
         public async Task Empty_filters_and_invalid_forms_keep_existing_validation_and_redisplay_context()
         {
             await using var site = await UiAcceptanceSite.CreateAsync();
@@ -128,7 +173,7 @@ namespace ASI.Basecode.Tests.UiMigration
                 ("/Users/Index?search=NO_MATCH_UI_FIXTURE", "No accounts match these filters."),
                 ("/BorrowingHistory/Index?Search=NO_MATCH_UI_FIXTURE", "No borrowing history found")
             }) Assert.Contains(entry.Item2, await Check(admin, entry.Item1));
-            Assert.Contains("Nothing to review", await Check(custodian, "/ReservationReview/Index?search=NO_MATCH_UI_FIXTURE"));
+            Assert.Contains("No matching requests", await Check(custodian, "/ReservationReview/Index?search=NO_MATCH_UI_FIXTURE"));
             await Invalid(admin, "/Categories/Create", new() { ["CategoryCode"] = "", ["CategoryName"] = "" });
             await Invalid(admin, "/Users/Create", new() { ["RoleName"] = "Custodian", ["UserCode"] = "", ["FirstName"] = "", ["LastName"] = "", ["Email"] = "", ["Password"] = "", ["ConfirmPassword"] = "" });
             var profilePath = $"/BorrowerProfile/Edit?id={site.BorrowerProfileId}";

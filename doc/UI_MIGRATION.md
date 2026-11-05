@@ -1,5 +1,36 @@
 # UI migration — phases 0–6
 
+## Assignment D follow-up — November 5, 2026
+
+Implemented the return-search and reporting changes on local branch `feat/custodian-reporting-refinement`, based on Assignment C commit `d70f6da5c648c7b286aee3989d960ac02c034f6e`.
+
+### Return and custodian pages
+
+- Added a trimmed, 100-character-bounded search to the shared Admin/Custodian Return & condition page. It searches equipment name/code, borrower full name/account identifier, and exact `RSV-<id>` codes in both active-loan and return queries before counts and pagination.
+- Preserved the selected tab and search through paging, details, return forms, invalid form redisplay, and a successful return. New searches begin on page 1. Search-specific empty states avoid system-wide claims such as “Nothing overdue.”
+- Removed duplicate queue/return page headings, used shared action styles, added required indicators (including the conditional backdate note and rejection reason), and kept server-side return validation and transaction paths unchanged.
+- Added focused service and real MVC tests for the 23-match 10/10/3 paging case, name/code/account/RSV matching, returned and late tabs, HTML-like input encoding, overlong input and empty states.
+
+### Borrowing report
+
+- Kept the existing streamed CSV route and added a separately authorized `ExportExcel` download using `DocumentFormat.OpenXml` 3.5.1. Both use the same normalized filters, report stream, role checks, and borrower-only scope.
+- The workbook writes the existing 17 columns in CSV order, keeps identifiers and supplied text as literal text, writes Manila dates as formatted Excel date serials and `Days late` as a number, and includes explicit widths, wrapped long text, and a frozen header. It writes incrementally to a temporary file, enforces Excel's row limit before returning a response, and removes the temporary file on success, failure, and cancellation.
+- Kept report search visible, moved the remaining filters into a native keyboard-accessible “More filters” disclosure, displays an active-filter count, and removed the duplicate page title. Added guidance that CSV `####` is an Excel display-width symptom and recommends AutoFit or the XLSX download.
+- Open XML reader tests cover all 23 rows, column order, leading-zero identifiers, non-ASCII text, comma/newline/formula-like text, numeric/date cell types, blank dates, widths, frozen header, no formulas/external workbook links, the empty report, cancellation cleanup and package validation. HTTP tests verify the XLSX MIME type, attachment filename, filter use, and the existing CSV response behavior.
+
+### Verification and remaining acceptance evidence
+
+- `dotnet restore .\ASI.Basecode.sln --ignore-failed-sources` — passed.
+- `dotnet build .\ASI.Basecode.sln --configuration Release --no-restore` — passed with 0 warnings/errors; the final full test run also rebuilt the final changed code.
+- Focused Return, XLSX, and MVC acceptance run — 50 passed, 1 opt-in interactive preview skipped, 0 failed.
+- `dotnet test .\ASI.Basecode.sln --configuration Release --no-restore` — 406 passed, 26 opt-in skipped, 0 failed (432 total; 1m 5s).
+- `npm.cmd run css:build` — passed; generated CSS asset check passed.
+- `git diff --check` — passed.
+- SQL Server opt-in tests were not enabled; their skips are not counted as passes.
+- I could see the already-running localhost Administrator dashboard, but the browser-control host was unavailable and VS Code's `dotnet watch` requested an application restart after the service-interface edit. The updated pages were therefore not visually checked at desktop/tablet/phone sizes or in both themes. Figma MCP also refused detailed design-context calls because the connected account is on the Starter plan.
+- The generated workbook was structurally validated and read in tests, but desktop Excel was not available to verify its rendered `####` behavior. The affected column/sample from the user's CSV was not supplied, so the original display symptom has not been independently reproduced.
+- Assignment D's final cross-owner matrix is not complete: evidence from A/B/C, SQL Server concurrency tests, responsive light/dark screenshots, and desktop Excel review remain outstanding. No WBS rows or progress counts were changed; no PR was created or merged.
+
 ## Assignment A follow-up — November 2, 2026
 
 Review correction: resolved the dark-mode contrast finding by migrating late-return/403/Error badges and Reject/Cancel actions to the shared danger styles. Added a regression verified failing before the fix; focused UI checks now pass (6 passed, 1 interactive skip). Browser-measured light/dark badge and hovered-button contrast exceeds 4.5:1. See `doc/SHARED_UI.md` for measurements and scope.

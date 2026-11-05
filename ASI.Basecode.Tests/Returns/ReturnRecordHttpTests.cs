@@ -43,11 +43,31 @@ namespace ASI.Basecode.Tests.Returns
 
             Assert.Contains("ON-TIME", html);
             Assert.Contains("OVERDUE", html);
-            Assert.Contains($"/ReturnRecord/Create?releaseRecordId={site.OnTimeRelease}", html);
+            Assert.Contains($"releaseRecordId={site.OnTimeRelease}", html);
 
             var overdue = await site.Html("/ReturnRecord?tab=Overdue");
             Assert.Contains("OVERDUE", overdue);
             Assert.DoesNotContain("ON-TIME", overdue);
+        }
+
+        [Fact]
+        public async Task Return_search_is_encoded_preserved_in_workflow_links_and_handles_markup_as_text()
+        {
+            await using var site = await ReturnHttpSite.CreateAsync();
+
+            var searched = await site.Html("/ReturnRecord?tab=OnLoan&search=ON-TIME");
+            Assert.Contains("ON-TIME", searched);
+            Assert.Contains($"releaseRecordId={site.OnTimeRelease}", searched);
+            Assert.Contains("search=ON-TIME", searched);
+            Assert.Contains("page=1", searched);
+
+            var special = "<script>alert('x')&";
+            var encodedSpecial = Uri.EscapeDataString(special);
+            var noMatch = await site.Html($"/ReturnRecord?tab=Overdue&search={encodedSpecial}");
+            Assert.Contains("No matching records", noMatch);
+            Assert.Contains($"value=\"{HtmlEncoder.Default.Encode(special)}\"", noMatch);
+            Assert.DoesNotContain(special, noMatch);
+            Assert.Contains("name=\"tab\" value=\"Overdue\"", noMatch);
         }
 
         [Fact]
