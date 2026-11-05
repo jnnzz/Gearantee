@@ -93,6 +93,7 @@ The initial release is intentionally focused on the core borrowing workflow and 
 - Search covers borrower name, user code, school ID, item name, and item code. Filters include borrower, item text, category, borrowing-start date range, status, and late-return status.
 - The paginated page shows requested, scheduled, actual release, and actual return times in Philippine time, along with return condition and late days when recorded.
 - Authorized users can export all matching filtered records to CSV. The export uses the same server-side filters as the page and protects text values from spreadsheet formula injection.
+- Authorized users can also download all matching records as an XLSX workbook. It keeps the CSV's 17-column order, stores identifiers and user values as literal text, writes Manila timestamps as formatted date cells, and uses explicit column widths, wrapped long text, and a frozen header row. Borrower-role exports remain scoped to the signed-in borrower.
 
 #### Availability Calendar
 - Users with `equipment.browse` can view a daily or weekly calendar filtered by category, equipment item, and its free-text location.

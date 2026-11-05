@@ -3,15 +3,18 @@ using ASI.Basecode.Resources.Constants;
 using ASI.Basecode.Services.Interfaces;
 using ASI.Basecode.Services.ServiceModels.Category;
 using ASI.Basecode.Services.ServiceModels.EquipmentItem;
+using ASI.Basecode.WebApp.Services.EquipmentImages;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using System.Threading;
 
 namespace ASI.Basecode.WebApp.Controllers
 {
@@ -23,10 +26,12 @@ namespace ASI.Basecode.WebApp.Controllers
     {
         private readonly ICategoryService _categoryService;
         private readonly IEquipmentItemService _equipmentItemService;
+        private readonly IEquipmentImageStorage _equipmentImageStorage;
 
         public CategoriesController(
             ICategoryService categoryService,
             IEquipmentItemService equipmentItemService,
+            IEquipmentImageStorage equipmentImageStorage,
             IHttpContextAccessor httpContextAccessor,
             ILoggerFactory loggerFactory,
             IConfiguration configuration)
@@ -34,6 +39,7 @@ namespace ASI.Basecode.WebApp.Controllers
         {
             _categoryService = categoryService;
             _equipmentItemService = equipmentItemService;
+            _equipmentImageStorage = equipmentImageStorage;
         }
 
         [HttpGet]
@@ -75,8 +81,8 @@ namespace ASI.Basecode.WebApp.Controllers
                 return Forbid();
             }
 
-            ViewData["Title"] = "Equipments & categories";
-            ViewData["Eyebrow"] = "Master data";
+            ViewData["Title"] = "Equipment & categories";
+            ViewData["Eyebrow"] = "Admin workspace";
             ViewData["SuccessMessage"] = TempData["SuccessMessage"];
             ViewData["ErrorMessage"] = TempData["ErrorMessage"];
 
@@ -99,12 +105,19 @@ namespace ASI.Basecode.WebApp.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CreateEquipment(EquipmentItemFormViewModel model)
+        [RequestSizeLimit(5_500_000)]
+        [RequestFormLimits(MultipartBodyLengthLimit = 5_500_000)]
+        public async Task<IActionResult> CreateEquipment(
+            EquipmentItemFormViewModel model,
+            [FromForm(Name = "imageFile")] List<IFormFile> imageFiles,
+            CancellationToken cancellationToken)
         {
             if (!await _categoryService.CanManageAsync(UserId))
             {
                 return Forbid();
             }
+
+            await PrepareImageUploadAsync(model, imageFiles, cancellationToken);
 
             if (!ModelState.IsValid)
             {
@@ -112,19 +125,40 @@ namespace ASI.Basecode.WebApp.Controllers
                 return View("CreateEquipment", model);
             }
 
-            var result = await _equipmentItemService.CreateAsync(UserId, model);
+            var promotedImageUrl = await PromoteImageForSaveAsync(model, cancellationToken);
+            if (!ModelState.IsValid)
+            {
+                await PrepareEquipmentFormAsync(model, isEdit: false);
+                return View("CreateEquipment", model);
+            }
+
+            EquipmentItemOperationResult result;
+            try
+            {
+                result = await _equipmentItemService.CreateAsync(UserId, model);
+            }
+            catch
+            {
+                TryDeleteEquipmentImage(promotedImageUrl);
+                throw;
+            }
+
             if (result.Forbidden)
             {
+                TryDeleteEquipmentImage(promotedImageUrl);
                 return Forbid();
             }
 
             if (!result.Succeeded)
             {
+                await HandleFailedImageSaveAsync(model, result, promotedImageUrl, cancellationToken);
+
                 ModelState.AddModelError(string.Empty, result.Message);
                 await PrepareEquipmentFormAsync(model, isEdit: false);
                 return View("CreateEquipment", model);
             }
 
+            model.UploadedImageUrl = null;
             TempData["SuccessMessage"] = result.Message;
             return RedirectToAction(nameof(Index), new { tab = "equipment" });
         }
@@ -150,12 +184,19 @@ namespace ASI.Basecode.WebApp.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> EditEquipment(EquipmentItemFormViewModel model)
+        [RequestSizeLimit(5_500_000)]
+        [RequestFormLimits(MultipartBodyLengthLimit = 5_500_000)]
+        public async Task<IActionResult> EditEquipment(
+            EquipmentItemFormViewModel model,
+            [FromForm(Name = "imageFile")] List<IFormFile> imageFiles,
+            CancellationToken cancellationToken)
         {
             if (!await _categoryService.CanManageAsync(UserId))
             {
                 return Forbid();
             }
+
+            await PrepareImageUploadAsync(model, imageFiles, cancellationToken);
 
             if (!ModelState.IsValid)
             {
@@ -167,19 +208,44 @@ namespace ASI.Basecode.WebApp.Controllers
                 return View("EditEquipment", model);
             }
 
-            var result = await _equipmentItemService.UpdateAsync(UserId, model);
+            var promotedImageUrl = await PromoteImageForSaveAsync(model, cancellationToken);
+            if (!ModelState.IsValid)
+            {
+                if (!await PrepareEquipmentFormAsync(model, isEdit: true))
+                {
+                    return NotFound();
+                }
+
+                return View("EditEquipment", model);
+            }
+
+            EquipmentItemOperationResult result;
+            try
+            {
+                result = await _equipmentItemService.UpdateAsync(UserId, model);
+            }
+            catch
+            {
+                TryDeleteEquipmentImage(promotedImageUrl);
+                throw;
+            }
+
             if (result.Forbidden)
             {
+                TryDeleteEquipmentImage(promotedImageUrl);
                 return Forbid();
             }
 
             if (result.Missing)
             {
+                TryDeleteEquipmentImage(promotedImageUrl);
                 return NotFound();
             }
 
             if (!result.Succeeded)
             {
+                await HandleFailedImageSaveAsync(model, result, promotedImageUrl, cancellationToken);
+
                 ModelState.AddModelError(string.Empty, result.Message);
                 if (!await PrepareEquipmentFormAsync(model, isEdit: true))
                 {
@@ -189,6 +255,8 @@ namespace ASI.Basecode.WebApp.Controllers
                 return View("EditEquipment", model);
             }
 
+            // Published image URLs can be shared by other items or reused by concurrent edits.
+            model.UploadedImageUrl = null;
             TempData["SuccessMessage"] = result.Message;
             return RedirectToAction(nameof(Index), new { tab = "equipment" });
         }
@@ -251,7 +319,139 @@ namespace ASI.Basecode.WebApp.Controllers
             model.Categories = options.Categories;
             model.IsLocked = options.IsLocked;
             model.IsCategoryInactive = options.IsCategoryInactive;
+            model.CurrentImageUrl = options.CurrentImageUrl;
             return true;
+        }
+
+        private async Task PrepareImageUploadAsync(
+            EquipmentItemFormViewModel model,
+            IReadOnlyList<IFormFile> imageFiles,
+            CancellationToken cancellationToken)
+        {
+            if (model == null)
+            {
+                return;
+            }
+
+            var previousUploadUrl = model.UploadedImageUrl;
+            if (imageFiles?.Count > 1)
+            {
+                ModelState.AddModelError("imageFile", "Select only one equipment image.");
+            }
+            else if (imageFiles?.Count == 1 && !string.IsNullOrWhiteSpace(imageFiles[0]?.FileName))
+            {
+                if (model.RemoveImage)
+                {
+                    ModelState.AddModelError(nameof(model.RemoveImage), "Choose either a replacement image or remove the current image.");
+                }
+                else
+                {
+                    var saved = await _equipmentImageStorage.SaveAsync(imageFiles[0], cancellationToken);
+                    if (!saved.Succeeded)
+                    {
+                        ModelState.AddModelError("imageFile", saved.Error);
+                    }
+                    else
+                    {
+                        model.UploadedImageUrl = saved.ImageUrl;
+                        if (_equipmentImageStorage.IsStagedImageUrl(previousUploadUrl) &&
+                            !string.Equals(previousUploadUrl, saved.ImageUrl, StringComparison.Ordinal))
+                        {
+                            TryDeleteEquipmentImage(previousUploadUrl);
+                        }
+                    }
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(model.UploadedImageUrl) &&
+                (!_equipmentImageStorage.IsStagedImageUrl(model.UploadedImageUrl) ||
+                 !_equipmentImageStorage.Exists(model.UploadedImageUrl)))
+            {
+                ModelState.AddModelError(nameof(model.UploadedImageUrl), "Choose the image again; the temporary upload is no longer available.");
+                model.UploadedImageUrl = null;
+            }
+
+            if (model.RemoveImage && (imageFiles == null || imageFiles.Count == 0))
+            {
+                TryDeleteEquipmentImage(model.UploadedImageUrl);
+                model.UploadedImageUrl = null;
+            }
+
+        }
+
+        private async Task<string> PromoteImageForSaveAsync(
+            EquipmentItemFormViewModel model,
+            CancellationToken cancellationToken)
+        {
+            if (model.RemoveImage)
+            {
+                // Explicit removal takes precedence over a URL entered in the secondary field.
+                model.ImageUrl = null;
+                return null;
+            }
+
+            // With no staged upload, preserve the optional URL input. When a file was
+            // selected, the promoted managed URL takes precedence over that input.
+            if (string.IsNullOrWhiteSpace(model.UploadedImageUrl)) return null;
+
+            var imageUrl = await _equipmentImageStorage.PromoteAsync(
+                model.UploadedImageUrl,
+                cancellationToken);
+            if (imageUrl == null)
+            {
+                ModelState.AddModelError(
+                    nameof(model.UploadedImageUrl),
+                    "Choose the image again; the temporary upload is no longer available.");
+                model.UploadedImageUrl = null;
+                return null;
+            }
+
+            model.ImageUrl = imageUrl;
+            return imageUrl;
+        }
+
+        private async Task HandleFailedImageSaveAsync(
+            EquipmentItemFormViewModel model,
+            EquipmentItemOperationResult result,
+            string promotedImageUrl,
+            CancellationToken cancellationToken)
+        {
+            if (promotedImageUrl == null)
+            {
+                return;
+            }
+
+            if (result.PersistenceFailure)
+            {
+                TryDeleteEquipmentImage(promotedImageUrl);
+                model.UploadedImageUrl = null;
+                model.ImageUrl = null;
+                return;
+            }
+
+            model.UploadedImageUrl = await _equipmentImageStorage.RevertToStagedAsync(
+                promotedImageUrl,
+                cancellationToken);
+            model.ImageUrl = null;
+            if (model.UploadedImageUrl == null)
+            {
+                ModelState.AddModelError(
+                    nameof(model.UploadedImageUrl),
+                    "The uploaded image could not be retained. Please choose it again.");
+            }
+        }
+
+        private void TryDeleteEquipmentImage(string imageUrl)
+        {
+            try
+            {
+                _equipmentImageStorage.Delete(imageUrl);
+            }
+            catch (Exception exception)
+            {
+                _logger.LogWarning(exception,
+                    "Could not clean up managed equipment image {ImageUrl}", imageUrl);
+            }
         }
 
         [HttpGet]
@@ -274,11 +474,6 @@ namespace ASI.Basecode.WebApp.Controllers
             if (!await _categoryService.CanManageAsync(UserId))
             {
                 return Forbid();
-            }
-
-            if (Request.HasFormContentType && Request.Form.TryGetValue(nameof(model.IsActive), out var activeValues))
-            {
-                model.IsActive = activeValues.Any(v => string.Equals(v, "true", StringComparison.OrdinalIgnoreCase));
             }
 
             if (!ModelState.IsValid)
@@ -341,11 +536,6 @@ namespace ASI.Basecode.WebApp.Controllers
             if (!await _categoryService.CanManageAsync(UserId))
             {
                 return Forbid();
-            }
-
-            if (Request.HasFormContentType && Request.Form.TryGetValue(nameof(model.IsActive), out var activeValues))
-            {
-                model.IsActive = activeValues.Any(v => string.Equals(v, "true", StringComparison.OrdinalIgnoreCase));
             }
 
             if (!ModelState.IsValid)

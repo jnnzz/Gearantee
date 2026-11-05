@@ -1,5 +1,46 @@
 # UI migration — phases 0–6
 
+## Assignment D follow-up — November 5, 2026
+
+Implemented the return-search and reporting changes on local branch `feat/custodian-reporting-refinement`, based on Assignment C commit `d70f6da5c648c7b286aee3989d960ac02c034f6e`.
+
+### Return and custodian pages
+
+- Added a trimmed, 100-character-bounded search to the shared Admin/Custodian Return & condition page. It searches equipment name/code, borrower full name/account identifier, and exact `RSV-<id>` codes in both active-loan and return queries before counts and pagination.
+- Preserved the selected tab and search through paging, details, return forms, invalid form redisplay, and a successful return. New searches begin on page 1. Search-specific empty states avoid system-wide claims such as “Nothing overdue.”
+- Removed duplicate queue/return page headings, used shared action styles, added required indicators (including the conditional backdate note and rejection reason), and kept server-side return validation and transaction paths unchanged.
+- Added focused service and real MVC tests for the 23-match 10/10/3 paging case, name/code/account/RSV matching, returned and late tabs, HTML-like input encoding, overlong input and empty states.
+
+### Borrowing report
+
+- Kept the existing streamed CSV route and added a separately authorized `ExportExcel` download using `DocumentFormat.OpenXml` 3.5.1. Both use the same normalized filters, report stream, role checks, and borrower-only scope.
+- The workbook writes the existing 17 columns in CSV order, keeps identifiers and supplied text as literal text, writes Manila dates as formatted Excel date serials and `Days late` as a number, and includes explicit widths, wrapped long text, and a frozen header. It writes incrementally to a temporary file, enforces Excel's row limit before returning a response, and removes the temporary file on success, failure, and cancellation.
+- Kept report search visible, moved the remaining filters into a native keyboard-accessible “More filters” disclosure, displays an active-filter count, and removed the duplicate page title. Added guidance that CSV `####` is an Excel display-width symptom and recommends AutoFit or the XLSX download.
+- Open XML reader tests cover all 23 rows, column order, leading-zero identifiers, non-ASCII text, comma/newline/formula-like text, numeric/date cell types, blank dates, widths, frozen header, no formulas/external workbook links, the empty report, cancellation cleanup and package validation. HTTP tests verify the XLSX MIME type, attachment filename, filter use, and the existing CSV response behavior.
+
+### Verification and remaining acceptance evidence
+
+- `dotnet restore .\ASI.Basecode.sln --ignore-failed-sources` — passed.
+- `dotnet build .\ASI.Basecode.sln --configuration Release --no-restore` — passed with 0 warnings/errors; the final full test run also rebuilt the final changed code.
+- Focused Return, XLSX, and MVC acceptance run — 50 passed, 1 opt-in interactive preview skipped, 0 failed.
+- `dotnet test .\ASI.Basecode.sln --configuration Release --no-restore` — 406 passed, 26 opt-in skipped, 0 failed (432 total; 1m 5s).
+- `npm.cmd run css:build` — passed; generated CSS asset check passed.
+- `git diff --check` — passed.
+- SQL Server opt-in tests were not enabled; their skips are not counted as passes.
+- I could see the already-running localhost Administrator dashboard, but the browser-control host was unavailable and VS Code's `dotnet watch` requested an application restart after the service-interface edit. The updated pages were therefore not visually checked at desktop/tablet/phone sizes or in both themes. Figma MCP also refused detailed design-context calls because the connected account is on the Starter plan.
+- The generated workbook was structurally validated and read in tests, but desktop Excel was not available to verify its rendered `####` behavior. The affected column/sample from the user's CSV was not supplied, so the original display symptom has not been independently reproduced.
+- Assignment D's final cross-owner matrix is not complete: evidence from A/B/C, SQL Server concurrency tests, responsive light/dark screenshots, and desktop Excel review remain outstanding. No WBS rows or progress counts were changed; no PR was created or merged.
+
+## Assignment A follow-up — November 2, 2026
+
+Review correction: resolved the dark-mode contrast finding by migrating late-return/403/Error badges and Reject/Cancel actions to the shared danger styles. Added a regression verified failing before the fix; focused UI checks now pass (6 passed, 1 interactive skip). Browser-measured light/dark badge and hovered-button contrast exceeds 4.5:1. See `doc/SHARED_UI.md` for measurements and scope.
+
+Implemented shared UI/login refinement on `feat/shared-ui-login-refinement` from `develop@2c1293b`. See `doc/SHARED_UI.md` for the reusable component/message/theme contract and verification record.
+
+Added Light/Dark/System with stored preference and safe fallback, consistent Barlow controls, semantic badges, required-label metadata and conditional marker synchronization, local Toastr with encoded/consumed flash messages across all roles, coordinated borrower navigation/date and Users filter-search changes, and removal of login Remember me/Create one controls. The user authorized a new editable campus-equipment SVG for login instead of the unspecified picture. Existing model/action/permission/security and transaction contracts remain; the only calendar-script change is its Borrowed appearance color.
+
+Release regression: **380 passed, 26 opt-in skipped, 0 failed**; three JavaScript behavior tests passed. Production CSS and its new utility guard passed. Real-MVC SQLite browser checks covered all three roles, action toasts, theme/font/required controls and desktop/tablet/phone/short-landscape layouts. SQL concurrency, live email, production load and 200% browser zoom were not checked. B/C/D's module changes and final whole-system acceptance remain separate.
+
 Continuation authorized October 25, 2026 and implemented October 26, 2026 on the same branch and checkout. Phases 4–5 and the phase 6 UI consistency checks are complete. A pre-existing CSV export failure was initially reported separately, then fixed under the user's subsequent explicit authorization on October 26. The only additional controller change is asynchronous CSV writer disposal; services, Identity, permission gates, database schema, form/script contracts, calendar engine and 10-record pagination are preserved. The separate local login-copy edit is preserved. On October 27, the user authorized reverting the separate relaxed lockout settings to the original production policy; see the follow-up below.
 
 Date: October 24, 2026. Branch: `feat/ui-design-migration`. Baseline: `6803c83d6a2aea89e684ca991fa67868fc593d59` (staging).
@@ -161,3 +202,13 @@ Post-restoration Release build/regression passed: **371 passed, 18 opt-in tests 
 The scoped handoff includes the 21 migrated Custodian/Admin views, source/compiled styles, category-dialog focus handling, CSV disposal repair, disposable HTTP acceptance tests, the continuation checker and tracker/documentation updates. The separate login-label copy, four earlier Figma tracker notes, design exports and PR review reports remain local. Authentication matches the original policy and has no pending source diff.
 
 `node ASI.Basecode.WebApp/scripts/check-ui-continuation.mjs --staged` reads all audited files directly from the proposed commit's index, including compiled styles, and permits no local-file exemptions. It still requires the full original authentication file and allows only the exact authorized asynchronous CSV disposal change in that controller. The working-tree mode retains hash verification for the separate login-copy edit. The verified comparison base for the PR draft is `origin/staging` at `6803c83d6a2aea89e684ca991fa67868fc593d59`; the full branch includes the earlier phase 0–3/follow-up commit as well as this continuation. No existing PR base could be queried because the GitHub connector is unavailable.
+
+## Assignment B student flow and calendar
+
+Implemented on `feat/student-calendar-refinement`, based on Assignment A commit `100b465`. The borrower dashboard links directly to the catalog and personal history. The catalog keeps keyword and category search and ten-record pagination. Old catalog list URLs with From or To redirect to a clean URL with the same search and category, starting at page one. Existing catalog detail links retain their scheduling context.
+
+My borrowing history uses the existing reservation routes, filters, ownership checks and cancellation flow. Borrowers with an explicit reporting grant can open their own report from history. Staff still use the separate reporting link. The reservation form retains the original Manila start and end time inputs and validation.
+
+The shared calendar defaults to equipment rows with seven Manila date columns. Bookings spanning several days appear in each occupied date cell. Expand a booking to see the interval returned for the displayed week. Each equipment row links to the existing detailed grid, where drag selection and a keyboard-accessible reservation form link provide precise scheduling. Search by equipment name or code runs before the item cap and event query. Category, item and location filters apply together with search. The calendar retains old day and week view URLs, and cancels outdated requests.
+
+Verification used the existing MVC and disposable SQLite fixture. The targeted availability, reservation and UI migration suites passed 123 tests with 11 opt-in skips. The Tailwind build, utility guard, JavaScript syntax and whitespace checks passed. Browser checks covered light desktop and dark mobile, equipment search, an empty result, keeping search across week changes, keyboard access to event details and the reservation time fields, and the borrower history navigation. Screenshots are in ignored `artifacts/assignment-b-calendar-light.png` and `artifacts/assignment-b-calendar-mobile-dark.png`. Production SQL concurrency, the full test suite, and exhaustive visual comparisons with every Figma frame were outside this verification pass.

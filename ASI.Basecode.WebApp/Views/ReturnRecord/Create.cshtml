@@ -1,10 +1,14 @@
 @model ASI.Basecode.Services.ServiceModels.Returns.ReturnRecordViewModel
+@using ASI.Basecode.Services.Utilities
 @{
     var loan = Model.Loan;
     var isOverdue = loan.DisplayStatus == "Overdue";
+    var returnTab = ViewData["ReturnTab"]?.ToString() ?? "OnLoan";
+    var returnSearch = ViewData["ReturnSearch"]?.ToString() ?? string.Empty;
+    var returnPage = ViewData["ReturnPage"]?.ToString() ?? "1";
 }
 
-<a asp-action="Index" class="mb-6 inline-flex text-sm font-semibold text-primary-strong underline underline-offset-4">← Back to return &amp; condition</a>
+<a asp-action="Index" asp-route-tab="@returnTab" asp-route-search="@returnSearch" asp-route-page="@returnPage" class="btn-secondary mb-6 min-h-10">Back to return &amp; condition</a>
 
 <div class="role-page detail-grid">
     <section aria-labelledby="return-heading" class="surface">
@@ -14,9 +18,12 @@
         <form asp-action="Create" method="post" class="mt-6">
             <div asp-validation-summary="ModelOnly" class="validation-summary-errors" role="alert"></div>
             <input type="hidden" asp-for="ReleaseRecordId" />
+            <input type="hidden" name="tab" value="@returnTab" />
+            <input type="hidden" name="search" value="@returnSearch" />
+            <input type="hidden" name="page" value="@returnPage" />
             <partial name="_ReturnRecordForm" model="Model" />
             <div class="form-actions">
-                <a asp-action="Index" class="btn-secondary">Cancel</a>
+                <a asp-action="Index" asp-route-tab="@returnTab" asp-route-search="@returnSearch" asp-route-page="@returnPage" class="btn-secondary">Cancel</a>
                 <button type="submit" class="btn-primary">Record return</button>
             </div>
         </form>
@@ -62,6 +69,25 @@
             }
             condition.addEventListener('change', function () { sync(true); });
             sync(false);
+        })();
+
+        (function () {
+            var returnedAt = document.querySelector('[name="ActualReturnAt"]');
+            var notes = document.querySelector('[name="Notes"]');
+            var requiredMarker = document.querySelector('[data-backdate-required]');
+            var cutoff = '@ManilaClock.NowLocal.AddMinutes(-ReturnInspection.BackdateGraceMinutes).ToString("yyyy-MM-ddTHH:mm")';
+            if (!returnedAt || !notes || !requiredMarker) return;
+
+            function syncBackdateRequirement() {
+                var required = returnedAt.value !== '' && returnedAt.value < cutoff;
+                notes.required = required;
+                notes.setAttribute('aria-required', String(required));
+                requiredMarker.hidden = !required;
+            }
+
+            returnedAt.addEventListener('input', syncBackdateRequirement);
+            returnedAt.addEventListener('change', syncBackdateRequirement);
+            syncBackdateRequirement();
         })();
     </script>
 }

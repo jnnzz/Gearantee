@@ -82,7 +82,7 @@
         <section class="surface" aria-labelledby="requests-heading">
             <div class="mb-4 flex items-end justify-between gap-3 border-b border-gray-200 pb-3">
                 <div><p class="eyebrow">Latest activity</p><h2 id="requests-heading" class="font-display text-xl font-semibold text-ink">My requests</h2></div>
-                <span class="text-xs text-gray-500">Recent</span>
+                <a asp-controller="Reservation" asp-action="Index" class="text-xs font-semibold text-primary-strong">View borrowing history</a>
             </div>
             @if (Model.RecentRequests.Count == 0)
             {
@@ -129,9 +129,9 @@
             </div>
             <p class="text-sm leading-6 text-gray-700">Only active, eligible borrowers can submit requests.</p>
             <p class="mt-2 text-xs text-gray-500">@(Model.LateReturnCount == 0 ? "No late returns on record." : $"{Model.LateReturnCount} late return(s) on record.")</p>
-            @if (Model.HasProfile && Model.IsEligible)
+            @if (User.HasClaim("permission", DomainValues.Permissions.EquipmentBrowse))
             {
-                <span class="btn-primary mt-5 inline-flex w-full items-center justify-center gap-2" aria-disabled="true">New reservation <span class="border border-white/50 px-1.5 py-0.5 font-sans text-[9px] font-medium tracking-[0.1em]">Soon</span></span>
+                <a asp-controller="Catalog" asp-action="Index" class="btn-primary mt-5 w-full">Browse equipment</a>
             }
         </section>
     </div>

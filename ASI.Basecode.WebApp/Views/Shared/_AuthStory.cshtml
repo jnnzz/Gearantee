@@ -6,6 +6,12 @@
             <p>One record for every laptop, projector, camera, speaker and lab tool the campus lends out — from request to condition check.</p>
         </div>
         <figure class="auth-equipment-card">
+            @if (ViewContext.RouteData.Values["action"]?.ToString() == "Login")
+            {
+                <img src="~/img/campus-equipment.svg" width="640" height="360" alt="" />
+            }
+            else
+            {
             <svg viewBox="0 0 520 210" fill="none" aria-hidden="true">
                 <circle cx="392" cy="55" r="30" fill="#D6EBFF" />
                 <circle cx="111" cy="161" r="42" fill="#D6EBFF" />
@@ -21,6 +27,7 @@
                 <rect x="338" y="165" width="23" height="6" rx="3" fill="#4A6F94" />
                 <path d="m118 74 7 7 14-16" stroke="#5980A6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
+            }
             <figcaption><p>Campus gear. Ready for your next idea.</p></figcaption>
         </figure>
     </div>

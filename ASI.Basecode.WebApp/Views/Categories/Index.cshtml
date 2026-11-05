@@ -1,187 +1,218 @@
 @model ASI.Basecode.Services.ServiceModels.Category.EquipmentManagementIndexViewModel
 @{
-    var successMessage = (ViewData["SuccessMessage"] ?? TempData["SuccessMessage"]) as string;
-    var errorMessage = (ViewData["ErrorMessage"] ?? TempData["ErrorMessage"]) as string;
-    var isCategoriesTab = string.Equals(Model.ActiveTab, "categories", StringComparison.OrdinalIgnoreCase);
     var hasCategoryFilters = !string.IsNullOrWhiteSpace(Model.CategorySearch) || !string.IsNullOrWhiteSpace(Model.CategoryStatusFilter);
     var hasEquipmentFilters = !string.IsNullOrWhiteSpace(Model.Equipment.Search) ||
         !string.IsNullOrWhiteSpace(Model.Equipment.StatusFilter) || Model.Equipment.CategoryId.HasValue;
 }
 
-@if (!string.IsNullOrWhiteSpace(successMessage))
-{
-    <div class="mb-5 border-l-4 border-primary bg-white px-4 py-3 text-sm" role="status">@successMessage</div>
-}
-@if (!string.IsNullOrWhiteSpace(errorMessage))
-{
-    <div class="mb-5 border-l-4 border-ink bg-white px-4 py-3 text-sm" role="alert">@errorMessage</div>
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin-inventory.css" asp-append-version="true" />
 }
 
-<div class="role-page space-y-6">
-    <!-- Page Header -->
-    <div class="flex flex-wrap items-center justify-between gap-4">
-        <div>
-            <h2 class="font-display text-2xl font-semibold">Equipments &amp; categories</h2>
-            <p class="mt-1 text-xs text-gray-500">Master inventory records, equipment condition and status, and classification categories</p>
-        </div>
-    </div>
-
-    <!-- Tab Navigation Bar -->
-    <div class="pb-1">
-        <nav class="management-tabs" aria-label="Inventory workspace tabs">
-            <button type="button"
-                    id="tab-btn-equipment"
-                    class="tab-btn inline-flex items-center gap-2 py-2 text-sm transition-colors duration-150 @(!isCategoriesTab ? "text-primary-strong font-semibold underline underline-offset-8 decoration-2 decoration-primary-strong" : "text-gray-500 hover:text-primary-strong font-medium no-underline")"
-                    data-tab="equipment"
-                    aria-controls="tab-panel-equipment"
-                    aria-selected="@(!isCategoriesTab ? "true" : "false")">
-                @await Html.PartialAsync("Icons/_Icon", "equipment")
-                <span>Equipments</span>
-            </button>
-
-            <button type="button"
-                    id="tab-btn-categories"
-                    class="tab-btn inline-flex items-center gap-2 py-2 text-sm transition-colors duration-150 @(isCategoriesTab ? "text-primary-strong font-semibold underline underline-offset-8 decoration-2 decoration-primary-strong" : "text-gray-500 hover:text-primary-strong font-medium no-underline")"
-                    data-tab="categories"
-                    aria-controls="tab-panel-categories"
-                    aria-selected="@(isCategoriesTab ? "true" : "false")">
-                <svg viewBox="0 0 24 24" class="size-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="square" stroke-linejoin="miter" aria-hidden="true">
-                    <path d="M7 7h10M7 12h10M7 17h6" />
-                    <rect x="3" y="3" width="18" height="18" rx="0" />
-                </svg>
-                <span>Categories</span>
-            </button>
-        </nav>
-    </div>
-
-    <!-- ================================================================= -->
-    <!-- TAB PANEL 1: EQUIPMENTS (DEFAULT TAB)                             -->
-    <!-- ================================================================= -->
-    <section id="tab-panel-equipment" class="tab-panel space-y-4 @(isCategoriesTab ? "hidden" : "")" aria-labelledby="tab-btn-equipment">
-        <!-- Equipment Header & Action Controls UI Frame -->
-        <div class="flex flex-wrap items-end justify-between gap-3">
-            <form method="get" asp-action="Index" class="filter-panel inventory-filters">
-                <input type="hidden" name="tab" value="equipment" />
-                <label class="sr-only" for="equipment-search">Search equipment items</label>
-                <input id="equipment-search" name="equipmentSearch" value="@Model.Equipment.Search" type="search" placeholder="Search code, name, serial, location..." class="input" />
-                <label class="sr-only" for="equipment-category-filter">Filter by category</label>
-                <select id="equipment-category-filter" name="equipmentCategoryId" class="input">
-                    <option value="">All categories</option>
-                    @foreach (var category in Model.Equipment.Categories)
-                    {
-                        <option value="@category.CategoryId" selected="@(Model.Equipment.CategoryId == category.CategoryId ? "selected" : null)">@category.CategoryCode - @category.CategoryName@(category.IsActive ? "" : " (Inactive)")</option>
-                    }
-                </select>
-                <label class="sr-only" for="equipment-status-filter">Filter by item status</label>
-                <select id="equipment-status-filter" name="equipmentStatus" class="input">
-                    <option value="" selected="@(string.IsNullOrWhiteSpace(Model.Equipment.StatusFilter) ? "selected" : null)">Active inventory</option>
-                    <option value="Available" selected="@(Model.Equipment.StatusFilter == "Available" ? "selected" : null)">Available</option>
-                    <option value="Borrowed" selected="@(Model.Equipment.StatusFilter == "Borrowed" ? "selected" : null)">Borrowed</option>
-                    <option value="UnderMaintenance" selected="@(Model.Equipment.StatusFilter == "UnderMaintenance" ? "selected" : null)">Under maintenance</option>
-                    <option value="Unavailable" selected="@(Model.Equipment.StatusFilter == "Unavailable" ? "selected" : null)">Unavailable</option>
-                    <option value="archived" selected="@(Model.Equipment.StatusFilter == "archived" ? "selected" : null)">Archived</option>
-                </select>
-                <div class="flex items-center gap-2">
-                    <button type="submit" class="btn-primary">Search</button>
-                    @if (hasEquipmentFilters)
-                    {
-                        <a asp-action="Index" asp-route-tab="equipment" class="btn-secondary text-xs">Clear</a>
-                    }
-                </div>
-            </form>
-            <a asp-action="CreateEquipment" class="btn-primary min-h-10">+ Register equipment</a>
+<div class="role-page inventory-workspace space-y-5">
+    <section class="surface inventory-section" aria-labelledby="categories-heading">
+        <div class="surface-heading inventory-section-heading">
+            <div>
+                <h2 id="categories-heading" class="surface-title">Equipment categories</h2>
+                <p class="surface-caption">Organize the equipment your campus relies on.</p>
+            </div>
+            <button type="button" id="btn-open-create-modal" class="btn-primary">+ New category</button>
         </div>
 
-        <div class="table-surface overflow-x-auto">
-            <table class="w-full min-w-[1050px] text-left text-sm">
-                <thead class="border-b border-gray-200 bg-gray-50 font-display text-[11px] uppercase tracking-[0.12em] text-gray-700">
+        <form method="get" asp-action="Index" class="inventory-filter-row category-filters" role="search" aria-label="Filter categories">
+            <input type="hidden" name="tab" value="categories" />
+            <input type="hidden" name="equipmentSearch" value="@Model.Equipment.Search" />
+            <input type="hidden" name="equipmentStatus" value="@Model.Equipment.StatusFilter" />
+            <input type="hidden" name="equipmentCategoryId" value="@Model.Equipment.CategoryId" />
+            <input type="hidden" name="equipmentPage" value="@Model.Equipment.Page" />
+            <label class="sr-only" for="category-search">Search categories</label>
+            <input id="category-search" name="categorySearch" value="@Model.CategorySearch" type="search" class="input" placeholder="Search categories" />
+            <label class="sr-only" for="category-status">Filter categories by status</label>
+            <select id="category-status" name="categoryStatus" class="input">
+                <option value="">All statuses</option>
+                <option value="active" selected="@(Model.CategoryStatusFilter == "active" ? "selected" : null)">Active</option>
+                <option value="inactive" selected="@(Model.CategoryStatusFilter == "inactive" ? "selected" : null)">Inactive</option>
+            </select>
+            <button type="submit" class="btn-secondary">Filter</button>
+            @if (hasCategoryFilters)
+            {
+                <a asp-action="Index" asp-route-tab="categories"
+                   asp-route-equipmentSearch="@Model.Equipment.Search"
+                   asp-route-equipmentStatus="@Model.Equipment.StatusFilter"
+                   asp-route-equipmentCategoryId="@Model.Equipment.CategoryId"
+                   asp-route-equipmentPage="@Model.Equipment.Page" class="inventory-clear-link">Clear</a>
+            }
+        </form>
+
+        @if (Model.Categories.Count == 0)
+        {
+            <div class="inventory-empty-state" role="status">
+                <h3>@(hasCategoryFilters ? "No matching categories" : "No categories yet")</h3>
+                <p>@(hasCategoryFilters ? "Try changing or clearing the category filters." : "Create a category to start organizing equipment.")</p>
+            </div>
+        }
+        else
+        {
+            <div class="category-card-grid">
+                @foreach (var category in Model.Categories)
+                {
+                    <article class="category-summary-card">
+                        <div class="flex items-start justify-between gap-2">
+                            <span class="item-code">@category.CategoryCode</span>
+                            <span class="status-badge rounded-full @(category.IsActive ? "status-info" : "status-neutral")">@(category.IsActive ? "Active" : "Inactive")</span>
+                        </div>
+                        <h3 class="category-summary-name">@category.CategoryName</h3>
+                        <p class="category-summary-count">@category.ItemCount tracked item@(category.ItemCount == 1 ? "" : "s")</p>
+                        @if (!string.IsNullOrWhiteSpace(category.Description))
+                        {
+                            <p class="category-summary-description">@category.Description</p>
+                        }
+                        <div class="category-summary-actions">
+                            <button type="button" class="btn-open-edit" data-id="@category.CategoryId"
+                                    data-code="@category.CategoryCode" data-name="@category.CategoryName"
+                                    data-description="@category.Description" aria-label="Edit @category.CategoryName">Edit</button>
+                            <button type="button" class="btn-open-status" data-id="@category.CategoryId"
+                                    data-name="@category.CategoryName" data-active="@category.IsActive.ToString().ToLowerInvariant()">
+                                @(category.IsActive ? "Deactivate" : "Activate")
+                            </button>
+                        </div>
+                    </article>
+                }
+            </div>
+        }
+
+        <partial name="Components/_Pagination" model="@(new PaginationViewModel
+        {
+            Page = Model.CategoryPage, TotalPages = Model.CategoryTotalPages, TotalCount = Model.CategoryTotalCount,
+            Label = "Category pages", PageParameter = "categoryPage",
+            Routes = {
+                ["tab"] = "categories", ["categorySearch"] = Model.CategorySearch, ["categoryStatus"] = Model.CategoryStatusFilter,
+                ["equipmentSearch"] = Model.Equipment.Search, ["equipmentStatus"] = Model.Equipment.StatusFilter,
+                ["equipmentCategoryId"] = Model.Equipment.CategoryId?.ToString(), ["equipmentPage"] = Model.Equipment.Page.ToString()
+            }
+        })" />
+    </section>
+
+    <section class="surface inventory-section" aria-labelledby="equipment-heading">
+        <div class="surface-heading inventory-section-heading">
+            <div>
+                <h2 id="equipment-heading" class="surface-title">Equipment items</h2>
+                <p class="surface-caption">Track condition, availability, and storage location.</p>
+            </div>
+            <a asp-action="CreateEquipment" class="btn-primary">+ Register item</a>
+        </div>
+
+        <form method="get" asp-action="Index" class="inventory-filter-row equipment-filters" role="search" aria-label="Filter equipment items">
+            <input type="hidden" name="tab" value="equipment" />
+            <input type="hidden" name="categorySearch" value="@Model.CategorySearch" />
+            <input type="hidden" name="categoryStatus" value="@Model.CategoryStatusFilter" />
+            <input type="hidden" name="categoryPage" value="@Model.CategoryPage" />
+            <label class="sr-only" for="equipment-search">Search equipment items</label>
+            <input id="equipment-search" name="equipmentSearch" value="@Model.Equipment.Search" type="search" class="input" placeholder="Search item, code, serial, or location" />
+            <label class="sr-only" for="equipment-category-filter">Filter by category</label>
+            <select id="equipment-category-filter" name="equipmentCategoryId" class="input">
+                <option value="">All categories</option>
+                @foreach (var category in Model.Equipment.Categories)
+                {
+                    <option value="@category.CategoryId" selected="@(Model.Equipment.CategoryId == category.CategoryId ? "selected" : null)">@category.CategoryName@(category.IsActive ? "" : " (Inactive)")</option>
+                }
+            </select>
+            <label class="sr-only" for="equipment-status-filter">Filter by item status</label>
+            <select id="equipment-status-filter" name="equipmentStatus" class="input">
+                <option value="" selected="@(string.IsNullOrWhiteSpace(Model.Equipment.StatusFilter) ? "selected" : null)">Active inventory</option>
+                <option value="Available" selected="@(Model.Equipment.StatusFilter == "Available" ? "selected" : null)">Available</option>
+                <option value="Borrowed" selected="@(Model.Equipment.StatusFilter == "Borrowed" ? "selected" : null)">Borrowed</option>
+                <option value="UnderMaintenance" selected="@(Model.Equipment.StatusFilter == "UnderMaintenance" ? "selected" : null)">Under maintenance</option>
+                <option value="Unavailable" selected="@(Model.Equipment.StatusFilter == "Unavailable" ? "selected" : null)">Unavailable</option>
+                <option value="archived" selected="@(Model.Equipment.StatusFilter == "archived" ? "selected" : null)">Archived</option>
+            </select>
+            <button type="submit" class="btn-secondary">Filter</button>
+            @if (hasEquipmentFilters)
+            {
+                <a asp-action="Index" asp-route-tab="equipment"
+                   asp-route-categorySearch="@Model.CategorySearch" asp-route-categoryStatus="@Model.CategoryStatusFilter"
+                   asp-route-categoryPage="@Model.CategoryPage" class="inventory-clear-link">Clear</a>
+            }
+        </form>
+
+        <div class="table-surface inventory-table-wrap">
+            <table class="inventory-table">
+                <thead>
                     <tr>
-                        <th scope="col" class="px-4 py-3">Item</th>
-                        <th scope="col" class="px-4 py-3">Category</th>
-                        <th scope="col" class="px-4 py-3">Serial number</th>
-                        <th scope="col" class="px-4 py-3">Condition</th>
-                        <th scope="col" class="px-4 py-3">Status</th>
-                        <th scope="col" class="px-4 py-3">Storage location</th>
-                        <th scope="col" class="px-4 py-3 text-right">Actions</th>
+                        <th scope="col">Item code</th>
+                        <th scope="col">Name / model</th>
+                        <th scope="col">Category</th>
+                        <th scope="col">Serial no.</th>
+                        <th scope="col">Condition</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Location</th>
+                        <th scope="col"><span class="sr-only">Actions</span></th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-200">
+                <tbody>
                     @if (Model.Equipment.Items.Count == 0)
                     {
-                        <tr>
-                            <td colspan="7" class="px-4 py-12 text-center text-sm text-gray-500">
-                                @if (hasEquipmentFilters)
-                                {
-                                    <span>No equipment items match these filters.</span>
-                                }
-                                else if (Model.Equipment.Categories.Count == 0)
-                                {
-                                    <span>Create and activate an equipment category before registering equipment.</span>
-                                }
-                                else
-                                {
-                                    <span>No equipment items registered yet. Register the first item to begin tracking inventory.</span>
-                                }
-                            </td>
-                        </tr>
+                        <tr><td colspan="8" class="inventory-table-empty">
+                            <h3>@(hasEquipmentFilters ? "No equipment items match these filters." : "No equipment registered")</h3>
+                            <p>@(hasEquipmentFilters ? "Try changing or clearing the equipment filters." : "Register an item to begin tracking campus inventory.")</p>
+                        </td></tr>
                     }
                     @foreach (var item in Model.Equipment.Items)
                     {
                         var displayedStatus = item.IsArchived ? "Archived" : item.ItemStatus;
                         if (displayedStatus == "UnderMaintenance") { displayedStatus = "Under maintenance"; }
-                        var displayedCondition = item.ConditionStatus;
-                        if (displayedCondition == "NeedsInspection") { displayedCondition = "Needs inspection"; }
-                        if (displayedCondition == "UnderRepair") { displayedCondition = "Under repair"; }
-                        var archiveValue = (!item.IsArchived).ToString().ToLowerInvariant();
-                        <tr class="align-middle hover:bg-gray-50/50">
-                            <td class="px-4 py-3">
-                                <p class="font-semibold text-ink">@item.ItemName</p>
-                                <p class="mt-1 text-xs text-gray-500"><span class="item-code">@item.ItemCode</span>@if (!string.IsNullOrWhiteSpace(item.Brand) || !string.IsNullOrWhiteSpace(item.Model)) { <span> - @item.Brand @item.Model</span> }</p>
-                            </td>
-                            <td class="px-4 py-3">
-                                <p class="font-medium text-ink">@item.CategoryName</p>
-                                <p class="mt-1 text-xs text-gray-500 item-code">@item.CategoryCode</p>
-                            </td>
-                            <td class="px-4 py-3 text-gray-700">@(string.IsNullOrWhiteSpace(item.SerialNumber) ? "-" : item.SerialNumber)</td>
-                            <td class="px-4 py-3 text-gray-700">@displayedCondition</td>
-                            <td class="px-4 py-3">
-                                <span class="inline-flex border px-2 py-0.5 text-[11px] font-medium @(item.IsArchived ? "border-gray-300 text-gray-500" : item.ItemStatus == "Available" ? "border-primary text-primary-strong" : "border-ink text-ink")">@displayedStatus</span>
-                                @if (item.IsLocked && !item.IsArchived)
+                        var displayedCondition = item.ConditionStatus switch
+                        {
+                            "NeedsInspection" => "Needs inspection",
+                            "UnderRepair" => "Under repair",
+                            _ => item.ConditionStatus
+                        };
+                        var badgeClass = item.IsArchived ? "status-neutral" : item.ItemStatus switch
+                        {
+                            "Available" => "status-info",
+                            "Borrowed" => "status-success",
+                            "UnderMaintenance" => "status-warning",
+                            _ => "status-neutral"
+                        };
+                        <tr>
+                            <td><span class="item-code">@item.ItemCode</span></td>
+                            <td>
+                                <strong>@item.ItemName</strong>
+                                @if (!string.IsNullOrWhiteSpace(item.Brand) || !string.IsNullOrWhiteSpace(item.Model))
                                 {
-                                    <p class="mt-1 text-[11px] text-gray-500">Active reservation or loan</p>
+                                    <span class="inventory-table-subtext">@item.Brand @item.Model</span>
                                 }
                             </td>
-                            <td class="px-4 py-3 text-gray-700">@item.Location</td>
-                            <td class="px-4 py-3 text-right">
-                                <div class="inline-flex items-center justify-end gap-3 text-xs">
-                                    @if (!item.IsArchived && !item.IsLocked)
-                                    {
-                                        <a asp-action="EditEquipment" asp-route-id="@item.EquipmentId" class="font-semibold text-primary-strong hover:underline">Edit</a>
-                                        <span class="text-gray-300" aria-hidden="true">|</span>
-                                    }
-                                    else if (item.IsLocked && !item.IsArchived)
-                                    {
-                                        <span class="text-gray-400" title="Close the active reservation or loan before editing">Edit locked</span>
-                                        <span class="text-gray-300" aria-hidden="true">|</span>
-                                    }
-                                    <form asp-action="SetEquipmentArchived" method="post" class="inline">
-                                        @Html.AntiForgeryToken()
-                                        <input type="hidden" name="id" value="@item.EquipmentId" />
-                                        <input type="hidden" name="archived" value="@archiveValue" />
-                                        <input type="hidden" name="equipmentSearch" value="@Model.Equipment.Search" />
-                                        <input type="hidden" name="equipmentStatus" value="@Model.Equipment.StatusFilter" />
-                                        <input type="hidden" name="equipmentCategoryId" value="@Model.Equipment.CategoryId" />
-                                        <input type="hidden" name="equipmentPage" value="@Model.Equipment.Page" />
-                                        @if (item.IsArchived)
-                                        {
-                                            <button type="submit" class="font-semibold text-primary-strong hover:underline">Restore</button>
-                                        }
-                                        else
-                                        {
-                                            <button type="submit" class="font-semibold text-gray-700 hover:text-ink hover:underline" onclick="return confirm('Archive this item from active inventory? Its reservation and return history will be preserved.')">Archive</button>
-                                        }
-                                    </form>
-                                </div>
+                            <td>@item.CategoryName</td>
+                            <td>@(string.IsNullOrWhiteSpace(item.SerialNumber) ? "—" : item.SerialNumber)</td>
+                            <td><span class="status-badge rounded-full status-neutral">@displayedCondition</span></td>
+                            <td>
+                                <span class="status-badge rounded-full @badgeClass">@displayedStatus</span>
+                                @if (item.IsLocked && !item.IsArchived)
+                                {
+                                    <span class="inventory-table-subtext">Active reservation or loan</span>
+                                }
+                            </td>
+                            <td>@item.Location</td>
+                            <td class="inventory-table-actions">
+                                @if (!item.IsArchived && !item.IsLocked)
+                                {
+                                    <a asp-action="EditEquipment" asp-route-id="@item.EquipmentId">Edit</a>
+                                }
+                                else if (item.IsLocked && !item.IsArchived)
+                                {
+                                    <span title="Close the active reservation or loan before editing">Locked</span>
+                                }
+                                <form asp-action="SetEquipmentArchived" method="post">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@item.EquipmentId" />
+                                    <input type="hidden" name="archived" value="@(!item.IsArchived).ToString().ToLowerInvariant()" />
+                                    <input type="hidden" name="equipmentSearch" value="@Model.Equipment.Search" />
+                                    <input type="hidden" name="equipmentStatus" value="@Model.Equipment.StatusFilter" />
+                                    <input type="hidden" name="equipmentCategoryId" value="@Model.Equipment.CategoryId" />
+                                    <input type="hidden" name="equipmentPage" value="@Model.Equipment.Page" />
+                                    <button type="submit" onclick="return confirm('@(item.IsArchived ? "Restore this item to active inventory?" : "Archive this item from active inventory? Its reservation and return history will be preserved.")')">@(item.IsArchived ? "Restore" : "Archive")</button>
+                                </form>
                             </td>
                         </tr>
                     }
@@ -193,128 +224,16 @@
         {
             Page = Model.Equipment.Page, TotalPages = Model.Equipment.TotalPages, TotalCount = Model.Equipment.TotalCount,
             Label = "Equipment item pages", PageParameter = "equipmentPage",
-            Routes = { ["tab"] = "equipment", ["equipmentSearch"] = Model.Equipment.Search, ["equipmentStatus"] = Model.Equipment.StatusFilter, ["equipmentCategoryId"] = Model.Equipment.CategoryId?.ToString() }
-        })" />
-    </section>
-
-    <!-- ================================================================= -->
-    <!-- TAB PANEL 2: CATEGORIES                                           -->
-    <!-- ================================================================= -->
-    <section id="tab-panel-categories" class="tab-panel space-y-4 @(!isCategoriesTab ? "hidden" : "")" aria-labelledby="tab-btn-categories">
-        <!-- Categories Search & Action Controls -->
-        <div class="flex flex-wrap items-center justify-between gap-3">
-            <form method="get" asp-action="Index" class="filter-panel category-filters">
-                <input type="hidden" name="tab" value="categories" />
-                <label class="sr-only" for="category-search">Search categories</label>
-                <input id="category-search" name="categorySearch" value="@Model.CategorySearch" type="search" placeholder="Search code, name, description..." class="input" />
-                
-                <label class="sr-only" for="category-status">Filter by status</label>
-                <select id="category-status" name="categoryStatus" class="input">
-                    <option value="">All statuses</option>
-                    <option value="active" selected="@(Model.CategoryStatusFilter == "active")">Active only</option>
-                    <option value="inactive" selected="@(Model.CategoryStatusFilter == "inactive")">Inactive only</option>
-                </select>
-
-                <div class="flex items-center gap-2">
-                    <button type="submit" class="btn-primary">Search</button>
-                    @if (hasCategoryFilters)
-                    {
-                        <a asp-action="Index" asp-route-tab="categories" class="btn-secondary text-xs">Clear</a>
-                    }
-                </div>
-            </form>
-
-            <div class="flex gap-2">
-                <button type="button" id="btn-open-create-modal" class="btn-primary min-h-10">+ New category</button>
-            </div>
-        </div>
-
-        <!-- Categories Table (Actions replacing Created Column) -->
-        <div class="table-surface overflow-x-auto">
-            <table class="w-full min-w-[640px] text-left text-sm">
-                <thead class="border-b border-gray-200 bg-gray-50 font-display text-[11px] uppercase tracking-[0.12em] text-gray-700">
-                    <tr>
-                        <th scope="col" class="px-4 py-3">Code</th>
-                        <th scope="col" class="px-4 py-3">Category Name</th>
-                        <th scope="col" class="px-4 py-3">Description</th>
-                        <th scope="col" class="px-4 py-3">Tracked Items</th>
-                        <th scope="col" class="px-4 py-3">Status</th>
-                        <th scope="col" class="px-4 py-3 text-right">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-200">
-                    @if (Model.Categories.Count == 0)
-                    {
-                        <tr>
-                            <td colspan="6" class="px-4 py-12 text-center text-sm text-gray-500">
-                                @if (hasCategoryFilters)
-                                {
-                                    <span>No categories match the specified search criteria.</span>
-                                }
-                                else
-                                {
-                                    <span>No categories registered yet. Click "+ New category" to create one.</span>
-                                }
-                            </td>
-                        </tr>
-                    }
-                    @foreach (var category in Model.Categories)
-                    {
-                        <tr class="align-middle hover:bg-gray-50/50">
-                            <td class="px-4 py-3 font-semibold text-primary-strong">
-                                <span class="item-code">@category.CategoryCode</span>
-                            </td>
-                            <td class="px-4 py-3 font-medium text-ink">
-                                @category.CategoryName
-                            </td>
-                            <td class="px-4 py-3 text-gray-500 max-w-xs truncate">
-                                @(string.IsNullOrWhiteSpace(category.Description) ? "—" : category.Description)
-                            </td>
-                            <td class="px-4 py-3 tabular-nums text-gray-700">
-                                @category.ItemCount item@(category.ItemCount == 1 ? "" : "s")
-                            </td>
-                            <td class="px-4 py-3">
-                                <span class="inline-flex border px-2 py-0.5 text-[11px] font-medium @(category.IsActive ? "border-primary text-primary-strong" : "border-gray-300 text-gray-500")">
-                                    @(category.IsActive ? "Active" : "Inactive")
-                                </span>
-                            </td>
-                            <td class="px-4 py-3 text-right">
-                                <div class="inline-flex items-center justify-end gap-3 text-xs">
-                                    <button type="button"
-                                            class="btn-open-edit font-semibold text-primary-strong hover:underline"
-                                            data-id="@category.CategoryId"
-                                            data-code="@category.CategoryCode"
-                                            data-name="@category.CategoryName"
-                                            data-description="@category.Description"
-                                            data-active="@category.IsActive.ToString().ToLower()">
-                                        Edit
-                                    </button>
-                                    <span class="text-gray-300" aria-hidden="true">|</span>
-                                    <button type="button"
-                                            class="btn-open-status font-semibold @(category.IsActive ? "text-gray-700 hover:text-ink hover:underline" : "text-primary-strong hover:underline")"
-                                            data-id="@category.CategoryId"
-                                            data-name="@category.CategoryName"
-                                            data-active="@category.IsActive.ToString().ToLower()">
-                                        @(category.IsActive ? "Deactivate" : "Activate")
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-
-        <partial name="Components/_Pagination" model="@(new PaginationViewModel
-        {
-            Page = Model.CategoryPage, TotalPages = Model.CategoryTotalPages, TotalCount = Model.CategoryTotalCount,
-            Label = "Category pages", PageParameter = "categoryPage",
-            Routes = { ["tab"] = "categories", ["categorySearch"] = Model.CategorySearch, ["categoryStatus"] = Model.CategoryStatusFilter }
+            Routes = {
+                ["tab"] = "equipment", ["equipmentSearch"] = Model.Equipment.Search,
+                ["equipmentStatus"] = Model.Equipment.StatusFilter, ["equipmentCategoryId"] = Model.Equipment.CategoryId?.ToString(),
+                ["categorySearch"] = Model.CategorySearch, ["categoryStatus"] = Model.CategoryStatusFilter,
+                ["categoryPage"] = Model.CategoryPage.ToString()
+            }
         })" />
     </section>
 </div>
 
-<!-- ========================= CREATE CATEGORY MODAL ========================= -->
 <div id="modal-create-category" class="management-modal fixed inset-0 z-50 hidden items-center justify-center bg-black/60 p-4" role="dialog" aria-modal="true" aria-labelledby="modal-create-title">
     <div class="management-modal-card w-full max-w-lg bg-white p-6 shadow-2xl">
         <div class="mb-4 flex items-center justify-between border-b border-gray-200 pb-3">
@@ -324,41 +243,16 @@
         <form asp-action="Create" method="post" id="form-create-category">
             @Html.AntiForgeryToken()
             <div class="space-y-4">
-                <div>
-                    <label for="create-category-code" class="mb-1 block text-sm font-medium text-gray-700">Category code</label>
-                    <input type="text" name="CategoryCode" id="create-category-code" required maxlength="50" placeholder="e.g. LAP" class="input uppercase" />
-                    <p class="mt-1 text-xs text-gray-500">Short unique code used in inventory identifiers.</p>
-                </div>
-
-                <div>
-                    <label for="create-category-name" class="mb-1 block text-sm font-medium text-gray-700">Category name</label>
-                    <input type="text" name="CategoryName" id="create-category-name" required maxlength="150" placeholder="e.g. Laptops" class="input" />
-                </div>
-
-                <div>
-                    <label for="create-category-description" class="mb-1 block text-sm font-medium text-gray-700">Description</label>
-                    <textarea name="Description" id="create-category-description" rows="3" maxlength="1000" placeholder="Brief description of items in this category..." class="input"></textarea>
-                </div>
-
-                <div>
-                    <label class="inline-flex items-center gap-2 cursor-pointer">
-                        <input type="hidden" name="IsActive" value="false" />
-                        <input type="checkbox" name="IsActive" id="create-category-active" value="true" checked class="size-4 accent-primary-strong" />
-                        <span class="text-sm font-medium text-gray-700">Active category</span>
-                    </label>
-                    <p class="mt-0.5 text-xs text-gray-500">Active categories are available when cataloging new equipment items.</p>
-                </div>
+                <div><label for="create-category-code" class="mb-1 block text-sm font-medium text-gray-700">Category code <span class="required-marker" data-required-marker aria-hidden="true">*</span></label><input type="text" name="CategoryCode" id="create-category-code" required maxlength="50" placeholder="e.g. LAP" class="input uppercase" /></div>
+                <div><label for="create-category-name" class="mb-1 block text-sm font-medium text-gray-700">Category name <span class="required-marker" data-required-marker aria-hidden="true">*</span></label><input type="text" name="CategoryName" id="create-category-name" required maxlength="150" placeholder="e.g. Laptops" class="input" /></div>
+                <div><label for="create-category-description" class="mb-1 block text-sm font-medium text-gray-700">Description</label><textarea name="Description" id="create-category-description" rows="3" maxlength="1000" placeholder="Brief description of items in this category..." class="input"></textarea></div>
+                <p class="rounded-xl bg-tint-soft px-4 py-3 text-sm text-primary-strong">New categories are active by default. Use the status action on the category card to deactivate one.</p>
             </div>
-
-            <div class="form-actions">
-                <button type="button" class="btn-close-modal border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:border-gray-400">Cancel</button>
-                <button type="submit" class="btn-primary">Create category</button>
-            </div>
+            <div class="form-actions"><button type="button" class="btn-close-modal btn-secondary">Cancel</button><button type="submit" class="btn-primary">Create category</button></div>
         </form>
     </div>
 </div>
 
-<!-- ========================= EDIT CATEGORY MODAL ========================= -->
 <div id="modal-edit-category" class="management-modal fixed inset-0 z-50 hidden items-center justify-center bg-black/60 p-4" role="dialog" aria-modal="true" aria-labelledby="modal-edit-title">
     <div class="management-modal-card w-full max-w-lg bg-white p-6 shadow-2xl">
         <div class="mb-4 flex items-center justify-between border-b border-gray-200 pb-3">
@@ -368,45 +262,18 @@
         <form asp-action="Edit" method="post" id="form-edit-category">
             @Html.AntiForgeryToken()
             <input type="hidden" name="CategoryId" id="edit-category-id" />
-            
             <div class="space-y-4">
-                <div>
-                    <label for="edit-category-code" class="mb-1 block text-sm font-medium text-gray-700">Category code</label>
-                    <input type="text" name="CategoryCode" id="edit-category-code" required maxlength="50" class="input uppercase" />
-                    <p class="mt-1 text-xs text-gray-500">Short unique code used in inventory identifiers.</p>
-                </div>
-
-                <div>
-                    <label for="edit-category-name" class="mb-1 block text-sm font-medium text-gray-700">Category name</label>
-                    <input type="text" name="CategoryName" id="edit-category-name" required maxlength="150" class="input" />
-                </div>
-
-                <div>
-                    <label for="edit-category-description" class="mb-1 block text-sm font-medium text-gray-700">Description</label>
-                    <textarea name="Description" id="edit-category-description" rows="3" maxlength="1000" class="input"></textarea>
-                </div>
-
-                <div>
-                    <label class="inline-flex items-center gap-2 cursor-pointer">
-                        <input type="hidden" name="IsActive" value="false" />
-                        <input type="checkbox" name="IsActive" id="edit-category-active" value="true" class="size-4 accent-primary-strong" />
-                        <span class="text-sm font-medium text-gray-700">Active category</span>
-                    </label>
-                    <p class="mt-0.5 text-xs text-gray-500">Active categories are available when cataloging new equipment items.</p>
-                </div>
+                <div><label for="edit-category-code" class="mb-1 block text-sm font-medium text-gray-700">Category code <span class="required-marker" data-required-marker aria-hidden="true">*</span></label><input type="text" name="CategoryCode" id="edit-category-code" required maxlength="50" class="input uppercase" /><p class="mt-1 text-xs text-gray-500">Changing category details does not change its active status.</p></div>
+                <div><label for="edit-category-name" class="mb-1 block text-sm font-medium text-gray-700">Category name <span class="required-marker" data-required-marker aria-hidden="true">*</span></label><input type="text" name="CategoryName" id="edit-category-name" required maxlength="150" class="input" /></div>
+                <div><label for="edit-category-description" class="mb-1 block text-sm font-medium text-gray-700">Description</label><textarea name="Description" id="edit-category-description" rows="3" maxlength="1000" class="input"></textarea></div>
             </div>
-
-            <div class="form-actions">
-                <button type="button" class="btn-close-modal border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:border-gray-400">Cancel</button>
-                <button type="submit" class="btn-primary">Save changes</button>
-            </div>
+            <div class="form-actions"><button type="button" class="btn-close-modal btn-secondary">Cancel</button><button type="submit" class="btn-primary">Save changes</button></div>
         </form>
     </div>
 </div>
 
-<!-- ========================= DEACTIVATE / ACTIVATE MODAL ========================= -->
 <div id="modal-status-category" class="management-modal fixed inset-0 z-50 hidden items-center justify-center bg-black/60 p-4" role="dialog" aria-modal="true" aria-labelledby="modal-status-title">
-    <div class="w-full max-w-md border border-gray-200 bg-white p-6 shadow-2xl">
+    <div class="management-modal-card w-full max-w-md bg-white p-6 shadow-2xl">
         <div class="mb-4 flex items-center justify-between border-b border-gray-200 pb-3">
             <h3 id="modal-status-title" class="font-display text-xl font-semibold text-ink">Deactivate category</h3>
             <button type="button" class="btn-close-modal text-gray-400 hover:text-ink text-lg font-bold" aria-label="Close modal">&times;</button>
@@ -415,18 +282,9 @@
             @Html.AntiForgeryToken()
             <input type="hidden" name="CategoryId" id="status-category-id" />
             <input type="hidden" name="IsActive" id="status-category-is-active" />
-
-            <p id="modal-status-message" class="text-sm text-gray-700 leading-6">
-                <span id="modal-status-action-text">Are you sure you want to deactivate</span> <strong id="status-category-name" class="font-semibold text-ink"></strong><span id="modal-status-question-mark">?</span>
-            </p>
-            <p id="modal-status-hint" class="mt-2 text-xs text-gray-500 leading-5">
-                Existing equipment items and reservation history in this category will remain preserved, but new items cannot be registered under it while deactivated.
-            </p>
-
-            <div class="form-actions">
-                <button type="button" class="btn-close-modal border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:border-gray-400">Cancel</button>
-                <button type="submit" id="btn-status-confirm" class="btn-primary">Confirm</button>
-            </div>
+            <p id="modal-status-message" class="text-sm leading-6 text-gray-700"><span id="modal-status-action-text">Are you sure you want to deactivate</span> <strong id="status-category-name" class="font-semibold text-ink"></strong><span id="modal-status-question-mark">?</span></p>
+            <p id="modal-status-hint" class="mt-2 text-xs leading-5 text-gray-500">Existing equipment and transaction history remain preserved. Inactive categories cannot be selected for new items.</p>
+            <div class="form-actions"><button type="button" class="btn-close-modal btn-secondary">Cancel</button><button type="submit" id="btn-status-confirm" class="btn-primary">Confirm</button></div>
         </form>
     </div>
 </div>
@@ -436,148 +294,36 @@
     <partial name="_ValidationScriptsPartial" />
     <script>
         (() => {
-            const tabButtons = document.querySelectorAll('.tab-btn');
-            const tabPanels = document.querySelectorAll('.tab-panel');
-
-            const activateTab = (tabName) => {
-                tabButtons.forEach(btn => {
-                    const isActive = btn.dataset.tab === tabName;
-                    btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
-                    btn.classList.toggle('text-primary-strong', isActive);
-                    btn.classList.toggle('font-semibold', isActive);
-                    btn.classList.toggle('underline', isActive);
-                    btn.classList.toggle('underline-offset-8', isActive);
-                    btn.classList.toggle('decoration-2', isActive);
-                    btn.classList.toggle('decoration-primary-strong', isActive);
-
-                    btn.classList.toggle('text-gray-500', !isActive);
-                    btn.classList.toggle('font-medium', !isActive);
-                    btn.classList.toggle('no-underline', !isActive);
-                });
-
-                tabPanels.forEach(panel => {
-                    const isTarget = panel.id === `tab-panel-${tabName}`;
-                    panel.classList.toggle('hidden', !isTarget);
-                });
-
-                if (history.replaceState) {
-                    history.replaceState(null, '', '#' + tabName);
-                }
-            };
-
-            window.switchTab = activateTab;
-
-            tabButtons.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    activateTab(btn.dataset.tab);
-                });
-            });
-
-            // Check URL hash on load
-            const hash = window.location.hash.replace('#', '').toLowerCase();
-            if (hash === 'categories' || hash === 'equipment') {
-                activateTab(hash);
-            }
-
-            // Modal Controls
             const createModal = document.getElementById('modal-create-category');
             const editModal = document.getElementById('modal-edit-category');
             const statusModal = document.getElementById('modal-status-category');
+            const openModal = modal => { if (modal) { modal.classList.remove('hidden'); modal.classList.add('flex'); } };
+            const closeModal = modal => { if (modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); } };
+            const closeAll = () => [createModal, editModal, statusModal].forEach(closeModal);
 
-            const openModal = (modal) => {
-                if (!modal) return;
-                modal.classList.remove('hidden');
-                modal.classList.add('flex');
-            };
-
-            const closeModal = (modal) => {
-                if (!modal) return;
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
-            };
-
-            const closeAllModals = () => {
-                if (createModal) closeModal(createModal);
-                if (editModal) closeModal(editModal);
-                if (statusModal) closeModal(statusModal);
-            };
-
-            // Open Create Modal
-            const openCreateBtn = document.getElementById('btn-open-create-modal');
-            if (openCreateBtn) {
-                openCreateBtn.addEventListener('click', () => {
-                    openModal(createModal);
-                });
-            }
-
-            // Open Edit Modal
-            document.querySelectorAll('.btn-open-edit').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    document.getElementById('edit-category-id').value = btn.dataset.id;
-                    document.getElementById('edit-category-code').value = btn.dataset.code || '';
-                    document.getElementById('edit-category-name').value = btn.dataset.name || '';
-                    document.getElementById('edit-category-description').value = btn.dataset.description || '';
-                    document.getElementById('edit-category-active').checked = btn.dataset.active === 'true';
-                    openModal(editModal);
-                });
-            });
-
-            // Open Deactivate/Activate Modal
-            document.querySelectorAll('.btn-open-status').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const isCurrentlyActive = btn.dataset.active === 'true';
-                    const targetActive = !isCurrentlyActive;
-                    const catName = btn.dataset.name || 'this category';
-
-                    document.getElementById('status-category-id').value = btn.dataset.id;
-                    document.getElementById('status-category-is-active').value = targetActive;
-                    document.getElementById('status-category-name').textContent = catName;
-
-                    const title = document.getElementById('modal-status-title');
-                    const actionText = document.getElementById('modal-status-action-text');
-                    const nameNode = document.getElementById('status-category-name');
-                    const hint = document.getElementById('modal-status-hint');
-                    const confirmBtn = document.getElementById('btn-status-confirm');
-
-                    if (isCurrentlyActive) {
-                        title.textContent = 'Deactivate category';
-                        actionText.textContent = 'Are you sure you want to deactivate';
-                        nameNode.textContent = catName;
-                        hint.textContent = 'Existing equipment items and history will remain preserved, but new items cannot be registered under this category.';
-                        confirmBtn.textContent = 'Deactivate category';
-                    } else {
-                        title.textContent = 'Activate category';
-                        actionText.textContent = 'Are you sure you want to activate';
-                        nameNode.textContent = catName;
-                        hint.textContent = 'This category will immediately become available again when cataloging new equipment items.';
-                        confirmBtn.textContent = 'Activate category';
-                    }
-
-                    openModal(statusModal);
-                });
-            });
-
-            // Close buttons
-            document.querySelectorAll('.btn-close-modal').forEach(btn => {
-                btn.addEventListener('click', closeAllModals);
-            });
-
-            // Close on backdrop click
-            [createModal, editModal, statusModal].forEach(modal => {
-                if (!modal) return;
-                modal.addEventListener('click', (e) => {
-                    if (e.target === modal) {
-                        closeModal(modal);
-                    }
-                });
-            });
-
-            // Close on Escape key
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape') {
-                    closeAllModals();
-                }
-            });
+            document.getElementById('btn-open-create-modal')?.addEventListener('click', () => openModal(createModal));
+            document.querySelectorAll('.btn-open-edit').forEach(button => button.addEventListener('click', () => {
+                document.getElementById('edit-category-id').value = button.dataset.id;
+                document.getElementById('edit-category-code').value = button.dataset.code || '';
+                document.getElementById('edit-category-name').value = button.dataset.name || '';
+                document.getElementById('edit-category-description').value = button.dataset.description || '';
+                openModal(editModal);
+            }));
+            document.querySelectorAll('.btn-open-status').forEach(button => button.addEventListener('click', () => {
+                const active = button.dataset.active === 'true';
+                document.getElementById('status-category-id').value = button.dataset.id;
+                document.getElementById('status-category-is-active').value = (!active).toString();
+                document.getElementById('status-category-name').textContent = button.dataset.name || 'this category';
+                document.getElementById('modal-status-title').textContent = active ? 'Deactivate category' : 'Activate category';
+                document.getElementById('modal-status-action-text').textContent = active ? 'Are you sure you want to deactivate' : 'Are you sure you want to activate';
+                document.getElementById('btn-status-confirm').textContent = active ? 'Deactivate' : 'Activate';
+                openModal(statusModal);
+            }));
+            document.querySelectorAll('.btn-close-modal').forEach(button => button.addEventListener('click', closeAll));
+            [createModal, editModal, statusModal].forEach(modal => modal?.addEventListener('click', event => {
+                if (event.target === modal) closeModal(modal);
+            }));
+            document.addEventListener('keydown', event => { if (event.key === 'Escape') closeAll(); });
         })();
     </script>
 }

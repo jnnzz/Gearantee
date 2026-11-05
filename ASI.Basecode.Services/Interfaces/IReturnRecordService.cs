@@ -5,7 +5,8 @@ namespace ASI.Basecode.Services.Interfaces
     public interface IReturnRecordService
     {
         /// <summary>Tab is OnLoan, Overdue, Returned, or Late; empty means OnLoan.</summary>
-        ReturnRecordIndexViewModel GetReturnRecords(string tab, int page);
+        /// <summary>Returns matching records for the selected tab. Empty search shows all records.</summary>
+        ReturnRecordIndexViewModel GetReturnRecords(string tab, int page, string search = null);
 
         /// <summary>Returns null when the release doesn't exist or was already returned.</summary>
         ReturnRecordListItemViewModel RetrieveActiveLoan(long releaseRecordId);

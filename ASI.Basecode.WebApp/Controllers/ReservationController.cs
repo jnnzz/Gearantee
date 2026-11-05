@@ -1,4 +1,4 @@
-﻿using ASI.Basecode.Data.Models;
+using ASI.Basecode.Data.Models;
 using ASI.Basecode.Resources.Constants;
 using ASI.Basecode.Services.Interfaces;
 using ASI.Basecode.Services.ServiceModels.Reservations;
@@ -42,7 +42,7 @@ namespace ASI.Basecode.WebApp.Controllers
         public IActionResult Index(string status, int page = 1)
         {
             var model = _reservationService.GetMyReservations(UserId, status, page);
-            SetPageData("My reservations");
+            SetPageData("My borrowing history");
             ViewData["SuccessMessage"] = TempData["SuccessMessage"];
             ViewData["ErrorMessage"] = TempData["ErrorMessage"];
             return View(model);

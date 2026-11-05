@@ -9,6 +9,7 @@ using ASI.Basecode.Services.Utilities;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Data;
+using System.Globalization;
 using System.Linq;
 using System.Runtime.ExceptionServices;
 
@@ -22,6 +23,7 @@ namespace ASI.Basecode.Services.Services
         public const string OverdueTab = "Overdue";
         public const string ReturnedTab = "Returned";
         public const string LateTab = "Late";
+        public const int MaxSearchLength = 100;
         private const int NotesMaxLength = 1000;
         private const string NoPermissionMessage = "You no longer have permission to record returns.";
         private const string AlreadyReturnedMessage = "This item has already been returned. Reload the page to see the latest loans.";
@@ -50,12 +52,37 @@ namespace ASI.Basecode.Services.Services
 
         public ReturnRecordIndexViewModel GetReturnRecords(string tab, int page)
         {
+            return GetReturnRecords(tab, page, null);
+        }
+
+        public ReturnRecordIndexViewModel GetReturnRecords(string tab, int page, string search)
+        {
             var nowUtc = _timeProvider.GetUtcNow().UtcDateTime;
-            var model = new ReturnRecordIndexViewModel { Tab = NormalizeTab(tab) };
+            var normalizedSearch = search?.Trim() ?? string.Empty;
+            var searchIsTooLong = normalizedSearch.Length > MaxSearchLength;
+            var model = new ReturnRecordIndexViewModel
+            {
+                Tab = NormalizeTab(tab),
+                Search = normalizedSearch,
+                ValidationMessage = searchIsTooLong
+                    ? $"Search must be {MaxSearchLength} characters or fewer."
+                    : null
+            };
 
             var loans = ActiveLoans();
-            var overdue = loans.Where(reservation => reservation.ReservationEnd < nowUtc);
             var returns = _returnRecordRepository.GetReturnRecords().AsNoTracking();
+            if (searchIsTooLong)
+            {
+                loans = loans.Where(_ => false);
+                returns = returns.Where(_ => false);
+            }
+            else
+            {
+                loans = ApplyLoanSearch(loans, normalizedSearch);
+                returns = ApplyReturnSearch(returns, normalizedSearch);
+            }
+
+            var overdue = loans.Where(reservation => reservation.ReservationEnd < nowUtc);
             var late = returns.Where(record => record.LateReturn != null);
 
             model.Tabs.Add(new ReturnRecordTab { Value = OnLoanTab, Label = "On loan", Count = loans.Count() });
@@ -81,6 +108,64 @@ namespace ASI.Basecode.Services.Services
                 .Select(row => ToListItem(new ReturnRecordListItemViewModel(), row, nowUtc))
                 .ToList();
             return model;
+        }
+
+        private static IQueryable<Reservation> ApplyLoanSearch(
+            IQueryable<Reservation> reservations,
+            string search)
+        {
+            if (string.IsNullOrEmpty(search))
+            {
+                return reservations;
+            }
+
+            var hasReservationCode = TryParseReservationCode(search, out var reservationId);
+            return reservations.Where(reservation =>
+                (hasReservationCode && reservation.ReservationId == reservationId) ||
+                reservation.EquipmentItem.ItemName.Contains(search) ||
+                reservation.EquipmentItem.ItemCode.Contains(search) ||
+                ((reservation.BorrowerProfile.User.FirstName ?? string.Empty) + " " +
+                    (reservation.BorrowerProfile.User.LastName ?? string.Empty)).Contains(search) ||
+                (reservation.BorrowerProfile.User.UserCode != null &&
+                    reservation.BorrowerProfile.User.UserCode.Contains(search)));
+        }
+
+        private static IQueryable<ReturnRecord> ApplyReturnSearch(
+            IQueryable<ReturnRecord> records,
+            string search)
+        {
+            if (string.IsNullOrEmpty(search))
+            {
+                return records;
+            }
+
+            var hasReservationCode = TryParseReservationCode(search, out var reservationId);
+            return records.Where(record =>
+                (hasReservationCode && record.ReleaseRecord.ReservationId == reservationId) ||
+                record.ReleaseRecord.Reservation.EquipmentItem.ItemName.Contains(search) ||
+                record.ReleaseRecord.Reservation.EquipmentItem.ItemCode.Contains(search) ||
+                ((record.ReleaseRecord.Reservation.BorrowerProfile.User.FirstName ?? string.Empty) + " " +
+                    (record.ReleaseRecord.Reservation.BorrowerProfile.User.LastName ?? string.Empty)).Contains(search) ||
+                (record.ReleaseRecord.Reservation.BorrowerProfile.User.UserCode != null &&
+                    record.ReleaseRecord.Reservation.BorrowerProfile.User.UserCode.Contains(search)));
+        }
+
+        private static bool TryParseReservationCode(string search, out long reservationId)
+        {
+            reservationId = 0;
+            if (search.Length <= 4 ||
+                !search.StartsWith("RSV-", StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            var numericPart = search.Substring(4);
+            return numericPart.All(char.IsAsciiDigit) &&
+                long.TryParse(
+                    numericPart,
+                    NumberStyles.None,
+                    CultureInfo.InvariantCulture,
+                    out reservationId);
         }
 
         public ReturnRecordListItemViewModel RetrieveActiveLoan(long releaseRecordId)

@@ -1,17 +1,15 @@
 @model ASI.Basecode.Services.ServiceModels.Returns.ReturnRecordDetailsViewModel
 @using ASI.Basecode.Services.Utilities
 @{
-    var successMessage = ViewData["SuccessMessage"] as string;
     string OrDash(string value) => string.IsNullOrWhiteSpace(value) ? "—" : value;
     string When(DateTime? value) => value.HasValue ? value.Value.ToString("ddd d MMM yyyy · HH:mm") : "—";
+    var returnTab = ViewData["ReturnTab"]?.ToString() ?? "Returned";
+    var returnSearch = ViewData["ReturnSearch"]?.ToString() ?? string.Empty;
+    var returnPage = ViewData["ReturnPage"]?.ToString() ?? "1";
 }
 
-<a asp-action="Index" asp-route-tab="Returned" class="mb-6 inline-flex text-sm font-semibold text-primary-strong underline underline-offset-4">← Back to returns</a>
+<a asp-action="Index" asp-route-tab="@returnTab" asp-route-search="@returnSearch" asp-route-page="@returnPage" class="btn-secondary mb-6 min-h-10">Back to returns</a>
 
-@if (!string.IsNullOrWhiteSpace(successMessage))
-{
-    <div class="mb-5 border-l-4 border-primary bg-white px-4 py-3 text-sm" role="status">@successMessage</div>
-}
 
 <div class="role-page detail-grid">
     <section aria-labelledby="return-heading" class="surface">

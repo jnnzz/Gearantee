@@ -83,6 +83,8 @@ namespace ASI.Basecode.Services.ServiceModels.Returns
         public List<ReturnRecordListItemViewModel> Items { get; set; } = new List<ReturnRecordListItemViewModel>();
         public List<ReturnRecordTab> Tabs { get; set; } = new List<ReturnRecordTab>();
         public string Tab { get; set; } = string.Empty;
+        public string Search { get; set; } = string.Empty;
+        public string ValidationMessage { get; set; }
         public int TotalCount { get; set; }
         public int Page { get; set; } = 1;
         public int TotalPages { get; set; } = 1;

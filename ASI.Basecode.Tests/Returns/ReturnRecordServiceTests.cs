@@ -47,6 +47,117 @@ namespace ASI.Basecode.Tests.Returns
             Assert.Empty(first.Items.Select(item => item.ReservationCode).Intersect(last.Items.Select(item => item.ReservationCode)));
         }
 
+        [Fact]
+        public void Search_is_applied_before_return_counts_and_pagination_and_matches_named_fields()
+        {
+            using var fixture = new SqliteDb();
+            using var db = fixture.Create();
+            var service = ReturnsFor(db, Now);
+            for (var index = 0; index < 23; index++)
+            {
+                var release = Loan(db, $"SEARCH-{index:00}", Now.AddDays(-1), Now.AddDays(1), Now.AddDays(-1));
+                var equipmentId = db.Reservations
+                    .Where(value => value.ReservationId == release.ReservationId)
+                    .Select(value => value.EquipmentId)
+                    .Single();
+                var item = db.EquipmentItems.Single(value => value.EquipmentId == equipmentId);
+                item.ItemName = "Shared projector";
+                db.SaveChanges();
+            }
+
+            var first = service.GetReturnRecords(ReturnRecordService.OnLoanTab, 1, "  Shared projector  ");
+            var second = service.GetReturnRecords(ReturnRecordService.OnLoanTab, 2, "Shared projector");
+            var third = service.GetReturnRecords(ReturnRecordService.OnLoanTab, 99, "Shared projector");
+            var emptySearch = service.GetReturnRecords(ReturnRecordService.OnLoanTab, 1, " \t ");
+
+            Assert.Equal(23, first.TotalCount);
+            Assert.Equal(3, first.TotalPages);
+            Assert.Equal(new[] { 23, 0, 0, 0 }, first.Tabs.Select(tab => tab.Count));
+            Assert.Equal(10, first.Items.Count);
+            Assert.Equal(10, second.Items.Count);
+            Assert.Equal(3, third.Items.Count);
+            Assert.Equal(3, third.Page);
+            Assert.Equal(first.Items.Select(item => item.ReservationId).OrderBy(id => id),
+                first.Items.Select(item => item.ReservationId));
+            Assert.Equal(23, emptySearch.TotalCount);
+            Assert.Empty(first.Items.Select(item => item.ReservationCode)
+                .Intersect(second.Items.Select(item => item.ReservationCode)));
+
+            var itemCode = service.GetReturnRecords(ReturnRecordService.OnLoanTab, 1, "SEARCH-17");
+            var borrower = service.GetReturnRecords(ReturnRecordService.OnLoanTab, 1, "BRW-SEARCH-17 Test");
+            var userCode = service.GetReturnRecords(ReturnRecordService.OnLoanTab, 1, "BRW-SEARCH-17");
+            var reservationCode = service.GetReturnRecords(
+                ReturnRecordService.OnLoanTab,
+                1,
+                $"rsv-{third.Items[0].ReservationId}");
+
+            Assert.Equal("SEARCH-17", Assert.Single(itemCode.Items).ItemCode);
+            Assert.Equal("SEARCH-17", Assert.Single(borrower.Items).ItemCode);
+            Assert.Equal("SEARCH-17", Assert.Single(userCode.Items).ItemCode);
+            Assert.Single(reservationCode.Items);
+        }
+
+        [Fact]
+        public void Search_filters_returned_and_late_tabs_and_rejects_overlong_input()
+        {
+            using var fixture = new SqliteDb();
+            using var db = fixture.Create();
+            var custodian = Staff(db, "CUS-RETURN-SEARCH", DomainValues.Roles.Custodian);
+            var release = Loan(db, "RETURN-SEARCH", Now.AddDays(-3), Now.AddDays(-2), Now.AddDays(-3));
+            var service = ReturnsFor(db, Now);
+            var result = service.AddReturnRecord(
+                Form(release, Now, DomainValues.ReturnConditions.Good, DomainValues.EquipmentStatuses.Available),
+                custodian.Id);
+            Assert.True(result.Succeeded, result.Message);
+
+            var returned = service.GetReturnRecords(ReturnRecordService.ReturnedTab, 1, "BRW-RETURN-SEARCH");
+            var late = service.GetReturnRecords(ReturnRecordService.LateTab, 1, $"RSV-{release.ReservationId}");
+            var tooLong = service.GetReturnRecords(ReturnRecordService.ReturnedTab, 1, new string('x', 101));
+
+            Assert.Equal("RETURN-SEARCH", Assert.Single(returned.Items).ItemCode);
+            Assert.Equal("RETURN-SEARCH", Assert.Single(late.Items).ItemCode);
+            Assert.Contains("100 characters", tooLong.ValidationMessage);
+            Assert.Empty(tooLong.Items);
+            Assert.Equal(0, tooLong.TotalCount);
+        }
+
+        [Theory]
+        [InlineData(ReturnRecordService.OnLoanTab)]
+        [InlineData(ReturnRecordService.OverdueTab)]
+        [InlineData(ReturnRecordService.ReturnedTab)]
+        [InlineData(ReturnRecordService.LateTab)]
+        public void Reservation_shaped_item_codes_match_alongside_reservation_ids(string tab)
+        {
+            using var fixture = new SqliteDb();
+            using var db = fixture.Create();
+            var service = ReturnsFor(db, Now);
+            var first = Loan(db, "RSV-999999", Now.AddDays(-2), Now.AddDays(-1), Now.AddDays(-2));
+            var second = Loan(db, "OTHER-ITEM", Now.AddDays(-2), Now.AddDays(-1), Now.AddDays(-2));
+            if (tab == ReturnRecordService.ReturnedTab || tab == ReturnRecordService.LateTab)
+            {
+                var custodian = Staff(db, "CUS-RSV-SEARCH", DomainValues.Roles.Custodian);
+                foreach (var loan in new[] { first, second })
+                {
+                    var result = service.AddReturnRecord(
+                        Form(loan, Now, DomainValues.ReturnConditions.Good, DomainValues.EquipmentStatuses.Available),
+                        custodian.Id);
+                    Assert.True(result.Succeeded, result.Message);
+                }
+            }
+
+            var byItemCode = service.GetReturnRecords(tab, 1, "RSV-999999");
+            Assert.Equal(first.ReservationId, Assert.Single(byItemCode.Items).ReservationId);
+
+            var item = db.EquipmentItems.Single(value => value.ItemCode == "RSV-999999");
+            item.ItemCode = $"RSV-{second.ReservationId}";
+            db.SaveChanges();
+
+            var combined = service.GetReturnRecords(tab, 1, item.ItemCode);
+            Assert.Equal(2, combined.TotalCount);
+            Assert.Equal(new[] { first.ReservationId, second.ReservationId }.OrderBy(value => value),
+                combined.Items.Select(value => value.ReservationId).OrderBy(value => value));
+        }
+
         private static ReturnRecordViewModel Form(ReleaseRecord release, DateTime returnedUtc, string condition, string status, string notes = null) => new()
         {
             ReleaseRecordId = release.ReleaseRecordId,

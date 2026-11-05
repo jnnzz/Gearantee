@@ -110,6 +110,50 @@ namespace ASI.Basecode.WebApp.Controllers
             return new EmptyResult();
         }
 
+        [HttpGet]
+        public async Task<IActionResult> ExportExcel(
+            [FromQuery] BorrowingHistoryFilterViewModel filter,
+            CancellationToken cancellationToken)
+        {
+            if (!TryGetHistoryScope(out var onlyOwnHistory))
+            {
+                return Forbid();
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest("One or more filter values are invalid.");
+            }
+
+            filter ??= new BorrowingHistoryFilterViewModel();
+            var validationMessage = BorrowingHistoryService.NormalizeAndValidateFilter(filter);
+            if (validationMessage != null)
+            {
+                return BadRequest(validationMessage);
+            }
+
+            var rows = _borrowingHistoryService.StreamReportRowsAsync(
+                filter,
+                UserId,
+                onlyOwnHistory,
+                cancellationToken);
+
+            FileStream workbook;
+            try
+            {
+                workbook = await BorrowingHistoryXlsxExporter.CreateAsync(rows, cancellationToken);
+            }
+            catch (BorrowingHistoryWorkbookLimitException error)
+            {
+                return StatusCode(StatusCodes.Status413PayloadTooLarge, error.Message);
+            }
+
+            return File(
+                workbook,
+                BorrowingHistoryXlsxExporter.ContentType,
+                $"borrowing-history-{ManilaClock.NowLocal:yyyyMMdd}.xlsx");
+        }
+
         private bool TryGetHistoryScope(out bool onlyOwnHistory)
         {
             var isCustodian = User.IsInRole(DomainValues.Roles.Custodian);

@@ -1,4 +1,4 @@
-﻿using ASI.Basecode.Data.Models;
+using ASI.Basecode.Data.Models;
 using ASI.Basecode.Resources.Constants;
 using ASI.Basecode.Services.Interfaces;
 using ASI.Basecode.Services.ServiceModels.Catalog;
@@ -38,6 +38,11 @@ namespace ASI.Basecode.WebApp.Controllers
         [HttpGet]
         public IActionResult Index([FromQuery] CatalogFilterViewModel filter)
         {
+            if (Request.Query.ContainsKey("From") || Request.Query.ContainsKey("To"))
+            {
+                return RedirectToAction(nameof(Index), new { filter.Search, filter.CategoryId });
+            }
+
             var model = _catalogService.GetCatalog(filter);
             SetPageData("Equipment catalog");
             return View(model);

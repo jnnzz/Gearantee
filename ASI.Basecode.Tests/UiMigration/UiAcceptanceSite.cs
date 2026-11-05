@@ -9,6 +9,7 @@ using ASI.Basecode.Services.Services;
 using ASI.Basecode.Tests.Dashboard;
 using ASI.Basecode.WebApp.Authorization;
 using ASI.Basecode.WebApp.Controllers;
+using ASI.Basecode.WebApp.Services.EquipmentImages;
 using ASI.Basecode.Data.Seeding;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
@@ -125,6 +126,7 @@ namespace ASI.Basecode.Tests.UiMigration
             services.AddScoped<IBorrowerProfileService, BorrowerProfileService>();
             services.AddScoped<ICategoryService, CategoryService>();
             services.AddScoped<IEquipmentItemService, EquipmentItemService>();
+            services.AddSingleton<IEquipmentImageStorage, EquipmentImageStorage>();
             services.AddScoped<IAvailabilityCalendarService, AvailabilityCalendarService>();
             services.AddScoped<ICatalogService, CatalogService>();
             services.AddScoped<IReservationService, ReservationService>();
