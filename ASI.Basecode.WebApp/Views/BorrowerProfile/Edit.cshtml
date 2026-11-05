@@ -6,20 +6,10 @@
     var schoolId = ViewData["SchoolId"] as string;
     var borrowerName = ViewData["BorrowerName"] as string;
     var isEligible = ViewData["IsEligible"] as bool? ?? false;
-    var successMessage = TempData["SuccessMessage"] as string;
-    var errorMessage = TempData["ErrorMessage"] as string;
 }
 
 <div class="role-page form-layout">
     <a asp-action="Index" class="mb-5 inline-flex text-sm font-semibold text-primary-strong underline underline-offset-4">← Back to borrower profiles</a>
-    @if (!string.IsNullOrWhiteSpace(successMessage))
-    {
-        <div class="mb-5 border-l-4 border-primary bg-white px-4 py-3 text-sm" role="status">@successMessage</div>
-    }
-    @if (!string.IsNullOrWhiteSpace(errorMessage))
-    {
-        <div class="mb-5 border-l-4 border-ink bg-white px-4 py-3 text-sm" role="alert">@errorMessage</div>
-    }
 
     <section class="surface">
         <div class="flex flex-wrap items-start justify-between gap-3">

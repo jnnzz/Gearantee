@@ -6,8 +6,8 @@
 
 <div class="register-page">
     <section class="register-card">
-        <a asp-controller="Account" asp-action="Login" class="inline-flex items-center">
-            <img src="~/img/gearantee-logo.png" alt="Gearantee" class="h-auto w-48" />
+        <a asp-controller="Account" asp-action="Login" class="inline-flex w-48 items-center">
+            @await Html.PartialAsync("_BrandLogo")
         </a>
         <p class="eyebrow mt-8">Campus equipment borrowing</p>
         <h1>Create your account</h1>

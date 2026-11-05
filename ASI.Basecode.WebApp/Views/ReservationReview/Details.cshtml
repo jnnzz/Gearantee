@@ -3,8 +3,6 @@
 @{
     ViewData["Title"] = "Reservation review";
     ViewData["Eyebrow"] = "Custodian workspace";
-    var successMessage = TempData["SuccessMessage"] as string;
-    var errorMessage = TempData["ErrorMessage"] as string;
     string OrDash(string value) => string.IsNullOrWhiteSpace(value) ? "—" : value;
     string When(DateTime? value) => value.HasValue ? value.Value.ToString("ddd d MMM yyyy · HH:mm") : "—";
     var brandModel = string.Join(" ", new[] { Model.Brand, Model.Model }.Where(part => !string.IsNullOrWhiteSpace(part)));
@@ -13,14 +11,6 @@
 
 <a asp-action="Index" class="mb-6 inline-flex text-sm font-semibold text-primary-strong underline underline-offset-4">← Back to approval &amp; release</a>
 
-@if (!string.IsNullOrWhiteSpace(successMessage))
-{
-    <div class="mb-5 border-l-4 border-primary bg-white px-4 py-3 text-sm" role="status">@successMessage</div>
-}
-@if (!string.IsNullOrWhiteSpace(errorMessage))
-{
-    <div class="mb-5 border-l-4 border-ink bg-white px-4 py-3 text-sm" role="alert">@errorMessage</div>
-}
 
 <div class="role-page detail-grid">
     <section aria-labelledby="review-heading" class="surface">
@@ -74,13 +64,14 @@
                 <textarea id="reject-reason" name="Reason" rows="3" required maxlength="1000" class="input w-full" placeholder="Tell the borrower why this request can't be approved."></textarea>
                 <div class="mt-3 flex flex-wrap items-center justify-between gap-3">
                     <p class="text-xs text-gray-500">The borrower sees this reason on their reservation.</p>
-                    <button type="submit" class="border border-ink bg-white px-4 py-2 text-sm font-semibold text-ink hover:bg-ink hover:text-white">Reject request</button>
+                    <button type="submit" class="btn-danger">Reject request</button>
                 </div>
             </form>
 
             <partial name="Components/_ConfirmDialog" model="@(new ConfirmDialogModel
             {
                 Id = "reject-reservation-dialog",
+                IsDestructive = true,
                 Title = $"Reject {Model.ReservationCode}?",
                 Message = "The request is declined and the reason you entered is shown to the borrower. This can't be undone.",
                 Detail = $"{Model.ItemName} · {Model.BorrowerName}",

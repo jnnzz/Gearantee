@@ -1,22 +1,25 @@
 @model ASI.Basecode.Services.ServiceModels.AvailabilityCalendar.AvailabilityCalendarPageViewModel
 @using ASI.Basecode.Services.Utilities
+@using ASI.Basecode.Services.ServiceModels.AvailabilityCalendar
 @{
     var selectedDate = string.IsNullOrWhiteSpace(Model.Filter.Date)
         ? ManilaClock.NowLocal.ToString("yyyy-MM-dd")
         : Model.Filter.Date;
     var selectedView = Model.Filter.View is "timeGridDay" or "timeGridWeek"
         ? Model.Filter.View
-        : "timeGridWeek";
+        : "overview";
+    var overview = selectedView == "overview";
 }
 
 @section Styles {
     <link rel="stylesheet" href="~/lib/fullcalendar/skeleton.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/availability-week.css" asp-append-version="true" />
 }
 
-<section aria-labelledby="availability-heading" class="calendar-page min-w-0">
+<section aria-label="Equipment availability" class="calendar-page min-w-0">
     <div class="mb-5">
-        <h2 id="availability-heading" class="surface-title">Equipment availability</h2>
         <p class="mt-1 text-sm text-gray-500">Equipment schedule and booking availability · times are Philippine time (UTC+8)</p>
+        <p class="mt-1 text-sm text-gray-500">The calendar shows current scheduling blocks. See borrowing history for completed loans.</p>
     </div>
 
     @if (!string.IsNullOrWhiteSpace(Model.ValidationMessage))
@@ -25,8 +28,22 @@
     }
 
     <form id="availability-filters" method="get" asp-controller="AvailabilityCalendar" asp-action="Index" class="filter-panel">
-        <input id="availability-date" type="hidden" name="Date" value="@selectedDate" />
-        <input id="availability-view" type="hidden" name="View" value="@selectedView" />
+        <div>
+            <label for="availability-search" class="field-label">Search equipment</label>
+            <input id="availability-search" name="Search" type="search" maxlength="100" value="@Model.Filter.Search" placeholder="Item name or code" class="input" />
+        </div>
+        <div>
+            <label for="availability-date" class="field-label">Date</label>
+            <input id="availability-date" type="date" name="Date" value="@selectedDate" min="@AvailabilityCalendarFilterViewModel.MinDate" max="@AvailabilityCalendarFilterViewModel.MaxDate" class="input" />
+        </div>
+        <div>
+            <label for="availability-view" class="field-label">View</label>
+            <select id="availability-view" name="View" class="input">
+                <option value="overview" selected="@overview">Equipment week</option>
+                <option value="timeGridDay" selected="@(selectedView == "timeGridDay")">Day / time details</option>
+                <option value="timeGridWeek" selected="@(selectedView == "timeGridWeek")">Week / time details</option>
+            </select>
+        </div>
         <div>
             <label for="availability-category" class="mb-1 block text-xs font-medium text-gray-700">Category</label>
             <select id="availability-category" name="CategoryId" class="input">
@@ -66,7 +83,7 @@
         </div>
     </form>
 
-    @if (Model.CanCreateReservations)
+    @if (Model.CanCreateReservations && !overview)
     {
         <p id="availability-selection-hint" class="mb-4 border-l-4 border-primary bg-white px-4 py-3 text-sm text-gray-700" role="status">
             Select an equipment item, then select an open time on the calendar to start a reservation.
@@ -82,7 +99,21 @@
     </div>
 
     <div id="availability-error" class="mb-4 hidden border-l-4 border-ink bg-white px-4 py-3 text-sm" role="alert"></div>
-    <div class="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(18rem,0.32fr)]">
+    @if (overview)
+    {
+        <div class="mb-4 flex flex-wrap gap-2" aria-label="Week navigation">
+            <button type="button" data-week-step="-7" class="btn-secondary">Previous week</button>
+            <button type="button" data-week-step="0" class="btn-secondary">Today</button>
+            <button type="button" data-week-step="7" class="btn-secondary">Next week</button>
+        </div>
+        <p class="mb-3 text-sm text-gray-500">Open time details to check specific times.</p>
+        <div class="table-surface mb-4" tabindex="0" role="region" aria-label="Scrollable equipment week">
+            <table id="availability-overview" class="equipment-week"></table>
+        </div>
+    }
+    <p id="availability-loading" class="mb-3 text-sm text-gray-500" role="status">Loading availability…</p>
+    <button id="availability-retry" type="button" class="btn-secondary hidden mb-3">Retry</button>
+    <div class="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(18rem,0.32fr)] @(overview ? "hidden" : "")">
         <div id="availability-calendar"
              class="availability-calendar min-w-0 border border-gray-200 bg-white p-2 sm:p-4"
              data-events-url="@Url.Action("Events", "AvailabilityCalendar")"

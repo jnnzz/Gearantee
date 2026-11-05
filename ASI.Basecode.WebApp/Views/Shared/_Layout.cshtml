@@ -5,19 +5,24 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#F2F2F3" />
+    <script src="~/js/theme.js" asp-append-version="true"></script>
     <title>@ViewData["Title"] · Gearantee</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="~/lib/toastr/toastr.min.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/app.css" asp-append-version="true" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.1.4/toastr.css" integrity="sha512-3pIirOrwegjM6erE5gPSwkUzO+3cTjpnV9lexlNZqvupR64iZBnOOTiiLPb9M36zpMScbmUNIcHUqKD47M719g==" crossorigin="anonymous" />
     @RenderSection("Styles", required: false)
 </head>
 <body class="ui-refresh min-h-screen bg-gray-50 font-sans text-ink antialiased">
     <a class="skip-link" href="#main-content">Skip to main content</a>
     @if (ViewBag.LoginView == true)
     {
-        <main id="main-content" class="auth-page min-h-screen">@RenderBody()</main>
+        <div class="auth-appearance"><partial name="_ThemePicker" /></div>
+        <main id="main-content" class="auth-page min-h-screen">
+            <partial name="_FlashMessages" />
+            @RenderBody()
+        </main>
     }
     else
     {
@@ -27,6 +32,7 @@
             <div class="workspace-main min-w-0 flex-1">
                 <partial name="_Topbar" />
                 <main id="main-content" class="workspace-content" role="main">
+                    <partial name="_FlashMessages" />
                     @if (ViewData["DashboardError"] is string dashboardError)
                     {
                         <div class="mb-7 border-l-4 border-ink bg-white px-4 py-3 text-sm" role="alert">@dashboardError</div>
@@ -39,13 +45,10 @@
     }
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.1.4/toastr.min.js" integrity="sha512-VEd+nq25CkR676O+pLBnDW09R7VQX9Mdiij052gVCp5yVH3jGtH70Ho/UUv4mJDsEdTvqRCFZg0NKGiojGnUCw==" crossorigin="anonymous"></script>
-    <script>
-        if (window.toastr) {
-            toastr.options = { positionClass: "toast-top-center", timeOut: 3000, closeButton: true, progressBar: true };
-        }
-    </script>
+    <script src="~/lib/toastr/toastr.min.js" asp-append-version="true"></script>
+    <script src="~/js/flash-messages.js" asp-append-version="true"></script>
     <script src="~/js/app-shell.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
+    <script src="~/js/form-presentation.js" asp-append-version="true"></script>
 </body>
 </html>

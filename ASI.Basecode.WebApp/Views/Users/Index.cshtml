@@ -2,8 +2,6 @@
 @using ASI.Basecode.Services.ServiceModels.UserAdministration
 @{
     var matrix = ViewData["PermissionMatrix"] as RolePermissionsViewModel;
-    var successMessage = ViewData["SuccessMessage"] as string;
-    var errorMessage = ViewData["ErrorMessage"] as string;
     string RoleCode(string name) => name switch
     {
         "Borrower" => "BRW",
@@ -13,14 +11,6 @@
     };
 }
 
-@if (!string.IsNullOrWhiteSpace(successMessage))
-{
-    <div class="mb-5 border-l-4 border-primary bg-white px-4 py-3 text-sm" role="status">@successMessage</div>
-}
-@if (!string.IsNullOrWhiteSpace(errorMessage))
-{
-    <div class="mb-5 border-l-4 border-ink bg-white px-4 py-3 text-sm" role="alert">@errorMessage</div>
-}
 
 <div class="role-page management-grid">
     <section aria-labelledby="accounts-heading" class="min-w-0">
@@ -37,8 +27,7 @@
 
         <form method="get" asp-action="Index" class="filter-panel user-filters">
             <label class="sr-only" for="user-search">Search accounts</label>
-            <input id="user-search" name="search" value="@Model.Search" type="search" placeholder="Search name, email, user code" class="input md:hidden" />
-            <input type="hidden" name="search" value="@Model.Search" class="hidden md:block" />
+            <input id="user-search" name="search" value="@Model.Search" type="search" placeholder="Search name, email, user code" class="input" />
             <label class="sr-only" for="user-status">Filter by status</label>
             <select id="user-status" name="status" class="input">
                 <option value="">All statuses</option>

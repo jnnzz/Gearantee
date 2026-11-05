@@ -15,5 +15,6 @@ namespace ASI.Basecode.WebApp.Models
 
         public string ConfirmText { get; set; } = "Confirm";
         public string CancelText { get; set; } = "Go back";
+        public bool IsDestructive { get; set; }
     }
 }
