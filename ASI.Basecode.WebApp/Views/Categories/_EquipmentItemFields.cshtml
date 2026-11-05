@@ -52,8 +52,9 @@
 
     <div class="equipment-image-upload-field sm:col-span-2" data-equipment-image-upload>
         <span class="mb-1 block text-sm font-medium">Equipment image <span class="text-xs font-normal text-gray-500">(optional)</span></span>
-        <input asp-for="UploadedImageUrl" type="hidden" />
-        <input asp-for="CurrentImageUrl" type="hidden" />
+        @* These values are refreshed by the server after uploads and validation errors. *@
+        <input id="UploadedImageUrl" name="UploadedImageUrl" type="hidden" value="@Model.UploadedImageUrl" />
+        <input id="CurrentImageUrl" name="CurrentImageUrl" type="hidden" value="@Model.CurrentImageUrl" />
         <div class="equipment-image-upload" data-drop-zone>
             <input id="imageFile" name="imageFile" type="file" accept=".jpg,.jpeg,.png,image/jpeg,image/png" class="equipment-image-input" aria-describedby="image-upload-help image-upload-status image-upload-error" />
             <div class="equipment-image-upload-content">

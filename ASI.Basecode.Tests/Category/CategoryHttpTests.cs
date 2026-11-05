@@ -442,6 +442,77 @@ namespace ASI.Basecode.Tests.Category
             Assert.Equal("image/jpeg", served.Content.Headers.ContentType?.MediaType);
         }
 
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task HttpEditEquipment_KeepsSharedPublishedImageWhenReplacingOrRemoving(bool removeImage)
+        {
+            await using var site = await CategoryHttpSite.CreateAsync();
+            long categoryId;
+            using (var scope = site.Environment.Provider.CreateScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<AsiBasecodeDBContext>();
+                var category = new EquipmentCategory
+                {
+                    CategoryCode = "SHARED-IMAGE",
+                    CategoryName = "Shared images",
+                    IsActive = true
+                };
+                db.EquipmentCategories.Add(category);
+                await db.SaveChangesAsync();
+                categoryId = category.CategoryId;
+            }
+
+            var token = await site.Token("/Categories/CreateEquipment");
+            using var createForm = EquipmentMultipartForm(token, categoryId, "SHARED-A", "First projector");
+            AddImage(createForm, CreatePngBytes(), "image/png", "shared.png");
+            Assert.Equal(HttpStatusCode.Redirect,
+                (await site.Client.PostAsync("/Categories/CreateEquipment", createForm)).StatusCode);
+
+            long firstItemId;
+            string sharedImageUrl;
+            using (var scope = site.Environment.Provider.CreateScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<AsiBasecodeDBContext>();
+                var item = await db.EquipmentItems.SingleAsync(value => value.ItemCode == "SHARED-A");
+                firstItemId = item.EquipmentId;
+                sharedImageUrl = item.ImageUrl;
+            }
+
+            using var sharedForm = EquipmentMultipartForm(token, categoryId, "SHARED-B", "Second projector");
+            sharedForm.Add(new StringContent(sharedImageUrl), "ImageUrl");
+            Assert.Equal(HttpStatusCode.Redirect,
+                (await site.Client.PostAsync("/Categories/CreateEquipment", sharedForm)).StatusCode);
+
+            using var editForm = EquipmentMultipartForm(token, categoryId, "SHARED-A", "First projector");
+            editForm.Add(new StringContent(firstItemId.ToString()), "EquipmentId");
+            editForm.Add(new StringContent(sharedImageUrl), "ImageUrl");
+            editForm.Add(new StringContent(removeImage.ToString()), "RemoveImage");
+            if (!removeImage)
+            {
+                AddImage(editForm, CreatePngBytes(), "image/png", "replacement.png");
+            }
+
+            Assert.Equal(HttpStatusCode.Redirect,
+                (await site.Client.PostAsync("/Categories/EditEquipment", editForm)).StatusCode);
+
+            using var verifyScope = site.Environment.Provider.CreateScope();
+            var verifyDb = verifyScope.ServiceProvider.GetRequiredService<AsiBasecodeDBContext>();
+            var first = await verifyDb.EquipmentItems.SingleAsync(value => value.ItemCode == "SHARED-A");
+            var second = await verifyDb.EquipmentItems.SingleAsync(value => value.ItemCode == "SHARED-B");
+            if (removeImage)
+            {
+                Assert.Null(first.ImageUrl);
+            }
+            else
+            {
+                Assert.NotEqual(sharedImageUrl, first.ImageUrl);
+                Assert.Equal(HttpStatusCode.OK, (await site.Client.GetAsync(first.ImageUrl)).StatusCode);
+            }
+            Assert.Equal(sharedImageUrl, second.ImageUrl);
+            Assert.Equal(HttpStatusCode.OK, (await site.Client.GetAsync(second.ImageUrl)).StatusCode);
+        }
+
         [Fact]
         public async Task HttpCreateEquipment_RejectsValidPngForgedAsJpeg()
         {
@@ -524,6 +595,8 @@ namespace ASI.Basecode.Tests.Category
             var editPath = $"/Categories/EditEquipment?id={itemId}";
             var token = await site.Token(editPath);
             using var failedForm = EquipmentMultipartForm(token, categoryId, "HTTP-EQ-EDIT-NEW", "Edited projector value");
+            failedForm.Add(new StringContent(string.Empty), "UploadedImageUrl");
+            failedForm.Add(new StringContent(existingImageUrl), "CurrentImageUrl");
             failedForm.Add(new StringContent(itemId.ToString()), "EquipmentId");
             failedForm.Add(new StringContent("DUP-EDIT-SERIAL"), "SerialNumber");
             failedForm.Add(new StringContent(existingImageUrl), "ImageUrl");
@@ -552,6 +625,22 @@ namespace ASI.Basecode.Tests.Category
                 Assert.Equal(existingImageUrl, unchanged.ImageUrl);
                 Assert.Equal("Original shelf", unchanged.Location);
             }
+
+            using var stillInvalidForm = EquipmentMultipartForm(token, categoryId, "HTTP-EQ-EDIT-NEW", "Edited projector value");
+            stillInvalidForm.Add(new StringContent(itemId.ToString()), "EquipmentId");
+            stillInvalidForm.Add(new StringContent("DUP-EDIT-SERIAL"), "SerialNumber");
+            stillInvalidForm.Add(new StringContent(existingImageUrl), "ImageUrl");
+            stillInvalidForm.Add(new StringContent(stagedUrl), "UploadedImageUrl");
+            var stillInvalidResponse = await site.Client.PostAsync("/Categories/EditEquipment", stillInvalidForm);
+            Assert.Equal(HttpStatusCode.OK, stillInvalidResponse.StatusCode);
+            var stillInvalidHtml = await stillInvalidResponse.Content.ReadAsStringAsync();
+            var nextStagedUrl = Regex.Match(stillInvalidHtml,
+                @"name=""UploadedImageUrl""[^>]*value=""(/equipment-images/staged/[a-f0-9]{32}\.png)""")
+                .Groups[1].Value;
+            Assert.NotEmpty(nextStagedUrl);
+            Assert.NotEqual(stagedUrl, nextStagedUrl);
+            Assert.False(File.Exists(Path.Combine(site.ImageStoragePath, ".staging", Path.GetFileName(stagedUrl))));
+            stagedUrl = nextStagedUrl;
 
             using var retryForm = EquipmentMultipartForm(token, categoryId, "HTTP-EQ-EDIT-NEW", "Edited projector value");
             retryForm.Add(new StringContent(itemId.ToString()), "EquipmentId");
@@ -816,6 +905,8 @@ namespace ASI.Basecode.Tests.Category
             var token = await site.Token("/Categories/CreateEquipment");
             var png = CreatePngBytes();
             using var invalidForm = EquipmentMultipartForm(token, categoryId, "BAD CODE", "Retry projector");
+            invalidForm.Add(new StringContent(string.Empty), "UploadedImageUrl");
+            invalidForm.Add(new StringContent(string.Empty), "CurrentImageUrl");
             var imageContent = new ByteArrayContent(png);
             imageContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("image/png");
             invalidForm.Add(imageContent, "imageFile", "retry.png");

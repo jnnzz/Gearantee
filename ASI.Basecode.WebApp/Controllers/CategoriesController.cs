@@ -255,13 +255,7 @@ namespace ASI.Basecode.WebApp.Controllers
                 return View("EditEquipment", model);
             }
 
-            if (model.RemoveImage ||
-                (promotedImageUrl != null && !string.Equals(
-                    promotedImageUrl, result.PreviousImageUrl, StringComparison.Ordinal)))
-            {
-                TryDeleteEquipmentImage(result.PreviousImageUrl);
-            }
-
+            // Published image URLs can be shared by other items or reused by concurrent edits.
             model.UploadedImageUrl = null;
             TempData["SuccessMessage"] = result.Message;
             return RedirectToAction(nameof(Index), new { tab = "equipment" });
