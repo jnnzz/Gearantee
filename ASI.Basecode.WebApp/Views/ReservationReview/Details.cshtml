@@ -61,7 +61,7 @@
             <form asp-action="Reject" asp-route-id="@Model.ReservationId" method="post" data-confirm-dialog="reject-reservation-dialog"
                   class="workflow-action">
                 <p class="required-legend"><span class="required-marker" aria-hidden="true">*</span> Required fields</p>
-                <label asp-for="RejectionReason" for="reject-reason" class="mb-1 block text-sm font-medium">Reason for rejection <span class="required-marker" aria-hidden="true">*</span></label>
+                <label asp-for="RejectionReason" for="reject-reason" class="mb-1 block text-sm font-medium">Reason for rejection <span class="required-marker" data-required-marker aria-hidden="true">*</span></label>
                 <textarea id="reject-reason" name="Reason" rows="3" required maxlength="1000" class="input w-full" placeholder="Tell the borrower why this request can't be approved."></textarea>
                 <div class="mt-3 flex flex-wrap items-center justify-between gap-3">
                     <p class="text-xs text-gray-500">The borrower sees this reason on their reservation.</p>

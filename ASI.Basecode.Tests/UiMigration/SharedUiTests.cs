@@ -12,6 +12,36 @@ namespace ASI.Basecode.Tests.UiMigration
     public class SharedUiTests
     {
         [Fact]
+        public async Task Required_labels_render_one_reusable_marker_in_manual_and_automatic_forms()
+        {
+            await using var site = await UiAcceptanceSite.CreateAsync();
+            using var anonymous = site.NewClient();
+            using var admin = site.NewClient();
+            using var custodian = site.NewClient();
+            await site.LoginAsync(admin, "UI-ADMIN");
+            await site.LoginAsync(custodian, "UI-CUST");
+            var cases = new[]
+            {
+                (anonymous, "/Account/Login", "Password"),
+                (admin, "/Categories/CreateEquipment", "ItemCode"),
+                (admin, "/Categories/CreateEquipment", "ItemName"),
+                (admin, "/Users/Create", "Password"),
+                (custodian, $"/ReturnRecord/Create?releaseRecordId={site.ReleaseId}", "ActualReturnAt"),
+                (custodian, $"/ReturnRecord/Create?releaseRecordId={site.ReleaseId}", "Notes"),
+                (custodian, $"/ReservationReview/Details?id={site.PendingId}", "reject-reason")
+            };
+            foreach (var (client, path, field) in cases)
+            {
+                var html = await client.GetStringAsync(path);
+                var labels = Regex.Matches(html, $"<label\\b[^>]*for=\"{field}\"[^>]*>([\\s\\S]*?)</label>");
+                var label = Assert.Single(labels.Cast<Match>()).Value;
+                var markers = Regex.Matches(label, "<span[^>]*class=\"required-marker\"[^>]*>");
+                var marker = Assert.Single(markers.Cast<Match>()).Value;
+                Assert.Contains("data-required-marker", marker);
+            }
+        }
+
+        [Fact]
         public async Task Late_and_error_badges_and_destructive_actions_do_not_use_the_heading_color_as_a_fill()
         {
             await using var site = await UiAcceptanceSite.CreateAsync();

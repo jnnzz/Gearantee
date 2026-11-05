@@ -119,12 +119,9 @@ namespace ASI.Basecode.Services.Services
                 return reservations;
             }
 
-            if (TryParseReservationCode(search, out var reservationId))
-            {
-                return reservations.Where(reservation => reservation.ReservationId == reservationId);
-            }
-
+            var hasReservationCode = TryParseReservationCode(search, out var reservationId);
             return reservations.Where(reservation =>
+                (hasReservationCode && reservation.ReservationId == reservationId) ||
                 reservation.EquipmentItem.ItemName.Contains(search) ||
                 reservation.EquipmentItem.ItemCode.Contains(search) ||
                 ((reservation.BorrowerProfile.User.FirstName ?? string.Empty) + " " +
@@ -142,13 +139,9 @@ namespace ASI.Basecode.Services.Services
                 return records;
             }
 
-            if (TryParseReservationCode(search, out var reservationId))
-            {
-                return records.Where(record =>
-                    record.ReleaseRecord.ReservationId == reservationId);
-            }
-
+            var hasReservationCode = TryParseReservationCode(search, out var reservationId);
             return records.Where(record =>
+                (hasReservationCode && record.ReleaseRecord.ReservationId == reservationId) ||
                 record.ReleaseRecord.Reservation.EquipmentItem.ItemName.Contains(search) ||
                 record.ReleaseRecord.Reservation.EquipmentItem.ItemCode.Contains(search) ||
                 ((record.ReleaseRecord.Reservation.BorrowerProfile.User.FirstName ?? string.Empty) + " " +

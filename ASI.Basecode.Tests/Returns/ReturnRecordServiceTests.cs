@@ -121,6 +121,43 @@ namespace ASI.Basecode.Tests.Returns
             Assert.Equal(0, tooLong.TotalCount);
         }
 
+        [Theory]
+        [InlineData(ReturnRecordService.OnLoanTab)]
+        [InlineData(ReturnRecordService.OverdueTab)]
+        [InlineData(ReturnRecordService.ReturnedTab)]
+        [InlineData(ReturnRecordService.LateTab)]
+        public void Reservation_shaped_item_codes_match_alongside_reservation_ids(string tab)
+        {
+            using var fixture = new SqliteDb();
+            using var db = fixture.Create();
+            var service = ReturnsFor(db, Now);
+            var first = Loan(db, "RSV-999999", Now.AddDays(-2), Now.AddDays(-1), Now.AddDays(-2));
+            var second = Loan(db, "OTHER-ITEM", Now.AddDays(-2), Now.AddDays(-1), Now.AddDays(-2));
+            if (tab == ReturnRecordService.ReturnedTab || tab == ReturnRecordService.LateTab)
+            {
+                var custodian = Staff(db, "CUS-RSV-SEARCH", DomainValues.Roles.Custodian);
+                foreach (var loan in new[] { first, second })
+                {
+                    var result = service.AddReturnRecord(
+                        Form(loan, Now, DomainValues.ReturnConditions.Good, DomainValues.EquipmentStatuses.Available),
+                        custodian.Id);
+                    Assert.True(result.Succeeded, result.Message);
+                }
+            }
+
+            var byItemCode = service.GetReturnRecords(tab, 1, "RSV-999999");
+            Assert.Equal(first.ReservationId, Assert.Single(byItemCode.Items).ReservationId);
+
+            var item = db.EquipmentItems.Single(value => value.ItemCode == "RSV-999999");
+            item.ItemCode = $"RSV-{second.ReservationId}";
+            db.SaveChanges();
+
+            var combined = service.GetReturnRecords(tab, 1, item.ItemCode);
+            Assert.Equal(2, combined.TotalCount);
+            Assert.Equal(new[] { first.ReservationId, second.ReservationId }.OrderBy(value => value),
+                combined.Items.Select(value => value.ReservationId).OrderBy(value => value));
+        }
+
         private static ReturnRecordViewModel Form(ReleaseRecord release, DateTime returnedUtc, string condition, string status, string notes = null) => new()
         {
             ReleaseRecordId = release.ReleaseRecordId,

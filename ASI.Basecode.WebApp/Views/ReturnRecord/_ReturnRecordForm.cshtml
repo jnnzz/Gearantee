@@ -6,13 +6,13 @@
 <div class="inspection-fields form-grid grid gap-4 sm:grid-cols-2">
     <p class="required-legend sm:col-span-2"><span class="required-marker" aria-hidden="true">*</span> Required fields</p>
     <div class="sm:col-span-2">
-        <label asp-for="ActualReturnAt" class="mb-1 block text-sm font-medium">Returned at <span class="required-marker" aria-hidden="true">*</span></label>
+        <label asp-for="ActualReturnAt" class="mb-1 block text-sm font-medium">Returned at <span class="required-marker" data-required-marker aria-hidden="true">*</span></label>
         <input asp-for="ActualReturnAt" asp-format="{0:yyyy-MM-ddTHH:mm}" type="datetime-local" max="@maxLocal" class="input" aria-required="true" />
         <span asp-validation-for="ActualReturnAt" class="field-validation-error"></span>
         <p class="mt-1 text-xs text-gray-500">Dated more than @ReturnInspection.BackdateGraceMinutes minutes ago? Add a note explaining why.</p>
     </div>
     <div>
-        <label asp-for="ReturnedCondition" class="mb-1 block text-sm font-medium">Condition <span class="required-marker" aria-hidden="true">*</span></label>
+        <label asp-for="ReturnedCondition" class="mb-1 block text-sm font-medium">Condition <span class="required-marker" data-required-marker aria-hidden="true">*</span></label>
         <select asp-for="ReturnedCondition" class="input" data-return-condition aria-required="true">
             @foreach (var condition in ReturnInspection.Conditions)
             {
@@ -22,7 +22,7 @@
         <span asp-validation-for="ReturnedCondition" class="field-validation-error"></span>
     </div>
     <div>
-        <label asp-for="ResultingItemStatus" class="mb-1 block text-sm font-medium">Resulting item status <span class="required-marker" aria-hidden="true">*</span></label>
+        <label asp-for="ResultingItemStatus" class="mb-1 block text-sm font-medium">Resulting item status <span class="required-marker" data-required-marker aria-hidden="true">*</span></label>
         <select asp-for="ResultingItemStatus" class="input" data-return-status aria-required="true">
             @foreach (var status in ReturnInspection.ResultingStatuses)
             {
@@ -33,7 +33,7 @@
         <p class="mt-1 text-xs text-gray-500">Only items in Good condition can go back to Available.</p>
     </div>
     <div class="sm:col-span-2">
-        <label asp-for="Notes" class="mb-1 block text-sm font-medium">Inspection notes <span class="required-marker" data-backdate-required hidden aria-hidden="true">*</span></label>
+        <label asp-for="Notes" class="mb-1 block text-sm font-medium">Inspection notes <span class="required-marker" data-required-marker data-backdate-required hidden aria-hidden="true">*</span></label>
         <textarea asp-for="Notes" rows="4" maxlength="1000" class="input" aria-required="false" placeholder="e.g. Scratch on the lid; charger returned"></textarea>
         <span asp-validation-for="Notes" class="field-validation-error"></span>
     </div>
