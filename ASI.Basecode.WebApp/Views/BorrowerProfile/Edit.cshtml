@@ -23,12 +23,13 @@
 
         <form asp-action="Edit" method="post" class="mt-6">
             <div asp-validation-summary="ModelOnly" class="validation-summary-errors" role="alert"></div>
+            <p class="required-legend"><span class="required-marker" data-required-marker aria-hidden="true">*</span> Required fields</p>
             <input type="hidden" name="id" value="@borrowerProfileId" />
             <input type="hidden" name="ConcurrencyStamp" value="@Model.ConcurrencyStamp" />
             <div class="form-grid grid gap-4 sm:grid-cols-2">
                 <div>
-                    <label asp-for="Department" class="mb-1 block text-sm font-medium"></label>
-                    <input asp-for="Department" class="input" />
+                    <label asp-for="Department" class="mb-1 block text-sm font-medium">Department <span class="required-marker" data-required-marker aria-hidden="true">*</span></label>
+                    <input asp-for="Department" class="input" aria-required="true" />
                     <span asp-validation-for="Department" class="field-validation-error"></span>
                 </div>
                 <div>

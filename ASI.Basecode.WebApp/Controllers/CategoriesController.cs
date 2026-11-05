@@ -92,8 +92,8 @@ namespace ASI.Basecode.WebApp.Controllers
                 return Forbid();
             }
 
-            ViewData["Title"] = "Equipments & categories";
-            ViewData["Eyebrow"] = "Master data";
+            ViewData["Title"] = "Equipment & categories";
+            ViewData["Eyebrow"] = "Admin workspace";
             ViewData["SuccessMessage"] = TempData["SuccessMessage"];
             ViewData["ErrorMessage"] = TempData["ErrorMessage"];
 
@@ -453,11 +453,6 @@ namespace ASI.Basecode.WebApp.Controllers
                 return Forbid();
             }
 
-            if (Request.HasFormContentType && Request.Form.TryGetValue(nameof(model.IsActive), out var activeValues))
-            {
-                model.IsActive = activeValues.Any(v => string.Equals(v, "true", StringComparison.OrdinalIgnoreCase));
-            }
-
             if (!ModelState.IsValid)
             {
                 ViewData["Title"] = "Create category";
@@ -518,11 +513,6 @@ namespace ASI.Basecode.WebApp.Controllers
             if (!await _categoryService.CanManageAsync(UserId))
             {
                 return Forbid();
-            }
-
-            if (Request.HasFormContentType && Request.Form.TryGetValue(nameof(model.IsActive), out var activeValues))
-            {
-                model.IsActive = activeValues.Any(v => string.Equals(v, "true", StringComparison.OrdinalIgnoreCase));
             }
 
             if (!ModelState.IsValid)

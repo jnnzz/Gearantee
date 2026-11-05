@@ -1,6 +1,6 @@
 # Bulk account creation (WBS 15.00)
 
-Open **Users & Roles → Import CSV** using an active Administrator account with `user_role.manage`. Download the template from the page, fill it out locally, then select the file and click **Import accounts**.
+Open **Users & Roles → Create account → Import CSV** using an active Administrator account with `user_role.manage`. Download the template from the page, fill it out locally, then select the file and click **Import accounts**. The direct Import URL remains available to authorized administrators.
 
 ## File format
 

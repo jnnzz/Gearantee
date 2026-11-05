@@ -18,6 +18,8 @@ namespace ASI.Basecode.WebApp.TagHelpers
             if (!For.Metadata.IsRequired || For.Metadata.ModelType == typeof(bool) ||
                 Nullable.GetUnderlyingType(For.Metadata.ModelType) == typeof(bool)) return;
 
+            if (output.Content.GetContent().Contains("data-required-marker", StringComparison.Ordinal)) return;
+
             output.Content.AppendHtml("<span class=\"required-marker\" data-required-marker><span aria-hidden=\"true\"> *</span><span class=\"sr-only\"> (required)</span></span>");
         }
     }

@@ -4,7 +4,7 @@
   "scripts": {
     "css:dev": "tailwindcss -i ./wwwroot/css/tailwind.src.css -o ./wwwroot/css/app.css --watch",
     "css:build": "tailwindcss -i ./wwwroot/css/tailwind.src.css -o ./wwwroot/css/app.css --minify && node ./scripts/check-ui-assets.mjs",
-    "test:ui": "node --test ./scripts/shared-ui.test.mjs",
+    "test:ui": "node --test ./scripts/shared-ui.test.mjs ./scripts/equipment-image-upload.test.mjs",
     "vendor:build": "node ./scripts/copy-calendar-assets.mjs",
     "assets:build": "npm run vendor:build && npm run css:build"
   },

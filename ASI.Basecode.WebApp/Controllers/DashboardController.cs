@@ -126,7 +126,7 @@ namespace ASI.Basecode.WebApp.Controllers
             }
 
             ViewData["Title"] = "System overview";
-            ViewData["Eyebrow"] = "Administrator workspace";
+            ViewData["Eyebrow"] = "Admin workspace";
             ViewData["Workspace"] = "Administrator workspace";
             return View(model);
         }
