@@ -146,7 +146,7 @@ namespace ASI.Basecode.Tests.Category
         }
 
         [Fact]
-        public async Task HttpEditEquipment_WithNewImage_ReplacesUrlAndDeletesOldObject()
+        public async Task HttpEditEquipment_WithNewImage_ReplacesUrlAndKeepsPublishedObject()
         {
             await using var site = await CategoryHttpSite.CreateAsync();
             var categoryId = await SeedCategoryAsync(site, "IMG-EDIT");
@@ -166,7 +166,7 @@ namespace ASI.Basecode.Tests.Category
                 "https://fake.supabase.co/storage/v1/object/public/equipment-images/items/upload-001.png",
                 saved.ImageUrl);
             Assert.Single(site.ImageStorage.Uploads);
-            Assert.Equal(new[] { oldUrl }, site.ImageStorage.DeletedUrls);
+            Assert.Empty(site.ImageStorage.DeletedUrls);
         }
 
         [Fact]
@@ -192,7 +192,7 @@ namespace ASI.Basecode.Tests.Category
         }
 
         [Fact]
-        public async Task HttpEditEquipment_RemoveImage_ClearsUrlAndDeletesOldObject()
+        public async Task HttpEditEquipment_RemoveImage_ClearsUrlAndKeepsPublishedObject()
         {
             await using var site = await CategoryHttpSite.CreateAsync();
             var categoryId = await SeedCategoryAsync(site, "IMG-REMOVE");
@@ -211,7 +211,7 @@ namespace ASI.Basecode.Tests.Category
             var saved = await db.EquipmentItems.SingleAsync(item => item.EquipmentId == equipmentId);
             Assert.Null(saved.ImageUrl);
             Assert.Empty(site.ImageStorage.Uploads);
-            Assert.Equal(new[] { oldUrl }, site.ImageStorage.DeletedUrls);
+            Assert.Empty(site.ImageStorage.DeletedUrls);
         }
 
         private static async Task<long> SeedCategoryAsync(CategoryHttpSite site, string code)
@@ -227,6 +227,28 @@ namespace ASI.Basecode.Tests.Category
             db.EquipmentCategories.Add(category);
             await db.SaveChangesAsync();
             return category.CategoryId;
+        }
+
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task Shared_images_survive_another_items_replacement_or_removal(bool removeImage)
+        {
+            await using var site = await CategoryHttpSite.CreateAsync();
+            var categoryId = await SeedCategoryAsync(site, "IMG-SHARED");
+            const string reference = "https://test-project.supabase.co/storage/v1/object/equipment-images/items/shared.png";
+            var first = await SeedItemAsync(site, categoryId, "SHARED-A", reference);
+            await SeedItemAsync(site, categoryId, "SHARED-B", reference);
+            var token = await site.Token($"/Categories/EditEquipment?id={first}");
+            using var form = EditForm(token, first, categoryId, "SHARED-A",
+                imageBytes: removeImage ? null : PngBytes, removeImage: removeImage);
+
+            Assert.Equal(HttpStatusCode.Redirect,
+                (await site.Client.PostAsync("/Categories/EditEquipment", form)).StatusCode);
+            using var scope = site.Environment.Provider.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<AsiBasecodeDBContext>();
+            Assert.Equal(reference, (await db.EquipmentItems.SingleAsync(item => item.ItemCode == "SHARED-B")).ImageUrl);
+            Assert.False(site.ImageStorage.WasDeleted(reference));
         }
 
         private static async Task<long> SeedItemAsync(

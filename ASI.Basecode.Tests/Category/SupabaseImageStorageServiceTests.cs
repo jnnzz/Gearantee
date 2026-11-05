@@ -133,6 +133,83 @@ namespace ASI.Basecode.Tests.Category
         }
 
         [Theory]
+        [InlineData("https://test-project.supabase.co/storage/v1/object/equipment-images/../private-documents/payroll.pdf")]
+        [InlineData("https://test-project.supabase.co/storage/v1/object/equipment-images/items/../../private-documents/payroll.pdf")]
+        [InlineData("https://test-project.supabase.co/storage/v1/object/equipment-images/items/..%2F..%2Fprivate-documents%2Fpayroll.pdf")]
+        [InlineData("https://test-project.supabase.co/storage/v1/object/equipment-images/items/%252e%252e%252fprivate-documents%252fx.png")]
+        [InlineData("https://test-project.supabase.co:8443/storage/v1/object/equipment-images/items/photo.png")]
+        [InlineData("http://test-project.supabase.co/storage/v1/object/equipment-images/items/photo.png")]
+        [InlineData("https://test-project.supabase.co/storage/v1/object/equipment-images/items/photo.png?download=1")]
+        [InlineData("https://test-project.supabase.co/storage/v1/object/equipment-images/items/photo.png#fragment")]
+        [InlineData("https://user@test-project.supabase.co/storage/v1/object/equipment-images/items/photo.png")]
+        public async Task Unsafe_references_never_send_privileged_sign_or_delete_requests(string reference)
+        {
+            var options = Options();
+            var requests = 0;
+            var handler = new StubHandler(_ =>
+            {
+                requests++;
+                return new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+                {
+                    Content = new StringContent("{}")
+                };
+            });
+            var client = new HttpClient(handler) { BaseAddress = new Uri(options.Url + "/") };
+            var service = new SupabaseImageStorageService(
+                client, Microsoft.Extensions.Options.Options.Create(options));
+
+            Assert.Equal(reference, await service.CreateSignedUrlAsync(reference, TimeSpan.FromMinutes(60)));
+            await service.DeleteAsync(reference);
+            Assert.Equal(0, requests);
+        }
+
+        [Theory]
+        [InlineData("network")]
+        [InlineData("timeout")]
+        [InlineData("invalid-json")]
+        [InlineData("non-object")]
+        [InlineData("non-string")]
+        public async Task Signing_failures_return_the_original_reference(string failure)
+        {
+            var options = Options();
+            var handler = new StubHandler(_ => failure switch
+            {
+                "network" => throw new HttpRequestException("Simulated network failure."),
+                "timeout" => throw new TaskCanceledException("Simulated storage timeout."),
+                _ => new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+                {
+                    Content = new StringContent(failure switch
+                    {
+                        "invalid-json" => "<html>Unavailable</html>",
+                        "non-object" => "[]",
+                        _ => "{\"signedURL\":42}"
+                    })
+                }
+            });
+            var client = new HttpClient(handler) { BaseAddress = new Uri(options.Url + "/") };
+            var service = new SupabaseImageStorageService(
+                client, Microsoft.Extensions.Options.Options.Create(options));
+            var reference = service.BuildObjectUrl("items/photo.png");
+
+            Assert.Equal(reference, await service.CreateSignedUrlAsync(reference, TimeSpan.FromMinutes(60)));
+        }
+
+        [Fact]
+        public async Task Signing_preserves_caller_cancellation()
+        {
+            var options = Options();
+            using var cancellation = new CancellationTokenSource();
+            cancellation.Cancel();
+            var client = new HttpClient(new StubHandler(_ => new HttpResponseMessage(System.Net.HttpStatusCode.OK)))
+            { BaseAddress = new Uri(options.Url + "/") };
+            var service = new SupabaseImageStorageService(
+                client, Microsoft.Extensions.Options.Options.Create(options));
+
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(() => service.CreateSignedUrlAsync(
+                service.BuildObjectUrl("items/photo.png"), TimeSpan.FromMinutes(60), cancellation.Token));
+        }
+
+        [Theory]
         [InlineData("https://other.supabase.co/storage/v1/object/public/equipment-images/items/x.png")]
         [InlineData("https://test-project.supabase.co/storage/v1/object/public/other-bucket/items/x.png")]
         [InlineData("https://test-project.supabase.co/storage/v1/object/authenticated/equipment-images/items/x.png")]

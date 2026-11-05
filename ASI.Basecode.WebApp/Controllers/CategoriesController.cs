@@ -276,14 +276,7 @@ namespace ASI.Basecode.WebApp.Controllers
                 return View("EditEquipment", model);
             }
 
-            // Only after the row is committed is the previous object safe to delete. A replace
-            // and a removal both land here; legacy or foreign URLs are ignored by the store.
-            if (!string.IsNullOrEmpty(currentImageUrl) &&
-                !string.Equals(currentImageUrl, model.ImageUrl, StringComparison.Ordinal))
-            {
-                await DeleteImageAsync(currentImageUrl);
-            }
-
+            // Published references can be shared or reused by concurrent edits; keep their objects.
             TempData["SuccessMessage"] = result.Message;
             return RedirectToAction(nameof(Index), new { tab = "equipment" });
         }
