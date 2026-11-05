@@ -16,7 +16,7 @@ This stack applies to the entire Campus Equipment Borrowing & Reservation System
 | User interface | ASP.NET Core MVC with Razor Views | Provides server-rendered pages, forms, tables, dashboards, and role-specific screens. |
 | Styling | Tailwind CSS + minimal custom CSS | Provides responsive utility-based styling without Bootstrap. |
 | Client-side interaction | Vanilla JavaScript | Supports confirmation dialogs, filters, calendar interaction, and small asynchronous updates. |
-| Equipment images | Application file storage + SQL Server image path/URL | Stores image files outside the database while SQL Server stores the relative path or URL. |
+| Equipment images | Supabase Storage (private bucket) | Uploads go to a private Supabase Storage bucket; SQL Server stores the object reference and the app renders short-lived signed URLs. Bucket credentials live in configuration, never in source control. |
 | Calendar | FullCalendar JavaScript library | Displays daily and weekly availability using data supplied by ASP.NET Core endpoints. |
 | Reporting | EF Core queries + MVC Razor Views | Produces filterable borrowing-history, overdue, availability, and inventory reports. |
 | Validation | ASP.NET Core model validation + FluentValidation (optional) | Enforces form and business rules on the server. |

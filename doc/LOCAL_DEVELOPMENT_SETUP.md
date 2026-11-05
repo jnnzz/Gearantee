@@ -116,7 +116,7 @@ The Custodian account receives only the Custodian role. All three `SeedCustodian
 
 ### Configure equipment image storage (optional)
 
-Equipment photos are uploaded to a public Supabase Storage bucket. The equipment forms always show the drag/drop upload control; it is disabled and no uploads are attempted until Supabase is configured. To enable drag-and-drop uploads, create a public bucket named `equipment-images`, then store the project URL and `service_role` key in User Secrets:
+Equipment photos are uploaded to a **private** Supabase Storage bucket and displayed through short-lived signed URLs. The equipment forms always show the drag/drop upload control; it is disabled and no uploads are attempted until Supabase is configured. To enable drag-and-drop uploads, create a **private** bucket named `equipment-images`, then store the project URL and `service_role` key in User Secrets:
 
 ```powershell
 dotnet user-secrets set "Supabase:Url" "https://YOUR-PROJECT.supabase.co" `
@@ -125,7 +125,7 @@ dotnet user-secrets set "Supabase:ServiceRoleKey" "YOUR_SERVICE_ROLE_KEY" `
   --project .\ASI.Basecode.WebApp\ASI.Basecode.WebApp.csproj
 ```
 
-`Supabase:Bucket` defaults to `equipment-images` and `Supabase:MaxFileBytes` defaults to 2 MiB (the bucket must allow at least that size — for example `10 MB`). Never commit the `service_role` key. Production deployments use the `Supabase__Url`, `Supabase__Bucket`, and `Supabase__ServiceRoleKey` environment variables.
+`Supabase:Bucket` defaults to `equipment-images` and `Supabase:MaxFileBytes` defaults to 2 MiB (the bucket must allow at least that size — for example `10 MB`). Keep the bucket **private**; the app signs each stored object with a short-lived URL at render time using the `service_role` key, so images are not publicly readable. Never commit the `service_role` key. Production deployments use the `Supabase__Url`, `Supabase__Bucket`, and `Supabase__ServiceRoleKey` environment variables.
 
 ## 7. Run the website
 

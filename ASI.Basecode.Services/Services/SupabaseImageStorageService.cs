@@ -7,6 +7,8 @@ using System.Globalization;
 using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -21,10 +23,11 @@ namespace ASI.Basecode.Services.Services
     public class SupabaseImageStorageService : IImageStorageService
     {
         private const string StorageObjectTemplate = "storage/v1/object/{0}/{1}";
-        private const string PublicObjectTemplate = "storage/v1/object/public/{0}/{1}";
+        private const string StorageSignTemplate = "storage/v1/object/sign/{0}/{1}";
+        private const string ObjectUrlTemplate = "storage/v1/object/{0}/{1}";
 
-        private static readonly Regex PublicUrlPattern = new(
-            @"^https?://[^/]+/storage/v1/object/public/(?<bucket>[^/]+)/(?<path>.+)$",
+        private static readonly Regex StorageUrlPattern = new(
+            @"^https?://[^/]+/storage/v1/object/(?:public/)?(?<bucket>[^/]+)/(?<path>.+)$",
             RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         private readonly HttpClient _httpClient;
@@ -86,7 +89,62 @@ namespace ASI.Basecode.Services.Services
                     "The image could not be uploaded to storage. Please try again.");
             }
 
-            return BuildPublicUrl(objectPath);
+            return BuildObjectUrl(objectPath);
+        }
+
+        /// <inheritdoc />
+        public async Task<string> CreateSignedUrlAsync(
+            string imageReference,
+            TimeSpan lifetime,
+            CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(imageReference) || !_options.IsConfigured)
+            {
+                return imageReference;
+            }
+
+            var objectPath = TryParseObjectPath(imageReference);
+            if (objectPath == null)
+            {
+                // Legacy external URLs and same-site paths are served as-is.
+                return imageReference;
+            }
+
+            var requestUri = string.Format(
+                CultureInfo.InvariantCulture, StorageSignTemplate, _options.Bucket, objectPath);
+            var expiresIn = (int)Math.Clamp(lifetime.TotalSeconds, 1, 604800);
+            using var request = new HttpRequestMessage(HttpMethod.Post, requestUri);
+            request.Headers.Authorization = new AuthenticationHeaderValue(
+                "Bearer", _options.ServiceRoleKey);
+            request.Content = new StringContent(
+                "{\"expiresIn\":" + expiresIn.ToString(CultureInfo.InvariantCulture) + "}",
+                Encoding.UTF8,
+                "application/json");
+
+            using var response = await _httpClient.SendAsync(request, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger?.LogWarning(
+                    "Supabase signed URL request failed with status {StatusCode} for object {ObjectPath}.",
+                    (int)response.StatusCode,
+                    objectPath);
+                return imageReference;
+            }
+
+            using var payload = JsonDocument.Parse(
+                await response.Content.ReadAsStringAsync(cancellationToken));
+            if (!payload.RootElement.TryGetProperty("signedURL", out var signed) ||
+                string.IsNullOrWhiteSpace(signed.GetString()))
+            {
+                return imageReference;
+            }
+
+            // Supabase returns a path relative to the Storage API root (e.g.
+            // "/object/sign/{bucket}/{path}?token=..."); the client prepends "/storage/v1".
+            var signedPath = signed.GetString();
+            return signedPath.StartsWith("http", StringComparison.OrdinalIgnoreCase)
+                ? signedPath
+                : _options.Url.TrimEnd('/') + "/storage/v1/" + signedPath.TrimStart('/');
         }
 
         /// <inheritdoc />
@@ -137,10 +195,10 @@ namespace ASI.Basecode.Services.Services
             return new Uri(relativePath, UriKind.RelativeOrAbsolute);
         }
 
-        /// <summary>Public URL for an object path, exposed for tests.</summary>
-        public string BuildPublicUrl(string objectPath) => string.Format(
+        /// <summary>Stable object reference URL for a path, exposed for tests.</summary>
+        public string BuildObjectUrl(string objectPath) => string.Format(
             CultureInfo.InvariantCulture,
-            PublicObjectTemplate,
+            ObjectUrlTemplate,
             _options.Bucket,
             objectPath).Insert(0, _options.Url.TrimEnd('/') + "/");
 
@@ -164,7 +222,7 @@ namespace ASI.Basecode.Services.Services
                 return null;
             }
 
-            var match = PublicUrlPattern.Match(publicUrl);
+            var match = StorageUrlPattern.Match(publicUrl);
             if (!match.Success ||
                 !string.Equals(
                     match.Groups["bucket"].Value,

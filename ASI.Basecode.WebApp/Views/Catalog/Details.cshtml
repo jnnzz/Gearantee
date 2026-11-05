@@ -1,5 +1,6 @@
 @model ASI.Basecode.Services.ServiceModels.Catalog.CatalogItemDetailsViewModel
 @using ASI.Basecode.WebApp.Models.Dashboard
+@inject ASI.Basecode.Services.Interfaces.IImageStorageService ImageStorage
 @{
     string OrDash(string value) => string.IsNullOrWhiteSpace(value) ? "—" : value;
     var statusLabel = Model.AvailabilityStatus == DomainValues.EquipmentStatuses.Borrowed ? "Borrowed" : "Available";
@@ -15,7 +16,8 @@
     <section aria-label="Equipment details" class="surface">
         @if (!string.IsNullOrWhiteSpace(Model.ImageUrl))
         {
-            <img src="@Model.ImageUrl" alt="@Model.ItemName" class="detail-image" />
+            var imageSrc = await ImageStorage.CreateSignedUrlAsync(Model.ImageUrl, System.TimeSpan.FromMinutes(60));
+            <img src="@imageSrc" alt="@Model.ItemName" class="detail-image" />
         }
         else
         {

@@ -16,16 +16,14 @@ namespace ASI.Basecode.Tests.Category
 {
     /// <summary>
     /// End-to-end coverage for the equipment image upload path: the controller validates the
-    /// file, uploads through IImageStorageService, persists only the public URL, and cleans up
-    /// orphaned or replaced objects. Storage is the offline FakeImageStorageService.
+    /// file, uploads through IImageStorageService, persists the stable object reference, and
+    /// cleans up orphaned or replaced objects. Storage is the offline FakeImageStorageService.
     /// </summary>
     public class EquipmentImageUploadHttpTests
     {
-        private static readonly byte[] PngBytes =
-        {
-            0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A,
-            0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44, 0x52
-        };
+        // A real, decodable 1x1 PNG so server-side decode/dimension validation passes.
+        private static readonly byte[] PngBytes = Convert.FromBase64String(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=");
 
         [Fact]
         public async Task HttpCreateEquipment_UploadsImage_AndPersistsPublicUrl()

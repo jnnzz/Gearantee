@@ -4,6 +4,8 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using System;
 using System.IO;
+using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -40,23 +42,94 @@ namespace ASI.Basecode.Tests.Category
         }
 
         [Fact]
-        public void BuildPublicUrl_CombinesProjectUrlBucketAndPath()
+        public void BuildObjectUrl_CombinesProjectUrlBucketAndPath()
         {
             var service = Service(Options());
-            var url = service.BuildPublicUrl("items/abc123.png");
+            var url = service.BuildObjectUrl("items/abc123.png");
 
             Assert.Equal(
-                "https://test-project.supabase.co/storage/v1/object/public/equipment-images/items/abc123.png",
+                "https://test-project.supabase.co/storage/v1/object/equipment-images/items/abc123.png",
                 url);
         }
 
         [Fact]
-        public void TryParseObjectPath_ExtractsPathFromOurPublicUrls()
+        public void TryParseObjectPath_ExtractsPathFromOurObjectUrls()
         {
             var service = Service(Options());
-            var url = service.BuildPublicUrl("items/abc123.png");
+            var url = service.BuildObjectUrl("items/abc123.png");
 
             Assert.Equal("items/abc123.png", service.TryParseObjectPath(url));
+        }
+
+        [Fact]
+        public void TryParseObjectPath_StillExtractsLegacyPublicUrls()
+        {
+            var service = Service(Options());
+
+            Assert.Equal(
+                "items/legacy.png",
+                service.TryParseObjectPath(
+                    "https://test-project.supabase.co/storage/v1/object/public/equipment-images/items/legacy.png"));
+        }
+
+        [Fact]
+        public async Task CreateSignedUrlAsync_ReturnsSignedUrlForManagedObject()
+        {
+            var options = Options();
+            HttpRequestMessage captured = null;
+            var handler = new StubHandler(request =>
+            {
+                captured = request;
+                return new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+                {
+                    Content = new StringContent(
+                        "{\"signedURL\":\"/object/sign/equipment-images/items/abc123.png?token=xyz\"}")
+                };
+            });
+            var client = new HttpClient(handler)
+            {
+                BaseAddress = new Uri(options.Url.TrimEnd('/') + "/")
+            };
+            var service = new SupabaseImageStorageService(
+                client, Microsoft.Extensions.Options.Options.Create(options),
+                NullLogger<SupabaseImageStorageService>.Instance);
+
+            var signed = await service.CreateSignedUrlAsync(
+                service.BuildObjectUrl("items/abc123.png"), TimeSpan.FromMinutes(60));
+
+            Assert.Equal(
+                "https://test-project.supabase.co/storage/v1/object/sign/equipment-images/items/abc123.png?token=xyz",
+                signed);
+            Assert.Equal(HttpMethod.Post, captured.Method);
+            Assert.Equal(
+                "https://test-project.supabase.co/storage/v1/object/sign/equipment-images/items/abc123.png",
+                captured.RequestUri.ToString());
+        }
+
+        [Fact]
+        public async Task CreateSignedUrlAsync_PassesThroughForeignAndSameSiteUrls()
+        {
+            var service = Service(Options());
+
+            Assert.Equal(
+                "/img/legacy/projector.jpg",
+                await service.CreateSignedUrlAsync("/img/legacy/projector.jpg", TimeSpan.FromMinutes(60)));
+            Assert.Equal(
+                "https://example.com/photo.jpg",
+                await service.CreateSignedUrlAsync("https://example.com/photo.jpg", TimeSpan.FromMinutes(60)));
+        }
+
+        private sealed class StubHandler : HttpMessageHandler
+        {
+            private readonly Func<HttpRequestMessage, HttpResponseMessage> _responder;
+
+            public StubHandler(Func<HttpRequestMessage, HttpResponseMessage> responder) =>
+                _responder = responder;
+
+            protected override Task<HttpResponseMessage> SendAsync(
+                HttpRequestMessage request,
+                CancellationToken cancellationToken) =>
+                Task.FromResult(_responder(request));
         }
 
         [Theory]

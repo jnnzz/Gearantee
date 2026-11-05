@@ -1,3 +1,4 @@
+using SkiaSharp;
 using System;
 using System.IO;
 using System.Linq;
@@ -6,12 +7,14 @@ namespace ASI.Basecode.Services.Utilities
 {
     /// <summary>
     /// Authoritative image validation for uploads: extension, content type, magic bytes,
-    /// and size. The client's declared content type is never trusted. GIF is deliberately
-    /// not supported. All checks run on the stream without buffering the whole file.
+    /// size, and a header decode that enforces maximum dimensions and pixel count. The
+    /// client's declared content type is never trusted. GIF is deliberately not supported.
     /// </summary>
     public static class ImageUploadValidation
     {
         public const long DefaultMaxFileBytes = 2 * 1024 * 1024;
+        public const int MaxDimension = 6000;
+        public const long MaxPixels = 8_000_000;
 
         private static readonly string[] AllowedExtensions =
             { ".jpg", ".jpeg", ".png", ".webp" };
@@ -79,6 +82,45 @@ namespace ASI.Basecode.Services.Utilities
             {
                 return ImageValidationResult.Invalid(
                     "The file's contents do not match its image type.");
+            }
+
+            // Decode the image header to confirm it is a real, parseable image and to
+            // bound the dimensions. SKCodec reads only the header, so a malformed or
+            // oversized image is rejected without allocating the full pixel buffer.
+            try
+            {
+                content.Seek(0, SeekOrigin.Begin);
+                using var buffered = new MemoryStream();
+                content.CopyTo(buffered);
+                using var data = SKData.CreateCopy(buffered.ToArray());
+                using var codec = SKCodec.Create(data);
+                if (codec == null ||
+                    (codec.EncodedFormat != SKEncodedImageFormat.Jpeg &&
+                     codec.EncodedFormat != SKEncodedImageFormat.Png &&
+                     codec.EncodedFormat != SKEncodedImageFormat.Webp))
+                {
+                    return ImageValidationResult.Invalid(
+                        "That file is not a valid JPEG, PNG, or WebP image.");
+                }
+
+                var info = codec.Info;
+                if (info.Width <= 0 || info.Height <= 0)
+                {
+                    return ImageValidationResult.Invalid(
+                        "That file is not a valid JPEG, PNG, or WebP image.");
+                }
+
+                if (info.Width > MaxDimension || info.Height > MaxDimension ||
+                    (long)info.Width * info.Height > MaxPixels)
+                {
+                    return ImageValidationResult.Invalid(
+                        $"Image dimensions must be at most {MaxDimension} pixels per side and {MaxPixels / 1_000_000} megapixels total.");
+                }
+            }
+            catch (Exception)
+            {
+                return ImageValidationResult.Invalid(
+                    "That file is not a valid JPEG, PNG, or WebP image.");
             }
 
             content.Seek(0, SeekOrigin.Begin);

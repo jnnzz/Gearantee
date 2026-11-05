@@ -1,4 +1,5 @@
 ﻿using ASI.Basecode.Services.Utilities;
+using SkiaSharp;
 using System.IO;
 using System.Text;
 using Xunit;
@@ -9,22 +10,25 @@ namespace ASI.Basecode.Tests.Category
     {
         private static Stream StreamOf(params byte[] bytes) => new MemoryStream(bytes);
 
-        private static byte[] HeaderFor(string contentType)
+        private static byte[] Encode(string contentType, int width = 1, int height = 1)
         {
-            switch (contentType)
+            using var bitmap = new SKBitmap(
+                new SKImageInfo(width, height, SKColorType.Rgba8888, SKAlphaType.Premul));
+            bitmap.Erase(SKColors.CornflowerBlue);
+            using var image = SKImage.FromBitmap(bitmap);
+            var format = contentType switch
             {
-                case "image/jpeg": return JpegHeader;
-                case "image/png": return PngHeader;
-                case "image/webp": return WebPHeader;
-                default: return PngHeader;
-            }
+                "image/jpeg" => SKEncodedImageFormat.Jpeg,
+                "image/webp" => SKEncodedImageFormat.Webp,
+                _ => SKEncodedImageFormat.Png,
+            };
+            using var data = image.Encode(format, 100);
+            return data.ToArray();
         }
 
         private static readonly byte[] JpegHeader = { 0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10 };
         private static readonly byte[] PngHeader =
             { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D };
-        private static readonly byte[] WebPHeader =
-            { 0x52, 0x49, 0x46, 0x46, 0x24, 0x00, 0x00, 0x00, 0x57, 0x45, 0x42, 0x50 };
 
         [Theory]
         [InlineData("photo.jpg", "image/jpeg")]
@@ -33,12 +37,33 @@ namespace ASI.Basecode.Tests.Category
         [InlineData("photo.webp", "image/webp")]
         public void Validate_AcceptsEachSupportedFormat(string fileName, string contentType)
         {
-            using var stream = StreamOf(HeaderFor(contentType));
+            using var stream = StreamOf(Encode(contentType));
             var result = ImageUploadValidation.Validate(stream, fileName, contentType);
 
             Assert.True(result.IsValid, result.Error);
             Assert.Equal(contentType, result.ContentType);
             Assert.Equal(0, stream.Position);
+        }
+
+        [Fact]
+        public void Validate_RejectsImageBeyondMaxDimension()
+        {
+            using var stream = StreamOf(
+                Encode("image/png", ImageUploadValidation.MaxDimension + 1, 1));
+            var result = ImageUploadValidation.Validate(stream, "photo.png", "image/png");
+
+            Assert.False(result.IsValid);
+            Assert.Contains("dimensions", result.Error);
+        }
+
+        [Fact]
+        public void Validate_RejectsImageBeyondMaxPixels()
+        {
+            using var stream = StreamOf(Encode("image/png", 6000, 1400));
+            var result = ImageUploadValidation.Validate(stream, "photo.png", "image/png");
+
+            Assert.False(result.IsValid);
+            Assert.Contains("dimensions", result.Error);
         }
 
         [Theory]
@@ -104,6 +129,5 @@ namespace ASI.Basecode.Tests.Category
             Assert.False(ImageUploadValidation.IsAllowedExtension("a.gif"));
             Assert.False(ImageUploadValidation.IsAllowedExtension("a.svg"));
         }
-
-            }
+    }
 }

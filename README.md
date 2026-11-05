@@ -57,7 +57,7 @@ dotnet user-secrets --project .\ASI.Basecode.WebApp\ASI.Basecode.WebApp.csproj s
 dotnet user-secrets --project .\ASI.Basecode.WebApp\ASI.Basecode.WebApp.csproj set "Brevo:SenderEmail" "your-verified-email@example.com"
 ```
 
-Equipment images are uploaded to Supabase Storage when it is configured. Create a public bucket (`equipment-images` by default) and store the project URL and `service_role` key locally with User Secrets. The register/edit forms always show the drag/drop upload control; it stays disabled (no uploads attempted) until Supabase is configured. Never commit the `service_role` key:
+Equipment images are uploaded to a **private** Supabase Storage bucket when it is configured, and displayed through short-lived signed URLs. Create a private bucket (`equipment-images` by default) and store the project URL and `service_role` key locally with User Secrets. The register/edit forms always show the drag/drop upload control; it stays disabled (no uploads attempted) until Supabase is configured. Never commit the `service_role` key:
 
 ```powershell
 dotnet user-secrets --project .\ASI.Basecode.WebApp\ASI.Basecode.WebApp.csproj set "Supabase:Url" "https://YOUR-PROJECT.supabase.co"

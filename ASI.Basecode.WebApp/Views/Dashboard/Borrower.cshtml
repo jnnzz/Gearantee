@@ -1,6 +1,7 @@
 @model ASI.Basecode.Services.ServiceModels.Dashboard.BorrowerDashboardModel
 @using ASI.Basecode.Services.Utilities
 @using ASI.Basecode.WebApp.Models.Dashboard
+@inject ASI.Basecode.Services.Interfaces.IImageStorageService ImageStorage
 
 <section class="borrower-summary" aria-label="Borrower summary">
     <partial name="Components/_KpiTile" model="@(new KpiTileModel { Label = "On loan now", Value = Model.ActiveLoanCount, Status = "Borrowed", Caption = Model.CurrentLoans.FirstOrDefault()?.ItemName ?? "No equipment currently on loan" })" />
@@ -53,7 +54,8 @@
                     <article class="loan-card">
                         @if (!string.IsNullOrWhiteSpace(loan.ImageUrl))
                         {
-                            <img src="@loan.ImageUrl" alt="@loan.ItemName" class="detail-image" />
+                            var imageSrc = await ImageStorage.CreateSignedUrlAsync(loan.ImageUrl, System.TimeSpan.FromMinutes(60));
+                            <img src="@imageSrc" alt="@loan.ItemName" class="detail-image" />
                         }
                         else
                         {

@@ -37,14 +37,23 @@ namespace ASI.Basecode.Tests.Common
             return Task.FromResult($"https://fake.supabase.co/storage/v1/object/public/equipment-images/items/upload-{_counter:D3}.png");
         }
 
-        public Task DeleteAsync(string publicUrl, CancellationToken cancellationToken = default)
+        public Task DeleteAsync(string imageReference, CancellationToken cancellationToken = default)
         {
-            if (!string.IsNullOrWhiteSpace(publicUrl))
+            if (!string.IsNullOrWhiteSpace(imageReference))
             {
-                DeletedUrls.Add(publicUrl);
+                DeletedUrls.Add(imageReference);
             }
 
             return Task.CompletedTask;
+        }
+
+        public Task<string> CreateSignedUrlAsync(
+            string imageReference,
+            TimeSpan lifetime,
+            CancellationToken cancellationToken = default)
+        {
+            // Offline: the stored reference is already a usable absolute URL for tests.
+            return Task.FromResult(imageReference);
         }
 
         public int DeleteCount => DeletedUrls.Count;
