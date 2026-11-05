@@ -3,23 +3,24 @@
 <div class="role-page form-layout">
     <a asp-action="Index" class="mb-5 inline-flex text-sm font-semibold text-primary-strong underline underline-offset-4">← Back to categories</a>
     <section class="surface">
-        <h2 class="font-display text-2xl font-semibold">Create equipment category</h2>
+        <h2 class="font-display text-xl font-semibold">Category details</h2>
         <p class="mt-1 text-sm text-gray-500">Categories classify equipment items for catalog discovery, availability schedules, and inventory tracking.</p>
         
         <form asp-action="Create" method="post" class="mt-6">
             <div asp-validation-summary="ModelOnly" class="validation-summary-errors" role="alert"></div>
+            <p class="required-legend"><span class="required-marker" data-required-marker aria-hidden="true">*</span> Required fields</p>
             
             <div class="form-grid grid gap-4 sm:grid-cols-2">
                 <div>
-                    <label asp-for="CategoryCode" class="mb-1 block text-sm font-medium"></label>
-                    <input asp-for="CategoryCode" class="input uppercase" placeholder="e.g. LAP" autocomplete="off" />
+                    <label asp-for="CategoryCode" class="mb-1 block text-sm font-medium">Category code <span class="required-marker" data-required-marker aria-hidden="true">*</span></label>
+                    <input asp-for="CategoryCode" class="input uppercase" placeholder="e.g. LAP" autocomplete="off" aria-required="true" />
                     <span asp-validation-for="CategoryCode" class="field-validation-error"></span>
                     <p class="mt-1 text-xs text-gray-500">Short unique code used for grouping equipment inventory.</p>
                 </div>
 
                 <div>
-                    <label asp-for="CategoryName" class="mb-1 block text-sm font-medium"></label>
-                    <input asp-for="CategoryName" class="input" placeholder="e.g. Laptops" autocomplete="off" />
+                    <label asp-for="CategoryName" class="mb-1 block text-sm font-medium">Category name <span class="required-marker" data-required-marker aria-hidden="true">*</span></label>
+                    <input asp-for="CategoryName" class="input" placeholder="e.g. Laptops" autocomplete="off" aria-required="true" />
                     <span asp-validation-for="CategoryName" class="field-validation-error"></span>
                 </div>
 
@@ -29,13 +30,7 @@
                     <span asp-validation-for="Description" class="field-validation-error"></span>
                 </div>
 
-                <div class="sm:col-span-2">
-                    <label class="inline-flex items-center gap-2 cursor-pointer">
-                        <input asp-for="IsActive" type="checkbox" class="size-4 accent-primary-strong" />
-                        <span class="text-sm font-medium text-gray-700">Active category</span>
-                    </label>
-                    <p class="mt-1 text-xs text-gray-500">Active categories are available when cataloging new equipment items.</p>
-                </div>
+                <p class="sm:col-span-2 rounded-xl bg-tint-soft px-4 py-3 text-sm text-primary-strong">New categories are active and available for equipment registration. You can change their status from the category list.</p>
             </div>
 
             <div class="mt-6 flex flex-wrap justify-end gap-3 border-t border-gray-100 pt-5">

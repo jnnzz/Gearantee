@@ -10,6 +10,7 @@ using ASI.Basecode.Tests.Dashboard;
 using ASI.Basecode.WebApp.Controllers;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -124,6 +125,7 @@ namespace ASI.Basecode.Tests.Returns
                     });
                     builder.Logging.ClearProviders();
                     builder.WebHost.UseUrls("http://127.0.0.1:0");
+                    builder.Services.AddDataProtection().UseEphemeralDataProtectionProvider();
                     builder.Services.AddDbContext<SqliteDashboardDbContext>(options => options.UseSqlite(site._sqlite.Connection));
                     builder.Services.AddScoped<AsiBasecodeDBContext>(provider => provider.GetRequiredService<SqliteDashboardDbContext>());
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();

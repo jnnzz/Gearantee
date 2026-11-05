@@ -5,6 +5,7 @@ using ASI.Basecode.Data.Interfaces;
 using ASI.Basecode.Data.Repositories;
 using ASI.Basecode.Services.Interfaces;
 using ASI.Basecode.Services.Services;
+using ASI.Basecode.WebApp.Services.EquipmentImages;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
@@ -49,6 +50,10 @@ namespace ASI.Basecode.WebApp
 
             _services.AddScoped<ICategoryService, CategoryService>();
             _services.AddScoped<IEquipmentItemService, EquipmentItemService>();
+            _services.Configure<EquipmentImageStorageOptions>(
+                Configuration.GetSection(EquipmentImageStorageOptions.SectionName));
+            _services.AddSingleton<IEquipmentImageStorage, EquipmentImageStorage>();
+            _services.AddHostedService<EquipmentImageStagingCleanupService>();
             _services.AddScoped<IAvailabilityCalendarService, AvailabilityCalendarService>();
 
             // Repositories

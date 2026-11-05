@@ -1,9 +1,13 @@
 @model ASI.Basecode.Services.ServiceModels.EquipmentItem.EquipmentItemFormViewModel
 
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin-inventory.css" asp-append-version="true" />
+}
+
 <div class="role-page form-layout form-layout--wide">
     <a asp-action="Index" asp-route-tab="equipment" class="mb-5 inline-flex text-sm font-semibold text-primary-strong underline underline-offset-4">&larr; Back to equipment items</a>
     <section class="surface">
-        <h2 class="font-display text-2xl font-semibold">Register equipment item</h2>
+        <h2 class="font-display text-xl font-semibold">Item details</h2>
         <p class="mt-1 text-sm text-gray-500">Add an individually tracked item to the equipment inventory.</p>
 
         @if (Model.Categories.Count == 0)
@@ -14,7 +18,7 @@
             </div>
         }
 
-        <form asp-action="CreateEquipment" method="post" class="mt-6">
+        <form asp-action="CreateEquipment" method="post" enctype="multipart/form-data" class="mt-6">
             @Html.AntiForgeryToken()
             <div asp-validation-summary="ModelOnly" class="validation-summary-errors" role="alert"></div>
             @await Html.PartialAsync("_EquipmentItemFields", Model)
@@ -28,4 +32,5 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/equipment-image-upload.js" asp-append-version="true"></script>
 }

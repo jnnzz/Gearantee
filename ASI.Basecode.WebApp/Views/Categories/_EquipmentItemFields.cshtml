@@ -1,20 +1,26 @@
 @model ASI.Basecode.Services.ServiceModels.EquipmentItem.EquipmentItemFormViewModel
+@{
+    var imagePreviewUrl = !string.IsNullOrWhiteSpace(Model.UploadedImageUrl)
+        ? Model.UploadedImageUrl
+        : Model.CurrentImageUrl;
+}
 
+<p class="required-legend"><span class="required-marker" data-required-marker aria-hidden="true">*</span> Required fields</p>
 <div class="form-grid grid gap-4 sm:grid-cols-2">
     <div>
-        <label asp-for="ItemCode" class="mb-1 block text-sm font-medium"></label>
-        <input asp-for="ItemCode" class="input uppercase" placeholder="e.g. EQ-PJ-003" autocomplete="off" />
+        <label asp-for="ItemCode" class="mb-1 block text-sm font-medium">Item code <span class="required-marker" data-required-marker aria-hidden="true">*</span></label>
+        <input asp-for="ItemCode" class="input uppercase" placeholder="e.g. EQ-PJ-003" autocomplete="off" aria-required="true" />
         <span asp-validation-for="ItemCode" class="field-validation-error"></span>
     </div>
     <div>
-        <label asp-for="ItemName" class="mb-1 block text-sm font-medium"></label>
-        <input asp-for="ItemName" class="input" placeholder="e.g. Portable projector" />
+        <label asp-for="ItemName" class="mb-1 block text-sm font-medium">Item name <span class="required-marker" data-required-marker aria-hidden="true">*</span></label>
+        <input asp-for="ItemName" class="input" placeholder="e.g. Portable projector" aria-required="true" />
         <span asp-validation-for="ItemName" class="field-validation-error"></span>
     </div>
 
     <div>
-        <label asp-for="CategoryId" class="mb-1 block text-sm font-medium"></label>
-        <select asp-for="CategoryId" class="input">
+        <label asp-for="CategoryId" class="mb-1 block text-sm font-medium">Category <span class="required-marker" data-required-marker aria-hidden="true">*</span></label>
+        <select asp-for="CategoryId" class="input" aria-required="true">
             <option value="0">Choose a category</option>
             @foreach (var category in Model.Categories)
             {
@@ -28,8 +34,8 @@
         }
     </div>
     <div>
-        <label asp-for="Location" class="mb-1 block text-sm font-medium"></label>
-        <input asp-for="Location" class="input" placeholder="e.g. Main Store, Shelf A2" />
+        <label asp-for="Location" class="mb-1 block text-sm font-medium">Storage location <span class="required-marker" data-required-marker aria-hidden="true">*</span></label>
+        <input asp-for="Location" class="input" placeholder="e.g. Main Store, Shelf A2" aria-required="true" />
         <span asp-validation-for="Location" class="field-validation-error"></span>
     </div>
 
@@ -44,11 +50,44 @@
         <span asp-validation-for="ModelName" class="field-validation-error"></span>
     </div>
 
-    <div class="sm:col-span-2">
-        <label asp-for="ImageUrl" class="mb-1 block text-sm font-medium"></label>
-        <input asp-for="ImageUrl" class="input" type="text" inputmode="url" autocomplete="off" placeholder="https://example.com/projector.jpg or /img/projector.jpg" />
-        <span asp-validation-for="ImageUrl" class="field-validation-error"></span>
-        <p class="mt-1 text-xs text-gray-500">Optional. Use an HTTPS image URL or a path on this site.</p>
+    <div class="equipment-image-upload-field sm:col-span-2" data-equipment-image-upload>
+        <span class="mb-1 block text-sm font-medium">Equipment image <span class="text-xs font-normal text-gray-500">(optional)</span></span>
+        <input asp-for="UploadedImageUrl" type="hidden" />
+        <input asp-for="CurrentImageUrl" type="hidden" />
+        <div class="equipment-image-upload" data-drop-zone>
+            <input id="imageFile" name="imageFile" type="file" accept=".jpg,.jpeg,.png,image/jpeg,image/png" class="equipment-image-input" aria-describedby="image-upload-help image-upload-status image-upload-error" />
+            <div class="equipment-image-upload-content">
+                <div class="equipment-image-upload-icon" aria-hidden="true">↑</div>
+                <div>
+                    <p class="font-medium text-ink">Drag an image here, or <label for="imageFile" class="equipment-image-browse">browse files</label></p>
+                    <p id="image-upload-help" class="mt-1 text-xs text-gray-500">JPEG or PNG, up to 5,000,000 bytes. Maximum 6,000 px per side and 8 megapixels.</p>
+                    <p id="image-upload-status" class="mt-1 text-xs text-gray-500" role="status" aria-live="polite">No new image selected.</p>
+                </div>
+            </div>
+        </div>
+        <div class="equipment-image-actions" data-image-actions hidden>
+            <button type="button" class="btn-secondary" data-clear-image>Clear selected image</button>
+        </div>
+        <span asp-validation-for="UploadedImageUrl" class="field-validation-error"></span>
+        @Html.ValidationMessage("imageFile", "", new { @class = "field-validation-error", id = "image-upload-error", role = "alert", data_upload_error = "" })
+        <div class="equipment-image-preview" data-image-preview-container @((string.IsNullOrWhiteSpace(imagePreviewUrl) || Model.RemoveImage) ? "hidden" : null)>
+            <img data-image-preview src="@imagePreviewUrl" alt="Equipment image preview" />
+            <span data-image-preview-caption>@(!string.IsNullOrWhiteSpace(Model.UploadedImageUrl) ? "Selected image" : "Current image")</span>
+        </div>
+        <div class="mt-3">
+            <label asp-for="ImageUrl" class="mb-1 block text-sm font-medium">Or enter an image URL <span class="text-xs font-normal text-gray-500">(optional)</span></label>
+            <input asp-for="ImageUrl" type="text" inputmode="url" autocomplete="off" class="input" placeholder="https://example.com/equipment.jpg or /images/equipment.jpg" aria-describedby="image-url-help" />
+            <span asp-validation-for="ImageUrl" class="field-validation-error"></span>
+            <p id="image-url-help" class="mt-1 text-xs text-gray-500">An uploaded file takes precedence over this URL. Only HTTPS URLs and same-site paths are accepted. When editing, leave the URL unchanged or blank to keep the current image; Remove current image takes precedence if checked.</p>
+        </div>
+        @if (!string.IsNullOrWhiteSpace(Model.CurrentImageUrl))
+        {
+            <label class="equipment-image-remove mt-3 inline-flex items-center gap-2 text-sm">
+                <input asp-for="RemoveImage" type="checkbox" />
+                Remove current image
+            </label>
+            <span asp-validation-for="RemoveImage" class="field-validation-error"></span>
+        }
     </div>
 
     <div>
@@ -58,8 +97,8 @@
         <p class="mt-1 text-xs text-gray-500">Leave blank if the item has no serial number. Entered serial numbers must be unique.</p>
     </div>
     <div>
-        <label asp-for="ConditionStatus" class="mb-1 block text-sm font-medium"></label>
-        <select asp-for="ConditionStatus" class="input">
+        <label asp-for="ConditionStatus" class="mb-1 block text-sm font-medium">Condition <span class="required-marker" data-required-marker aria-hidden="true">*</span></label>
+        <select asp-for="ConditionStatus" class="input" aria-required="true">
             <option value="@DomainValues.ReturnConditions.Good">Good</option>
             <option value="@DomainValues.ReturnConditions.Damaged">Damaged</option>
             <option value="@DomainValues.ReturnConditions.NeedsInspection">Needs inspection</option>
@@ -69,8 +108,8 @@
     </div>
 
     <div>
-        <label asp-for="ItemStatus" class="mb-1 block text-sm font-medium"></label>
-        <select asp-for="ItemStatus" class="input">
+        <label asp-for="ItemStatus" class="mb-1 block text-sm font-medium">Item status <span class="required-marker" data-required-marker aria-hidden="true">*</span></label>
+        <select asp-for="ItemStatus" class="input" aria-required="true">
             <option value="@DomainValues.EquipmentStatuses.Available">Available</option>
             <option value="@DomainValues.EquipmentStatuses.UnderMaintenance">Under maintenance</option>
             <option value="@DomainValues.EquipmentStatuses.Unavailable">Unavailable</option>

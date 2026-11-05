@@ -42,6 +42,44 @@ namespace ASI.Basecode.Tests.UiMigration
                 "/BorrowingHistory/Index", "/AvailabilityCalendar/Index"
             };
             foreach (var path in adminPaths) await Check(admin, path);
+
+            var adminDashboardHtml = await Check(admin, "/Dashboard/Administrator");
+            Assert.Contains("admin-dashboard-caption", adminDashboardHtml);
+            Assert.Contains("Inventory by category", adminDashboardHtml);
+            Assert.DoesNotContain("Shortcuts", adminDashboardHtml);
+            var equipmentManagementHtml = await Check(admin, "/Categories/Index?tab=categories");
+            Assert.Contains("Equipment &amp; categories", equipmentManagementHtml);
+            var createEquipmentHtml = await Check(admin, "/Categories/CreateEquipment");
+            Assert.Contains("data-clear-image", createEquipmentHtml);
+
+            var userEditHtml = await Check(admin, $"/Users/Edit?id={site.BorrowerId}");
+            Assert.Contains("class=\"btn-danger\"", userEditHtml);
+            Assert.Contains("class=\"status-badge status-success\">Active</span>", userEditHtml);
+            var usersIndexHtml = await Check(admin, "/Users/Index");
+            Assert.Single(Regex.Matches(usersIndexHtml, "id=\"user-search\" name=\"search\""));
+            var topbar = Regex.Match(usersIndexHtml, "<header class=\"workspace-topbar\">.*?</header>", RegexOptions.Singleline);
+            Assert.True(topbar.Success);
+            Assert.DoesNotContain("type=\"search\"", topbar.Value);
+            Assert.Single(Regex.Matches(usersIndexHtml, "<h1\\b", RegexOptions.IgnoreCase));
+            var appStyles = await admin.GetStringAsync("/css/app.css");
+            Assert.Contains(".ui-refresh .text-link{color:var(--ui-link)}", appStyles);
+            Assert.Contains("--ui-link:#a8cff4", appStyles);
+            Assert.Contains(".ui-refresh .status-badge.status-success{background:var(--ui-success-bg);color:var(--ui-success-text)}", appStyles);
+            Assert.Contains(".ui-refresh .status-badge.status-danger{background:var(--ui-danger-bg);color:var(--ui-danger-text)}", appStyles);
+            Assert.Contains(".ui-refresh .btn-danger", appStyles);
+            Assert.Contains("--ui-danger-text:#ffb8b3", appStyles);
+            Assert.Contains(".ui-refresh :is(a,button):focus-visible", appStyles);
+            Assert.Contains(".ui-refresh .input:focus{border-color:var(--ui-link);outline:2px solid var(--ui-link);outline-offset:1px}", appStyles);
+            Assert.Contains(".ui-refresh .user-filters{grid-template-columns:minmax(180px,1.5fr) repeat(2,minmax(120px,1fr)) auto}", appStyles);
+            Assert.Contains("@media (max-width:767px)", appStyles);
+            Assert.Contains(".ui-refresh .user-filters>input{grid-column:1/-1}", appStyles);
+            Assert.Contains("@media (max-width:599px)", appStyles);
+            Assert.Contains(".ui-refresh .user-filters{grid-template-columns:minmax(0,1fr)}", appStyles);
+            var inventoryStyles = await admin.GetStringAsync("/css/admin-inventory.css");
+            Assert.Contains(".equipment-image-upload:focus-within { outline: 3px solid var(--ui-link); outline-offset: 3px; }", inventoryStyles);
+            Assert.Contains(".admin-operations-grid { align-items: stretch; }", inventoryStyles);
+            Assert.Contains("repeat(auto-fit, minmax(min(100%, 150px), 1fr))", inventoryStyles);
+
             foreach (var path in custodianPaths) await Check(custodian, path);
             foreach (var path in new[] { "/Dashboard/Borrower", "/Catalog/Index", $"/Catalog/Details?id={site.AvailableItemId}", "/Reservation/Index", $"/Reservation/Create?equipmentId={site.AvailableItemId}", "/AvailabilityCalendar/Index" })
                 await Check(borrower, path);

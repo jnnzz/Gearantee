@@ -216,7 +216,7 @@ namespace ASI.Basecode.Tests.Category
         }
 
         [Fact]
-        public async Task UpdateCategoryAsync_ValidInput_UpdatesCategorySuccessfully()
+        public async Task UpdateCategoryAsync_UpdatesMetadataAndPreservesActiveStatus()
         {
             using var database = new SqliteDb();
             using var provider = CreateProvider(database);
@@ -252,7 +252,7 @@ namespace ASI.Basecode.Tests.Category
             Assert.Equal("LAP-NEW", updated.CategoryCode);
             Assert.Equal("Refreshed Laptops", updated.CategoryName);
             Assert.Equal("Updated description", updated.Description);
-            Assert.False(updated.IsActive);
+            Assert.True(updated.IsActive);
         }
 
         [Fact]

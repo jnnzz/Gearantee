@@ -20,7 +20,6 @@
                 <p class="mt-1 text-xs text-gray-500">@Model.TotalCount account@(Model.TotalCount == 1 ? "" : "s") · deactivation preserves borrowing history</p>
             </div>
             <div class="flex flex-wrap gap-2">
-                <a asp-action="Import" class="btn-secondary">Import CSV</a>
                 <a asp-action="Create" class="btn-primary min-h-10">+ New user</a>
             </div>
         </div>
@@ -84,10 +83,10 @@
                                 </div>
                             </td>
                             <td class="px-3 py-3">
-                                <span class="inline-flex border px-2 py-1 text-[11px] @(user.IsActive ? "border-primary text-primary-strong" : "border-gray-200 text-gray-500")">@(user.IsActive ? "Active" : "Deactivated")</span>
+                                <partial name="Components/_StatusBadge" model="@(user.IsActive ? "Active" : "Deactivated")" />
                             </td>
                             <td class="px-3 py-3 text-right">
-                                <a asp-action="Edit" asp-route-id="@user.Id" class="text-xs font-semibold text-primary-strong underline underline-offset-4">Edit</a>
+                                <a asp-action="Edit" asp-route-id="@user.Id" class="text-link">Edit</a>
                             </td>
                         </tr>
                     }

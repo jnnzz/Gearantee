@@ -155,6 +155,18 @@ A successful database health check returns:
 
 Press `Ctrl+C` in the terminal to stop the website.
 
+## Equipment image storage
+
+Equipment images are optional JPEG or PNG uploads. The application validates and decodes each image, then stores it outside `wwwroot` under the configured `EquipmentImages:StoragePath`. The default is `App_Data/EquipmentImages`, relative to the WebApp content root. Temporary uploads used while a form is being corrected are removed after 24 hours.
+
+For a deployed server, set `EquipmentImages__StoragePath` to a directory on persistent storage and grant the application identity read/write access. For example, in PowerShell:
+
+```powershell
+$env:EquipmentImages__StoragePath = "D:\GearanteeData\EquipmentImages"
+```
+
+On Linux, configure an absolute persistent directory such as `/var/lib/gearantee/equipment-images` using the deployment environment's configuration mechanism. Do not put uploaded files under `wwwroot`; the application serves generated filenames through an authorized image endpoint. Back up the configured image directory alongside the database, and restore both when recovering the system. For multi-instance hosting, all instances must use the same persistent shared storage location.
+
 ## Daily development workflow
 
 After completing the initial setup, the usual workflow is:
