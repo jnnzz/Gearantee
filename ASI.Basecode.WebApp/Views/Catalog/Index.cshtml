@@ -1,0 +1,89 @@
+@model ASI.Basecode.Services.ServiceModels.Catalog.CatalogIndexViewModel
+@using ASI.Basecode.Services.ServiceModels.Catalog
+@using ASI.Basecode.WebApp.Models.Dashboard
+@inject ASI.Basecode.Services.Interfaces.IImageStorageService ImageStorage
+@{
+    var filter = Model.Filter;
+    string BrandModel(string brand, string model)
+    {
+        var text = string.Join(" ", new[] { brand, model }.Where(part => !string.IsNullOrWhiteSpace(part)));
+        return text.Length > 0 ? text : "—";
+    }
+    string StatusLabel(string status) => status == DomainValues.EquipmentStatuses.Borrowed ? "Borrowed" : "Available";
+}
+
+<section aria-label="Catalog results">
+    <p class="mb-4 text-sm text-gray-500">@Model.TotalCount matching equipment</p>
+
+    <form method="get" asp-action="Index" class="filter-panel filter-panel--compact">
+        <div>
+            <label for="catalog-search" class="mb-1 block text-xs font-medium text-gray-700">Search</label>
+            <input id="catalog-search" name="Search" value="@filter.Search" type="search" maxlength="100" placeholder="Name, item code, brand, model" class="input" />
+        </div>
+        <div>
+            <label for="catalog-category" class="mb-1 block text-xs font-medium text-gray-700">Category</label>
+            <select id="catalog-category" name="CategoryId" class="input">
+                <option value="">All categories</option>
+                @foreach (var category in Model.Categories)
+                {
+                    <option value="@category.CategoryId" selected="@(filter.CategoryId == category.CategoryId)">@category.CategoryName</option>
+                }
+            </select>
+        </div>
+        <div class="flex items-end gap-2">
+            <button type="submit" class="btn-primary min-h-10 flex-1 xl:flex-none">Search</button>
+            <a asp-action="Index" class="btn-secondary inline-flex min-h-10 items-center border border-gray-200 bg-white px-3 text-sm font-semibold text-gray-700">Clear</a>
+        </div>
+    </form>
+
+    @if (Model.Items.Count == 0)
+    {
+        <partial name="Components/_EmptyState" model="@(new EmptyStateModel { Heading = "No equipment found", Message = "No reservable equipment matches your search. Try a different name or category." })" />
+    }
+    else
+    {
+        <div class="catalog-grid">
+            @foreach (var item in Model.Items)
+            {
+                <article class="catalog-card">
+                    @if (!string.IsNullOrWhiteSpace(item.ImageUrl))
+                    {
+                        var imageSrc = await ImageStorage.CreateSignedUrlAsync(item.ImageUrl, System.TimeSpan.FromMinutes(60));
+                        <img src="@imageSrc" alt="@item.ItemName" class="aspect-[4/3] w-full bg-white object-cover" />
+                    }
+                    else
+                    {
+                        <div class="equipment-placeholder" aria-label="No equipment image available">
+                            <partial name="_EquipmentPlaceholder" model="item.CategoryName" />
+                        </div>
+                    }
+                    <div class="catalog-card-body">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="min-w-0">
+                                <p class="item-code">@item.ItemCode</p>
+                                <h3 class="mt-1 truncate font-display text-lg font-semibold text-ink" title="@item.ItemName">@item.ItemName</h3>
+                            </div>
+                            <partial name="Components/_StatusBadge" model="@(StatusLabel(item.AvailabilityStatus))" />
+                        </div>
+                        <dl class="mt-4 grid grid-cols-2 gap-3 text-xs">
+                            <div><dt class="text-gray-500">Category</dt><dd class="mt-1 font-medium text-gray-700">@item.CategoryName</dd></div>
+                            <div><dt class="text-gray-500">Condition</dt><dd class="mt-1 font-medium text-gray-700">@item.ConditionStatus</dd></div>
+                            <div class="col-span-2"><dt class="text-gray-500">Brand / model</dt><dd class="mt-1 truncate font-medium text-gray-700">@BrandModel(item.Brand, item.Model)</dd></div>
+                            <div class="col-span-2"><dt class="text-gray-500">Location</dt><dd class="mt-1 truncate font-medium text-gray-700">@item.Location</dd></div>
+                        </dl>
+                        <div class="mt-auto pt-4">
+                            <a asp-action="Details" asp-route-id="@item.EquipmentId" class="text-sm font-semibold text-primary-strong underline underline-offset-4">View details &amp; schedule</a>
+                        </div>
+                    </div>
+                </article>
+            }
+        </div>
+
+        <partial name="Components/_Pagination" model="@(new PaginationViewModel
+        {
+            Page = Model.Page, TotalPages = Model.TotalPages, TotalCount = Model.TotalCount,
+            Label = "Catalog pages",
+            Routes = { ["search"] = filter.Search, ["categoryId"] = filter.CategoryId?.ToString() }
+        })" />
+    }
+</section>

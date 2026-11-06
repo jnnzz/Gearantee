@@ -1,19 +1,25 @@
-@model ASI.Basecode.WebApp.Models.CreateUserViewModel
+@model ASI.Basecode.Services.ServiceModels.UserAdministration.CreateUserViewModel
 
-<div class="mx-auto max-w-3xl">
+<div class="role-page form-layout">
     <a asp-action="Index" class="mb-5 inline-flex text-sm font-semibold text-primary-strong underline underline-offset-4">← Back to users &amp; roles</a>
-    <section class="border border-gray-200 bg-white p-5 sm:p-8">
-        <h2 class="font-display text-2xl font-semibold">Create account</h2>
-        <p class="mt-1 text-sm text-gray-500">Accounts are created in ASP.NET Core Identity. The initial password is never recorded in the audit trail.</p>
+    <section class="surface">
+        <div class="surface-heading">
+            <div>
+                <h2 class="font-display text-xl font-semibold">Account details</h2>
+                <p class="mt-1 text-sm text-gray-500">Create a campus account, choose its initial role, and set a private password for the user.</p>
+            </div>
+            <a asp-action="Import" class="btn-secondary">Import CSV</a>
+        </div>
         <form asp-action="Create" method="post" class="mt-6">
             <div asp-validation-summary="ModelOnly" class="validation-summary-errors" role="alert"></div>
-            <div class="grid gap-4 sm:grid-cols-2">
-                <div><label asp-for="UserCode" class="mb-1 block text-sm font-medium"></label><input asp-for="UserCode" class="input" autocomplete="off" /><span asp-validation-for="UserCode" class="field-validation-error"></span></div>
-                <div><label asp-for="Email" class="mb-1 block text-sm font-medium"></label><input asp-for="Email" class="input" autocomplete="email" /><span asp-validation-for="Email" class="field-validation-error"></span></div>
-                <div><label asp-for="FirstName" class="mb-1 block text-sm font-medium"></label><input asp-for="FirstName" class="input" autocomplete="given-name" /><span asp-validation-for="FirstName" class="field-validation-error"></span></div>
-                <div><label asp-for="LastName" class="mb-1 block text-sm font-medium"></label><input asp-for="LastName" class="input" autocomplete="family-name" /><span asp-validation-for="LastName" class="field-validation-error"></span></div>
+            <p class="required-legend"><span class="required-marker" data-required-marker aria-hidden="true">*</span> Required fields. Borrower profile fields are required only when Borrower is selected.</p>
+            <div class="form-grid grid gap-4 sm:grid-cols-2">
+                <div><label asp-for="UserCode" class="mb-1 block text-sm font-medium">User code / school ID <span class="required-marker" data-required-marker aria-hidden="true">*</span></label><input asp-for="UserCode" class="input" autocomplete="off" aria-required="true" /><span asp-validation-for="UserCode" class="field-validation-error"></span></div>
+                <div><label asp-for="Email" class="mb-1 block text-sm font-medium">Email <span class="required-marker" data-required-marker aria-hidden="true">*</span></label><input asp-for="Email" class="input" autocomplete="email" aria-required="true" /><span asp-validation-for="Email" class="field-validation-error"></span></div>
+                <div><label asp-for="FirstName" class="mb-1 block text-sm font-medium">First name <span class="required-marker" data-required-marker aria-hidden="true">*</span></label><input asp-for="FirstName" class="input" autocomplete="given-name" aria-required="true" /><span asp-validation-for="FirstName" class="field-validation-error"></span></div>
+                <div><label asp-for="LastName" class="mb-1 block text-sm font-medium">Last name <span class="required-marker" data-required-marker aria-hidden="true">*</span></label><input asp-for="LastName" class="input" autocomplete="family-name" aria-required="true" /><span asp-validation-for="LastName" class="field-validation-error"></span></div>
                 <div>
-                    <label asp-for="RoleName" class="mb-1 block text-sm font-medium"></label>
+                    <label asp-for="RoleName" for="initial-role" class="mb-1 block text-sm font-medium">Initial role <span class="required-marker" data-required-marker aria-hidden="true">*</span></label>
                     <select asp-for="RoleName" class="input" id="initial-role">
                         <option value="Borrower">Borrower</option>
                         <option value="Custodian">Custodian</option>
@@ -21,16 +27,15 @@
                     </select>
                 </div>
                 <fieldset id="borrower-fields" class="contents">
-                    <div><label asp-for="SchoolId" class="mb-1 block text-sm font-medium"></label><input asp-for="SchoolId" class="input" autocomplete="off" /><span asp-validation-for="SchoolId" class="field-validation-error"></span></div>
-                    <div><label asp-for="Department" class="mb-1 block text-sm font-medium"></label><input asp-for="Department" class="input" /><span asp-validation-for="Department" class="field-validation-error"></span></div>
+                    <div><label asp-for="Department" class="mb-1 block text-sm font-medium">Department <span class="required-marker" data-required-marker data-borrower-required-marker aria-hidden="true">*</span></label><input asp-for="Department" class="input" /><span asp-validation-for="Department" class="field-validation-error"></span></div>
                     <div><label asp-for="ContactNumber" class="mb-1 block text-sm font-medium"></label><input asp-for="ContactNumber" class="input" autocomplete="tel" /><span asp-validation-for="ContactNumber" class="field-validation-error"></span></div>
                 </fieldset>
-                <div><label asp-for="Password" class="mb-1 block text-sm font-medium"></label><input asp-for="Password" class="input" autocomplete="new-password" /><span asp-validation-for="Password" class="field-validation-error"></span><p class="mt-1 text-xs text-gray-500">At least 8 characters with upper/lowercase, a number, and a symbol.</p></div>
-                <div><label asp-for="ConfirmPassword" class="mb-1 block text-sm font-medium"></label><input asp-for="ConfirmPassword" class="input" autocomplete="new-password" /><span asp-validation-for="ConfirmPassword" class="field-validation-error"></span></div>
+                <div><label asp-for="Password" class="mb-1 block text-sm font-medium">Password <span class="required-marker" data-required-marker aria-hidden="true">*</span></label><input asp-for="Password" class="input" autocomplete="new-password" aria-required="true" /><span asp-validation-for="Password" class="field-validation-error"></span><p class="mt-1 text-xs text-gray-500">At least 8 characters with upper/lowercase, a number, and a symbol.</p></div>
+                <div><label asp-for="ConfirmPassword" class="mb-1 block text-sm font-medium">Confirm password <span class="required-marker" data-required-marker aria-hidden="true">*</span></label><input asp-for="ConfirmPassword" class="input" autocomplete="new-password" aria-required="true" /><span asp-validation-for="ConfirmPassword" class="field-validation-error"></span></div>
             </div>
-            <p class="mt-4 text-xs leading-5 text-gray-500">Borrower accounts start with borrowing eligibility disabled. An administrator must approve eligibility separately.</p>
-            <div class="mt-6 flex flex-wrap justify-end gap-3">
-                <a asp-action="Index" class="border border-gray-200 px-4 py-2 text-sm">Cancel</a>
+            <p class="mt-4 text-xs leading-5 text-gray-500">Borrower accounts start with borrowing eligibility disabled. An administrator must approve eligibility separately. The borrower's school ID is the user code entered above.</p>
+            <div class="form-actions">
+                <a asp-action="Index" class="btn-secondary">Cancel</a>
                 <button type="submit" class="btn-primary">Create account</button>
             </div>
         </form>
@@ -42,14 +47,17 @@
     <script>
         (() => {
             const role = document.getElementById("initial-role");
-            const fields = [document.getElementById("SchoolId"), document.getElementById("Department")];
+            const fields = [document.getElementById("Department")];
+            const requiredMarkers = document.querySelectorAll("[data-borrower-required-marker]");
             const syncBorrowerFields = () => {
                 const borrower = role.value === "Borrower";
                 for (const field of fields) {
                     field.required = borrower;
+                    field.setAttribute("aria-required", String(borrower));
                     field.closest("div").classList.toggle("hidden", !borrower);
                 }
                 document.getElementById("ContactNumber").closest("div").classList.toggle("hidden", !borrower);
+                requiredMarkers.forEach(marker => marker.hidden = !borrower);
             };
             role.addEventListener("change", syncBorrowerFields);
             syncBorrowerFields();

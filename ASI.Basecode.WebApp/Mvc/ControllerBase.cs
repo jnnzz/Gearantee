@@ -1,3 +1,4 @@
+using ASI.Basecode.Services.Utilities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -39,11 +40,15 @@ namespace ASI.Basecode.WebApp.Mvc
         public override void OnActionExecuting(
             ActionExecutingContext context)
         {
+            base.OnActionExecuting(context);
+            ViewData["PageDate"] = ManilaClock.NowLocal
+                .ToString("ddd d MMM yyyy");
         }
 
         public override void OnActionExecuted(
             ActionExecutedContext context)
         {
+            base.OnActionExecuted(context);
         }
 
         protected void HandleExceptionLog(

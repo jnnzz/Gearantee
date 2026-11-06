@@ -1,0 +1,93 @@
+@model ASI.Basecode.Services.ServiceModels.Returns.ReturnRecordViewModel
+@using ASI.Basecode.Services.Utilities
+@{
+    var loan = Model.Loan;
+    var isOverdue = loan.DisplayStatus == "Overdue";
+    var returnTab = ViewData["ReturnTab"]?.ToString() ?? "OnLoan";
+    var returnSearch = ViewData["ReturnSearch"]?.ToString() ?? string.Empty;
+    var returnPage = ViewData["ReturnPage"]?.ToString() ?? "1";
+}
+
+<a asp-action="Index" asp-route-tab="@returnTab" asp-route-search="@returnSearch" asp-route-page="@returnPage" class="btn-secondary mb-6 min-h-10">Back to return &amp; condition</a>
+
+<div class="role-page detail-grid">
+    <section aria-labelledby="return-heading" class="surface">
+        <h2 id="return-heading" class="font-display text-2xl font-semibold text-ink">Return and condition check</h2>
+        <p class="mt-1 text-sm text-gray-500">Times are Philippine time. Inspect the item before saving; this can't be edited later.</p>
+
+        <form asp-action="Create" method="post" class="mt-6">
+            <div asp-validation-summary="ModelOnly" class="validation-summary-errors" role="alert"></div>
+            <input type="hidden" asp-for="ReleaseRecordId" />
+            <input type="hidden" name="tab" value="@returnTab" />
+            <input type="hidden" name="search" value="@returnSearch" />
+            <input type="hidden" name="page" value="@returnPage" />
+            <partial name="_ReturnRecordForm" model="Model" />
+            <div class="form-actions">
+                <a asp-action="Index" asp-route-tab="@returnTab" asp-route-search="@returnSearch" asp-route-page="@returnPage" class="btn-secondary">Cancel</a>
+                <button type="submit" class="btn-primary">Record return</button>
+            </div>
+        </form>
+    </section>
+
+    <aside aria-labelledby="loan-heading" class="surface">
+        <div class="flex flex-wrap items-start justify-between gap-3">
+            <div class="min-w-0">
+                <p class="item-code">@loan.ReservationCode</p>
+                <h2 id="loan-heading" class="mt-1 font-display text-xl font-semibold text-ink">@loan.ItemName</h2>
+            </div>
+            <partial name="Components/_StatusBadge" model="loan.DisplayStatus" />
+        </div>
+        @if (isOverdue)
+        {
+            <p class="mt-3 text-sm text-gray-700">Past its due time. Saving will log a late return.</p>
+        }
+        <dl class="record-details mt-4 grid gap-4 text-sm sm:grid-cols-2">
+            <div><dt class="text-xs text-gray-500">Item code</dt><dd class="mt-1 font-medium text-gray-700">@loan.ItemCode</dd></div>
+            <div><dt class="text-xs text-gray-500">Category</dt><dd class="mt-1 font-medium text-gray-700">@loan.CategoryName</dd></div>
+            <div><dt class="text-xs text-gray-500">Borrower</dt><dd class="mt-1 font-medium text-gray-700">@loan.BorrowerName</dd></div>
+            <div><dt class="text-xs text-gray-500">School ID</dt><dd class="mt-1 font-medium text-gray-700">@loan.SchoolId</dd></div>
+            <div><dt class="text-xs text-gray-500">Released</dt><dd class="mt-1 font-medium text-gray-700">@loan.ReleasedAtLocal.ToString("ddd d MMM yyyy · HH:mm")</dd></div>
+            <div><dt class="text-xs text-gray-500">Due</dt><dd class="mt-1 font-medium text-gray-700">@loan.EndLabel</dd></div>
+        </dl>
+    </aside>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Non-Good condition can't go back to Available
+        (function () {
+            var condition = document.querySelector('[data-return-condition]');
+            var status = document.querySelector('[data-return-status]');
+            if (!condition || !status) return;
+            var available = status.querySelector('option[value="Available"]');
+            function sync(changed) {
+                var isGood = condition.value === 'Good';
+                available.disabled = !isGood;
+                if (changed) status.value = isGood ? 'Available' : 'UnderMaintenance';
+                else if (!isGood && status.value === 'Available') status.value = 'UnderMaintenance';
+            }
+            condition.addEventListener('change', function () { sync(true); });
+            sync(false);
+        })();
+
+        (function () {
+            var returnedAt = document.querySelector('[name="ActualReturnAt"]');
+            var notes = document.querySelector('[name="Notes"]');
+            var requiredMarker = document.querySelector('[data-backdate-required]');
+            var cutoff = '@ManilaClock.NowLocal.AddMinutes(-ReturnInspection.BackdateGraceMinutes).ToString("yyyy-MM-ddTHH:mm")';
+            if (!returnedAt || !notes || !requiredMarker) return;
+
+            function syncBackdateRequirement() {
+                var required = returnedAt.value !== '' && returnedAt.value < cutoff;
+                notes.required = required;
+                notes.setAttribute('aria-required', String(required));
+                requiredMarker.hidden = !required;
+            }
+
+            returnedAt.addEventListener('input', syncBackdateRequirement);
+            returnedAt.addEventListener('change', syncBackdateRequirement);
+            syncBackdateRequirement();
+        })();
+    </script>
+}

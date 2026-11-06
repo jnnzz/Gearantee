@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360" fill="none">
+  <title>Campus equipment, ready for your next idea</title>
+  <desc>A laptop, camera and projector with a reservation check mark, drawn in Gearantee blue.</desc>
+  <rect width="640" height="360" rx="28" fill="#EBF5FF"/>
+  <circle cx="512" cy="97" r="63" fill="#D6EBFF"/><circle cx="101" cy="245" r="54" fill="#D6EBFF"/>
+  <path d="M67 295h506" stroke="#A9C5DF" stroke-width="2" stroke-linecap="round"/>
+  <g id="laptop">
+    <rect x="106" y="89" width="283" height="183" rx="17" fill="#274C70"/>
+    <rect x="116" y="99" width="263" height="161" rx="9" fill="#FFF"/>
+    <rect x="132" y="115" width="59" height="129" rx="6" fill="#EBF5FF"/>
+    <rect x="143" y="129" width="36" height="6" rx="3" fill="#5980A6"/>
+    <path d="M144 151h25m-25 17h25m-25 17h25" stroke="#A9C5DF" stroke-width="5" stroke-linecap="round"/>
+    <rect x="205" y="115" width="157" height="37" rx="8" fill="#D6EBFF"/>
+    <rect x="205" y="164" width="73" height="80" rx="8" fill="#EBF5FF"/>
+    <rect x="289" y="164" width="73" height="80" rx="8" fill="#5980A6"/>
+    <path d="m311 205 9 9 20-24" stroke="white" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M88 272h320l18 15c3 3 1 8-4 8H74c-5 0-7-5-4-8l18-15Z" fill="#5980A6"/>
+    <path d="M213 272h69l-6 8h-57l-6-8Z" fill="#274C70"/>
+  </g>
+  <g id="projector">
+    <rect x="347" y="216" width="208" height="73" rx="19" fill="#FFF" stroke="#A9C5DF" stroke-width="2"/>
+    <path d="M347 238c0-12 10-22 22-22h164c12 0 22 10 22 22v5H347v-5Z" fill="#D6EBFF"/>
+    <circle cx="505" cy="252" r="25" fill="#4A6F94"/><circle cx="505" cy="252" r="17" fill="#EBF5FF"/>
+    <circle cx="505" cy="252" r="9" fill="#5980A6"/><circle cx="509" cy="248" r="3" fill="#FFF"/>
+    <path d="M368 251h46m-46 10h46m-46 10h29" stroke="#5980A6" stroke-width="3" stroke-linecap="round"/>
+    <path d="M369 290h14m130 0h14" stroke="#274C70" stroke-width="7" stroke-linecap="round"/>
+  </g>
+  <g id="camera">
+    <rect x="426" y="135" width="126" height="77" rx="14" fill="#4A6F94"/>
+    <path d="m449 135 10-17h40l10 17" fill="#4A6F94"/>
+    <path d="M437 147h103" stroke="#7299BC" stroke-width="3"/>
+    <circle cx="489" cy="175" r="28" fill="#274C70"/><circle cx="489" cy="175" r="20" fill="#D6EBFF"/>
+    <circle cx="489" cy="175" r="12" fill="#5980A6"/><circle cx="495" cy="169" r="5" fill="#FFF"/>
+    <rect x="438" y="155" width="14" height="8" rx="3" fill="#D6EBFF"/>
+  </g>
+  <g id="reservation">
+    <rect x="69" y="59" width="67" height="68" rx="15" fill="#FFF"/>
+    <path d="m87 93 10 10 20-22" stroke="#4A6F94" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <path d="M568 172v18m-9-9h18M78 178v12m-6-6h12" stroke="#5980A6" stroke-width="3" stroke-linecap="round"/>
+</svg>

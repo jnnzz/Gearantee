@@ -87,6 +87,24 @@ dotnet ef database update --project ".\ASI.Basecode.Data\ASI.Basecode.Data.cspro
 
 Do not create another initial migration when the existing migration has already been applied.
 
+### Existing databases: schema normalization (October 2026 refactor)
+
+If your local `GearanteeDev` was created before the backend architecture refactor, run the command from section 3 once after pulling. The `NormalizeUserAndBorrowerSchema` migration:
+
+- Drops the `BorrowerProfile.SchoolId` column (borrower identity now lives only in `AspNetUsers.UserName`, exposed as `IdNumber`)
+- Drops the unused `AspNetUserLogins` table
+- Retains the `RolePermissionSeed` table (it is no longer dropped): the initialization markers survive the upgrade, including roles left with zero grants, so reseeding never restores revoked grants
+
+**Warning:** dropping `SchoolId` is destructive. The migration stops with an error if any borrower's `SchoolId` differs from the linked account identifier (`AspNetUsers.UserName`) or a profile has no linked account; reconcile those rows first (the error message includes the inspection query). Otherwise any values stored in `BorrowerProfile.SchoolId` are permanently deleted. Registration and administration code now derives the borrower's displayed school ID from the account's user code, so no backfill is needed once the identifiers match. Apply this migration **before** running the updated application: new borrower-profile inserts omit the old required `SchoolId` column, so leaving the schema unmigrated causes those writes to fail.
+
+Seeding does **not** run automatically at startup. After migrating, run it explicitly:
+
+```powershell
+dotnet run --no-build --project ".\ASI.Basecode.WebApp\ASI.Basecode.WebApp.csproj" -- --seed
+```
+
+Use `--seed-demo` instead when you want the development dashboard sample data (Development only).
+
 ## 4. Configure password-reset email for local development
 
 The password-reset flow sends a six-digit OTP through Brevo. Keep the API key and verified sender email outside the repository by using .NET User Secrets:

@@ -1,0 +1,110 @@
+@model ASI.Basecode.Services.ServiceModels.Reservations.ReservationReviewIndexViewModel
+@using ASI.Basecode.WebApp.Models.Dashboard
+@{
+    ViewData["Title"] = "Approval & release";
+    ViewData["Eyebrow"] = "Custodian workspace";
+}
+
+
+<section aria-label="Reservation review queue" class="role-page">
+    <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div>
+            <p class="text-xs text-gray-500">Earliest window first · times are Philippine time</p>
+        </div>
+    </div>
+
+    <nav class="filter-tabs" aria-label="Filter by status">
+        @foreach (var tab in Model.Tabs)
+        {
+            var isActive = tab.Value == Model.StatusFilter;
+            <form asp-action="Index" method="get" class="inline">
+                <input type="hidden" name="status" value="@tab.Value" />
+                <input type="hidden" name="search" value="@Model.Search" />
+                <button type="submit"
+                        class="border px-3 py-2 text-sm @(isActive ? "border-primary bg-tint font-semibold text-primary-strong" : "border-gray-200 bg-white text-gray-700")"
+                        aria-current="@(isActive ? "page" : null)">@tab.Label <span class="ml-1 text-xs text-gray-500">@tab.Count</span></button>
+            </form>
+        }    </nav>
+
+    <form method="get" asp-action="Index" class="filter-panel filter-panel--compact">
+        <div class="flex-1">
+            <label class="sr-only" for="review-search">Search reservation requests</label>
+            <input id="review-search" name="search" value="@Model.Search" type="search" placeholder="Search item code, item name, school ID, or borrower" class="input w-full" />
+        </div>
+        <input type="hidden" name="status" value="@Model.StatusFilter" />
+        <button type="submit" class="btn-primary">Search</button>
+        @if (!string.IsNullOrWhiteSpace(Model.Search))
+        {
+            <a asp-action="Index" asp-route-status="@(string.IsNullOrEmpty(Model.StatusFilter) ? null : Model.StatusFilter)" class="btn-secondary">Clear</a>
+        }
+    </form>
+
+
+
+    @if (Model.Items.Count == 0)
+    {
+        @if (!string.IsNullOrWhiteSpace(Model.Search))
+        {
+            <div class="mt-5 border border-gray-200 bg-white px-5 py-6" role="status">
+                <h2 class="font-display text-lg font-semibold text-ink">No matching requests</h2>
+                <p class="mt-1 text-sm text-gray-500">Try another borrower, school ID, item name or item code.</p>
+                <a asp-action="Index" asp-route-status="@(string.IsNullOrEmpty(Model.StatusFilter) ? null : Model.StatusFilter)" class="btn-secondary mt-4 min-h-10">Clear search</a>
+            </div>
+        }
+        else
+        {
+            <partial name="Components/_EmptyState" model="@(new EmptyStateModel { Heading = "Nothing to review", Message = "Requests appear here as soon as borrowers submit them." })" />
+        }
+    }
+    else
+    {
+        <div class="table-surface overflow-x-auto">
+            <table class="w-full min-w-[680px] text-left text-sm">
+                <thead class="border-b border-gray-200 bg-gray-50 font-display text-[11px] uppercase tracking-[0.12em] text-gray-700">
+                    <tr>
+                        <th scope="col" class="px-3 py-3">Reservation</th>
+                        <th scope="col" class="px-3 py-3">Borrower</th>
+                        <th scope="col" class="px-3 py-3">Equipment</th>
+                        <th scope="col" class="px-3 py-3">When</th>
+                        <th scope="col" class="px-3 py-3">Status</th>
+                        <th scope="col" class="px-3 py-3"><span class="sr-only">Actions</span></th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    @foreach (var reservation in Model.Items)
+                    {
+                        <tr class="align-middle">
+                            <td class="px-3 py-3">
+                                <p class="item-code">@reservation.ReservationCode</p>
+                                <p class="mt-1 text-xs text-gray-500">Requested @reservation.RequestedAtLocal.ToString("d MMM · HH:mm")</p>
+                            </td>
+                            <td class="px-3 py-3">
+                                <p class="font-semibold text-ink">@reservation.BorrowerName</p>
+                                <p class="mt-1 text-xs text-gray-500">@reservation.SchoolId · @reservation.Department</p>
+                            </td>
+                            <td class="px-3 py-3">
+                                <p class="font-semibold text-ink">@reservation.ItemName</p>
+                                <p class="mt-1 text-xs text-gray-500">@reservation.ItemCode · @reservation.CategoryName</p>
+                            </td>
+                            <td class="px-3 py-3 text-gray-700">
+                                @reservation.StartLabel<br />
+                                <span class="text-xs text-gray-500">to @reservation.EndLabel</span>
+                            </td>
+                            <td class="px-3 py-3"><partial name="Components/_StatusBadge" model="reservation.DisplayStatus" /></td>
+                            <td class="px-3 py-3 text-right">
+                                <a asp-action="Details" asp-route-id="@reservation.ReservationId" class="btn-secondary min-h-9 text-sm">Review<span class="sr-only"> @reservation.ReservationCode</span></a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <partial name="Components/_Pagination" model="@(new PaginationViewModel
+        {
+            Page = Model.Page, TotalPages = Model.TotalPages, TotalCount = Model.TotalCount,
+            Label = "Review pages",
+            Routes = { ["status"] = Model.StatusFilter, ["search"] = Model.Search }
+        })" />
+    }
+</section>

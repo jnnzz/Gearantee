@@ -1,9 +1,13 @@
-using ASI.Basecode.Data.Models;
-using ASI.Basecode.WebApp.Models;
-using ASI.Basecode.WebApp.Services;
+﻿using ASI.Basecode.Data.Models;
+using ASI.Basecode.Resources.Constants;
+using ASI.Basecode.Services.Interfaces;
+using ASI.Basecode.Services.ServiceModels.UserAdministration;
+using ASI.Basecode.Services.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Threading.Tasks;
 
@@ -13,11 +17,16 @@ namespace ASI.Basecode.WebApp.Controllers
         Roles = DomainValues.Roles.Administrator,
         Policy = DomainValues.Permissions.UserRoleManage)]
     [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
-    public class UsersController : Controller
+    public class UsersController : Mvc.ControllerBase<UsersController>
     {
         private readonly IUserAdministrationService _userAdministration;
 
-        public UsersController(IUserAdministrationService userAdministration)
+        public UsersController(
+            IUserAdministrationService userAdministration,
+            IHttpContextAccessor httpContextAccessor,
+            ILoggerFactory loggerFactory,
+            IConfiguration configuration)
+            : base(httpContextAccessor, loggerFactory, configuration)
         {
             _userAdministration = userAdministration;
         }
@@ -90,7 +99,6 @@ namespace ASI.Basecode.WebApp.Controllers
 
             ViewData["Title"] = "Users & roles";
             ViewData["Eyebrow"] = "Administration";
-            ViewData["PageDate"] = DateTime.Now.ToString("MMM d, yyyy");
             ViewData["PermissionMatrix"] = permissions;
             ViewData["SuccessMessage"] = TempData["SuccessMessage"];
             ViewData["ErrorMessage"] = TempData["ErrorMessage"];
@@ -264,9 +272,6 @@ namespace ASI.Basecode.WebApp.Controllers
             TempData[result.Succeeded ? "SuccessMessage" : "ErrorMessage"] = result.Message;
             return RedirectToAction(nameof(Index));
         }
-
-        private string UserId => User.FindFirst(
-            System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
     }
 }

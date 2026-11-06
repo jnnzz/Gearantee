@@ -1,7 +1,10 @@
-using ASI.Basecode.Data;
+﻿using ASI.Basecode.Data;
+using ASI.Basecode.Data.Interfaces;
 using ASI.Basecode.Data.Models;
+using ASI.Basecode.Resources.Constants;
 using ASI.Basecode.Tests.Dashboard;
-using ASI.Basecode.WebApp.Services;
+using ASI.Basecode.Services.Interfaces;
+using ASI.Basecode.Services.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
@@ -49,7 +52,10 @@ namespace ASI.Basecode.Tests.UserAdministration
                 services.AddIdentityCore<ApplicationUser>().AddRoles<IdentityRole>()
                     .AddEntityFrameworkStores<AsiBasecodeDBContext>().AddDefaultTokenProviders();
             }
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
+            services.AddScoped<IAuditService, AuditService>();
             services.AddScoped<IUserAdministrationService, UserAdministrationService>();
+            services.AddScoped<IBorrowerProfileService, BorrowerProfileService>();
         }
 
         public static async Task<AdministrationTestEnvironment> CreateAsync(bool sqlServer = false)

@@ -1,41 +1,33 @@
-@model ASI.Basecode.WebApp.Models.EditUserViewModel
+@model ASI.Basecode.Services.ServiceModels.UserAdministration.EditUserViewModel
 @{
-    var successMessage = ViewData["SuccessMessage"] as string;
-    var errorMessage = ViewData["ErrorMessage"] as string;
 }
 
-<div class="mx-auto max-w-4xl">
+<div class="role-page form-layout">
     <a asp-action="Index" class="mb-5 inline-flex text-sm font-semibold text-primary-strong underline underline-offset-4">← Back to users &amp; roles</a>
-    @if (!string.IsNullOrWhiteSpace(successMessage))
-    {
-        <div class="mb-5 border-l-4 border-primary bg-white px-4 py-3 text-sm" role="status">@successMessage</div>
-    }
-    @if (!string.IsNullOrWhiteSpace(errorMessage))
-    {
-        <div class="mb-5 border-l-4 border-ink bg-white px-4 py-3 text-sm" role="alert">@errorMessage</div>
-    }
-    <section class="border border-gray-200 bg-white p-5 sm:p-8">
+    <section class="surface">
         <div class="flex flex-wrap items-start justify-between gap-3">
             <div>
                 <p class="item-code">@Model.UserCode</p>
-                <h2 class="mt-1 font-display text-2xl font-semibold">Edit account</h2>
+                <h2 class="mt-1 font-display text-xl font-semibold">Account details</h2>
                 <p class="mt-1 text-sm text-gray-500">User code: <span class="font-semibold text-gray-700">@Model.UserCode</span></p>
             </div>
-            <span class="inline-flex border px-2 py-1 text-xs @(Model.IsActive ? "border-primary text-primary-strong" : "border-gray-200 text-gray-500")">@(Model.IsActive ? "Active" : "Deactivated")</span>
+            <partial name="Components/_StatusBadge" model="@(Model.IsActive ? "Active" : "Deactivated")" />
         </div>
 
         <form asp-action="Edit" method="post" class="mt-6">
             <div asp-validation-summary="ModelOnly" class="validation-summary-errors" role="alert"></div>
+            <p class="required-legend"><span class="required-marker" data-required-marker aria-hidden="true">*</span> Required fields. Department is required only when Borrower is assigned.</p>
             <input asp-for="Id" type="hidden" />
             <input asp-for="ConcurrencyStamp" type="hidden" />
-            <div class="grid gap-4 sm:grid-cols-2">
-                <div><label asp-for="FirstName" class="mb-1 block text-sm font-medium"></label><input asp-for="FirstName" class="input" /><span asp-validation-for="FirstName" class="field-validation-error"></span></div>
-                <div><label asp-for="LastName" class="mb-1 block text-sm font-medium"></label><input asp-for="LastName" class="input" /><span asp-validation-for="LastName" class="field-validation-error"></span></div>
-                <div class="sm:col-span-2"><label asp-for="Email" class="mb-1 block text-sm font-medium"></label><input asp-for="Email" class="input" autocomplete="email" /><span asp-validation-for="Email" class="field-validation-error"></span></div>
+            <input asp-for="BorrowerProfileConcurrencyStamp" type="hidden" />
+            <div class="form-grid grid gap-4 sm:grid-cols-2">
+                <div><label asp-for="FirstName" class="mb-1 block text-sm font-medium">First name <span class="required-marker" data-required-marker aria-hidden="true">*</span></label><input asp-for="FirstName" class="input" aria-required="true" /><span asp-validation-for="FirstName" class="field-validation-error"></span></div>
+                <div><label asp-for="LastName" class="mb-1 block text-sm font-medium">Last name <span class="required-marker" data-required-marker aria-hidden="true">*</span></label><input asp-for="LastName" class="input" aria-required="true" /><span asp-validation-for="LastName" class="field-validation-error"></span></div>
+                <div class="sm:col-span-2"><label asp-for="Email" class="mb-1 block text-sm font-medium">Email <span class="required-marker" data-required-marker aria-hidden="true">*</span></label><input asp-for="Email" class="input" autocomplete="email" aria-required="true" /><span asp-validation-for="Email" class="field-validation-error"></span></div>
             </div>
 
-            <fieldset class="mt-6 border-t border-gray-200 pt-5">
-                <legend class="font-display text-lg font-semibold">Assigned roles</legend>
+            <fieldset class="form-section">
+                <legend class="font-display text-lg font-semibold">Assigned roles <span class="required-marker" data-required-marker aria-hidden="true">*</span></legend>
                 <p class="mb-3 text-xs text-gray-500">Users can have more than one role. Assign at least one.</p>
                 <div class="grid gap-2 sm:grid-cols-3">
                     @foreach (var role in Model.AvailableRoles)
@@ -49,24 +41,28 @@
                 </div>
             </fieldset>
 
-            <fieldset id="borrower-profile-fields" class="mt-6 border-t border-gray-200 pt-5">
+            <fieldset id="borrower-profile-fields" class="form-section">
                 <legend class="font-display text-lg font-semibold">Borrower profile</legend>
                 <p class="mb-3 text-xs text-gray-500">Required whenever the Borrower role is assigned. Eligibility remains a separate decision.</p>
-                <div class="grid gap-4 sm:grid-cols-2">
-                    <div><label asp-for="SchoolId" class="mb-1 block text-sm font-medium"></label><input asp-for="SchoolId" class="input" /><span asp-validation-for="SchoolId" class="field-validation-error"></span></div>
-                    <div><label asp-for="Department" class="mb-1 block text-sm font-medium"></label><input asp-for="Department" class="input" /><span asp-validation-for="Department" class="field-validation-error"></span></div>
+                <div class="form-grid grid gap-4 sm:grid-cols-2">
+                    <div>
+                        <span class="mb-1 block text-sm font-medium">School ID</span>
+                        <p class="input bg-gray-100 text-gray-700">@Model.UserCode</p>
+                        <p class="mt-1 text-xs text-gray-500">Derived from the user code and not editable here.</p>
+                    </div>
+                    <div><label asp-for="Department" class="mb-1 block text-sm font-medium">Department <span class="required-marker" data-required-marker data-borrower-required-marker aria-hidden="true">*</span></label><input asp-for="Department" class="input" /><span asp-validation-for="Department" class="field-validation-error"></span></div>
                     <div><label asp-for="ContactNumber" class="mb-1 block text-sm font-medium"></label><input asp-for="ContactNumber" class="input" /><span asp-validation-for="ContactNumber" class="field-validation-error"></span></div>
                 </div>
             </fieldset>
 
-            <div class="mt-6 flex flex-wrap justify-end gap-3 border-t border-gray-200 pt-5">
-                <a asp-action="Index" class="border border-gray-200 px-4 py-2 text-sm">Cancel</a>
+            <div class="form-actions">
+                <a asp-action="Index" class="btn-secondary">Cancel</a>
                 <button type="submit" class="btn-primary">Save changes</button>
             </div>
         </form>
     </section>
 
-    <section class="mt-5 flex flex-wrap items-center justify-between gap-4 border border-gray-200 bg-white p-5">
+    <section class="surface account-state-card mt-5 flex flex-wrap items-center justify-between gap-4">
         <div>
             <h3 class="font-display text-lg font-semibold">@(Model.IsActive ? "Deactivate account" : "Reactivate account")</h3>
             <p class="mt-1 max-w-xl text-xs leading-5 text-gray-500">@(Model.IsActive ? "This blocks future sign-ins while retaining the account and its borrowing history." : "This allows the account to sign in again. Existing history is unchanged.")</p>
@@ -75,7 +71,7 @@
             <input type="hidden" name="UserId" value="@Model.Id" />
             <input type="hidden" name="ConcurrencyStamp" value="@Model.ConcurrencyStamp" />
             <input type="hidden" name="IsActive" value="@(!Model.IsActive)" />
-            <button type="submit" class="border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:border-primary hover:text-primary-strong">@(Model.IsActive ? "Deactivate" : "Reactivate")</button>
+            <button type="submit" class="@(Model.IsActive ? "btn-danger" : "btn-secondary")">@(Model.IsActive ? "Deactivate" : "Reactivate")</button>
         </form>
     </section>
 </div>
@@ -86,11 +82,16 @@
         (() => {
             const roleBoxes = document.querySelectorAll('input[name="SelectedRoles"]');
             const profile = document.getElementById("borrower-profile-fields");
-            const requiredFields = [document.getElementById("SchoolId"), document.getElementById("Department")];
+            const requiredFields = [document.getElementById("Department")];
+            const requiredMarkers = document.querySelectorAll("[data-borrower-required-marker]");
             const syncProfile = () => {
                 const borrower = Array.from(roleBoxes).some(box => box.checked && box.value === "Borrower");
                 profile.classList.toggle("hidden", !borrower);
-                for (const field of requiredFields) field.required = borrower;
+                for (const field of requiredFields) {
+                    field.required = borrower;
+                    field.setAttribute("aria-required", String(borrower));
+                }
+                requiredMarkers.forEach(marker => marker.hidden = !borrower);
             };
             roleBoxes.forEach(box => box.addEventListener("change", syncProfile));
             syncProfile();

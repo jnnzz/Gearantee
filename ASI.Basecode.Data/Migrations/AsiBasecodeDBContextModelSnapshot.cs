@@ -177,6 +177,12 @@ namespace ASI.Basecode.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("BorrowerProfileId"));
 
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
                     b.Property<string>("ContactNumber")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
@@ -196,11 +202,6 @@ namespace ASI.Basecode.Data.Migrations
                         .HasColumnType("bit")
                         .HasDefaultValue(false);
 
-                    b.Property<string>("SchoolId")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
                     b.Property<DateTime>("UpdatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
@@ -212,9 +213,6 @@ namespace ASI.Basecode.Data.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("BorrowerProfileId");
-
-                    b.HasIndex("SchoolId")
-                        .IsUnique();
 
                     b.HasIndex("UserId")
                         .IsUnique();
@@ -253,6 +251,9 @@ namespace ASI.Basecode.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
                         .HasDefaultValue(true);
+
+                    b.Property<long>("NextItemNumber")
+                        .HasColumnType("bigint");
 
                     b.Property<DateTime>("UpdatedAt")
                         .ValueGeneratedOnAdd()
@@ -400,6 +401,92 @@ namespace ASI.Basecode.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("ASI.Basecode.Data.Models.Notification", b =>
+                {
+                    b.Property<long>("NotificationId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("NotificationId"));
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DedupKey")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<int>("EmailAttempts")
+                        .HasColumnType("int");
+
+                    b.Property<string>("EmailLastError")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime?>("EmailLeaseExpiresAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("EmailLeaseToken")
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<DateTime?>("EmailNextAttemptAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("EmailRequested")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("EmailSentAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("EmailStatus")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("LinkUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime?>("ReadAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long>("RelatedEntityId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("NotificationId");
+
+                    b.HasIndex("DedupKey")
+                        .IsUnique();
+
+                    b.HasIndex("EmailStatus", "EmailNextAttemptAt")
+                        .HasFilter("[EmailRequested] = 1");
+
+                    b.HasIndex("UserId", "ReadAt", "CreatedAt");
+
+                    b.ToTable("Notifications", (string)null);
+                });
+
             modelBuilder.Entity("ASI.Basecode.Data.Models.Permission", b =>
                 {
                     b.Property<long>("PermissionId")
@@ -485,6 +572,9 @@ namespace ASI.Basecode.Data.Migrations
                     b.Property<long>("EquipmentId")
                         .HasColumnType("bigint");
 
+                    b.Property<bool>("IsFullDay")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Purpose")
                         .IsRequired()
                         .HasMaxLength(1000)
@@ -526,13 +616,13 @@ namespace ASI.Basecode.Data.Migrations
 
                     b.HasKey("ReservationId");
 
-                    b.HasIndex("BorrowerProfileId");
-
                     b.HasIndex("ReviewedByUserId");
 
                     b.HasIndex("Status");
 
                     b.HasIndex("EquipmentId", "ReservationStart", "ReservationEnd");
+
+                    b.HasIndex("BorrowerProfileId", "EquipmentId", "Status", "ReservationStart", "ReservationEnd");
 
                     b.ToTable("Reservation", null, t =>
                         {
@@ -692,28 +782,6 @@ namespace ASI.Basecode.Data.Migrations
                     b.ToTable("AspNetUserClaims", (string)null);
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
-                {
-                    b.Property<string>("LoginProvider")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("ProviderKey")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("ProviderDisplayName")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("LoginProvider", "ProviderKey");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("AspNetUserLogins", (string)null);
-                });
-
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
                 {
                     b.Property<string>("UserId")
@@ -798,6 +866,17 @@ namespace ASI.Basecode.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("ReturnRecord");
+                });
+
+            modelBuilder.Entity("ASI.Basecode.Data.Models.Notification", b =>
+                {
+                    b.HasOne("ASI.Basecode.Data.Models.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("ASI.Basecode.Data.Models.ReleaseRecord", b =>
@@ -902,15 +981,6 @@ namespace ASI.Basecode.Data.Migrations
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
-                {
-                    b.HasOne("ASI.Basecode.Data.Models.ApplicationUser", null)
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
                 {
                     b.HasOne("ASI.Basecode.Data.Models.ApplicationUser", null)
                         .WithMany()

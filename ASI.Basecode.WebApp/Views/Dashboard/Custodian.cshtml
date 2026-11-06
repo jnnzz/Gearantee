@@ -2,18 +2,28 @@
 @using ASI.Basecode.Services.Utilities
 @using ASI.Basecode.WebApp.Models.Dashboard
 
-<section class="mb-9 grid grid-cols-2 gap-x-5 gap-y-6 xl:grid-cols-4 xl:gap-x-8" aria-label="Custodian summary">
+@if (ViewData["DashboardUnavailable"] is true)
+{
+    <section class="table-surface p-8" aria-label="Dashboard unavailable">
+        <p class="mb-4">Dashboard data is temporarily unavailable.</p>
+        <a asp-action="Custodian" class="btn-secondary">Try again</a>
+    </section>
+    return;
+}
+
+<div class="role-page">
+<section class="role-summary" aria-label="Custodian summary">
     <partial name="Components/_KpiTile" model="@(new KpiTileModel { Label = "Pending approval", Value = Model.PendingCount, Status = "Pending", Caption = $"{Model.PendingStartingSoonCount} starting within 24 hours" })" />
     <partial name="Components/_KpiTile" model="@(new KpiTileModel { Label = "To release today", Value = Model.PickupsTodayCount, Status = "Awaiting Release", Caption = Model.PickupsToday.FirstOrDefault() is { } pickup ? $"{pickup.BorrowerName} · {pickup.ItemName}" : "No scheduled pickups today" })" />
     <partial name="Components/_KpiTile" model="@(new KpiTileModel { Label = "Returns due today", Value = Model.ReturnsDueTodayCount, Status = "Due today", Caption = "Active loans due before end of day" })" />
     <partial name="Components/_KpiTile" model="@(new KpiTileModel { Label = "Overdue", Value = Model.OverdueCount, Status = "Overdue", Caption = "Needs follow-up" })" />
 </section>
 
-<div class="grid gap-10 xl:grid-cols-[minmax(0,1.6fr)_minmax(300px,1fr)]">
-    <section aria-labelledby="desk-heading">
-        <div class="mb-4 flex flex-wrap items-end justify-between gap-3 border-b border-gray-200 pb-3">
+<div class="operations-grid">
+    <section class="surface" aria-labelledby="desk-heading">
+        <div class="surface-heading">
             <div><p class="eyebrow">@ViewData["PageDate"] · @(Model.PendingCount + Model.PickupsTodayCount + Model.ReturnsDueTodayCount + Model.OverdueCount) open task(s)</p><h2 id="desk-heading" class="font-display text-xl font-semibold text-ink">Today’s desk</h2></div>
-            <button type="button" class="border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-500" onclick="window.location.reload()">Refresh</button>
+            <button type="button" class="btn-secondary" onclick="window.location.reload()">Refresh</button>
         </div>
 
         @if (Model.Desk.Count == 0)
@@ -25,27 +35,29 @@
             <div class="divide-y divide-gray-200">
                 @foreach (var task in Model.Desk)
                 {
-                    <article class="flex flex-wrap items-center justify-between gap-4 py-4">
-                        <div class="min-w-0 flex-1">
-                            <div class="flex flex-wrap items-center gap-2">
-                                <span class="border border-gray-200 px-2 py-1 font-sans text-[10px] font-medium tracking-[0.12em] text-gray-500">@task.Kind</span>
-                                <p class="item-code">@task.Row.ReservationCode @(task.Row.LoanCode is null ? "" : $"· {task.Row.LoanCode}")</p>
-                                <partial name="Components/_StatusBadge" model="task.Row.DisplayStatus" />
-                            </div>
-                            <h3 class="mt-2 font-display text-lg font-semibold text-ink">@task.Row.ItemName <span class="font-sans text-sm font-normal text-gray-500">· @task.Row.BorrowerName</span></h3>
-                            <p class="mt-1 text-xs text-gray-500">@task.Row.SchoolId · @task.Row.Department · @task.Row.LocationName</p>
-                            <p class="mt-1 text-xs text-gray-500">@ManilaClock.ToLocal(task.Row.StartUtc).ToString("d MMM HH:mm") → @ManilaClock.ToLocal(task.Row.EndUtc).ToString("d MMM HH:mm")</p>
+                    <article class="desk-task">
+                        <div class="desk-task-code">
+                            <span class="eyebrow">@task.Kind</span>
+                            <p class="item-code mt-1">@task.Row.ReservationCode @(task.Row.LoanCode is null ? "" : $"· {task.Row.LoanCode}")</p>
                         </div>
-                        <span class="inline-flex items-center gap-2 border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-500" aria-disabled="true">@(task.Kind == "APPROVE" ? "Review" : task.Kind == "RELEASE" ? "Release" : "Receive") <span class="soon-tag">Soon</span></span>
+                        <div class="min-w-0 flex-1">
+                            <h3 class="font-display text-lg font-semibold text-ink">@task.Row.ItemName <span class="font-sans text-sm font-normal text-gray-500">· @task.Row.BorrowerName</span></h3>
+                            <p class="mt-1 text-xs text-gray-500">@task.Row.SchoolId · @task.Row.Department · @task.Row.LocationName</p>
+                            <p class="mt-1 text-xs text-gray-500">@task.Row.StartLabel → @task.Row.EndLabel</p>
+                        </div>
+                        <div class="desk-task-actions">
+                            <partial name="Components/_StatusBadge" model="task.Row.DisplayStatus" />
+                            <span class="inline-flex items-center gap-2 border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-500" aria-disabled="true">@(task.Kind == "APPROVE" ? "Review" : task.Kind == "RELEASE" ? "Release" : "Receive") <span class="soon-tag">Soon</span></span>
+                        </div>
                     </article>
                 }
             </div>
         }
     </section>
 
-    <aside class="space-y-10">
-        <section aria-labelledby="attention-heading">
-            <div class="mb-4 border-b border-gray-200 pb-3"><p class="eyebrow">Operational alerts</p><h2 id="attention-heading" class="font-display text-xl font-semibold text-ink">Needs attention</h2></div>
+    <aside class="support-stack">
+        <section class="surface" aria-labelledby="attention-heading">
+            <div class="surface-heading"><p class="eyebrow">Operational alerts</p><h2 id="attention-heading" class="font-display text-xl font-semibold text-ink">Needs attention</h2></div>
             @if (Model.NeedsAttention.Count == 0)
             {
                 <partial name="Components/_EmptyState" model="@(new EmptyStateModel { Heading = "No equipment alerts", Message = "Items requiring maintenance or availability attention will show up here." })" />
@@ -63,12 +75,13 @@
                 </ul>
             }
         </section>
-        <section class="border-t border-gray-200 pt-6">
+        <section class="surface shortcut-card">
             <p class="eyebrow">Quick access</p><h2 class="mt-1 font-display text-xl font-semibold text-ink">Shortcuts</h2>
             <div class="mt-4 flex flex-wrap gap-x-5 gap-y-3 text-sm text-gray-500">
-                @if (User.HasClaim("permission", "equipment.browse")) { <span class="inline-flex items-center gap-2">Equipment <span class="soon-tag">Soon</span></span> }
-                @if (User.HasClaim("permission", "history.view")) { <span class="inline-flex items-center gap-2">Reports <span class="soon-tag">Soon</span></span> }
+                @if (User.HasClaim("permission", "equipment.browse")) { <a asp-controller="Catalog" asp-action="Index" class="action-edit">Equipment</a> }
+                @if (User.HasClaim("permission", "history.view")) { <a asp-controller="BorrowingHistory" asp-action="Index" class="action-edit">Reports</a> }
             </div>
         </section>
     </aside>
+</div>
 </div>

@@ -44,6 +44,15 @@ namespace ASI.Basecode.Services.Utilities
                 DateTimeKind.Unspecified);
         }
 
+        public static DateTime ToUtc(DateTime local)
+        {
+            return DateTime.SpecifyKind(
+                TimeZoneInfo.ConvertTimeToUtc(
+                    DateTime.SpecifyKind(local, DateTimeKind.Unspecified),
+                    ManilaTimeZone),
+                DateTimeKind.Utc);
+        }
+
         public static (DateTime StartUtc, DateTime EndUtc) TodayUtcRange()
         {
             return TodayUtcRange(DateTime.UtcNow);

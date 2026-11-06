@@ -29,7 +29,7 @@ The initial release is intentionally focused on the core borrowing workflow and 
 ### 3.1 Authentication
 
 #### User Login
-- Users sign in with their registered email/student-faculty ID and password.
+- Users sign in with their School ID (the canonical account UserName) and password. Email login is not supported.
 - The system validates credentials before granting access.
 - Unauthenticated users cannot use protected system features.
 
@@ -40,7 +40,7 @@ The initial release is intentionally focused on the core borrowing workflow and 
 - Administrators see management and reporting functions.
 
 #### Password Reset Request
-- A user can request a six-digit OTP using their registered email address.
+- A user can request a six-digit OTP using their School ID. The server sends it to that account’s registered email without exposing the email in the response.
 - The OTP is hashed and stored in the existing ASP.NET Core Identity user-token table for ten minutes, with a maximum of five checked attempts.
 - OTP attempts are reserved atomically so concurrent requests cannot bypass the attempt limit.
 - Requests are rate-limited and resend requests use a per-account cooldown and hourly issuance cap.
@@ -89,14 +89,17 @@ The initial release is intentionally focused on the core borrowing workflow and 
 ### 3.4 Reports and Visibility
 
 #### Borrowing History Report
-- Authorized staff can view filterable borrowing history.
-- Filters include borrower, equipment item/category, date range, transaction status, and late-return status.
-- The report supports accountability by showing request, approval, release, and return records.
+- Users with `history.view` can review reservation and loan history; borrower-role users are restricted to their own records.
+- Search covers borrower name, user code, school ID, item name, and item code. Filters include borrower, item text, category, borrowing-start date range, status, and late-return status.
+- The paginated page shows requested, scheduled, actual release, and actual return times in Philippine time, along with return condition and late days when recorded.
+- Authorized users can export all matching filtered records to CSV. The export uses the same server-side filters as the page and protects text values from spreadsheet formula injection.
+- Authorized users can also download all matching records as an XLSX workbook. It keeps the CSV's 17-column order, stores identifiers and user values as literal text, writes Manila timestamps as formatted date cells, and uses explicit column widths, wrapped long text, and a frozen header row. Borrower-role exports remain scoped to the signed-in borrower.
 
 #### Availability Calendar
-- Users can view a daily or weekly calendar of equipment availability.
-- The calendar distinguishes available, reserved, borrowed, and under-maintenance items.
-- It helps borrowers select dates that do not conflict with existing reservations.
+- Users with `equipment.browse` can view a daily or weekly calendar filtered by category, equipment item, and its free-text location.
+- The calendar displays approved reservations, active loans, and overdue loans in Philippine time; it shows current maintenance/unavailable state in the equipment list without inventing a repair date.
+- Select an equipment item to see its schedule. Borrowers with `reservation.create` can select an open future interval to continue to the existing reservation form; the reservation service rechecks eligibility and conflicts before saving.
+- Calendar results contain schedule and equipment details only, never another borrower's identity or request purpose.
 
 ### 3.5 Administration
 
@@ -133,6 +136,7 @@ The initial release is intentionally focused on the core borrowing workflow and 
 - Only active, eligible borrowers may create reservations.
 - A reservation requires an available item and a valid return date/time after its release date/time.
 - One item cannot have overlapping approved reservations or active loans.
+- Inventory edits/archives and reservation creation/approval must coordinate through the same per-equipment SQL Server lock. Each workflow must use a `SERIALIZABLE` transaction, acquire the equipment-row lock before checking reservation state, then validate and write before committing. This prevents either workflow from validating against stale inventory state.
 - Only custodians and administrators can approve, reject, release, or complete a return.
 - Equipment marked as unavailable or under maintenance cannot be reserved or released.
 - Every approval, rejection, release, return, and status change should retain the acting user and timestamp for audit history.

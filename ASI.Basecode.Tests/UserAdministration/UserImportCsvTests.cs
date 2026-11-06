@@ -1,4 +1,5 @@
-using ASI.Basecode.WebApp.Services;
+using ASI.Basecode.Services.ServiceModels.UserAdministration;
+using ASI.Basecode.Services.Services;
 using System;
 using System.IO;
 using System.Linq;
@@ -52,7 +53,7 @@ namespace ASI.Basecode.Tests.UserAdministration
             Assert.NotEmpty((await UserImportCsv.ParseAsync(stream)).Errors);
         }
 
-        internal static async Task<ASI.Basecode.WebApp.Models.UserCsvParseResult> Parse(string csv)
+        internal static async Task<UserCsvParseResult> Parse(string csv)
         {
             using var stream = new MemoryStream(Encoding.UTF8.GetBytes(csv));
             return await UserImportCsv.ParseAsync(stream);

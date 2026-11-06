@@ -1,6 +1,7 @@
-using ASI.Basecode.Data;
+﻿using ASI.Basecode.Data;
+using ASI.Basecode.WebApp.Configuration;
 using ASI.Basecode.WebApp.Extensions.Configuration;
-using ASI.Basecode.WebApp.Services;
+using ASI.Basecode.Services.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -39,7 +40,14 @@ namespace ASI.Basecode.WebApp
             {
                 options.UseSqlServer(
                     Configuration.GetConnectionString("DefaultConnection"),
-                    sqlServerOptions => sqlServerOptions.CommandTimeout(120));
+                    sqlServerOptions =>
+                    {
+                        sqlServerOptions.CommandTimeout(120);
+                        sqlServerOptions.EnableRetryOnFailure(
+                            maxRetryCount: 5,
+                            maxRetryDelay: TimeSpan.FromSeconds(30),
+                            errorNumbersToAdd: null);
+                    });
             });
 
             ConfigureIdentityAndAuthorization();
@@ -86,6 +94,7 @@ namespace ASI.Basecode.WebApp
             services.Configure<FormOptions>(options =>
             {
                 options.ValueLengthLimit = 1024 * 1024 * 100;
+                options.MultipartBodyLengthLimit = 5_500_000;
             });
 
             services.AddSingleton<IFileProvider>(

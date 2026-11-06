@@ -1,0 +1,137 @@
+@model ASI.Basecode.Services.ServiceModels.Returns.ReturnRecordIndexViewModel
+@using ASI.Basecode.Services.Services
+@using ASI.Basecode.Services.Utilities
+@using ASI.Basecode.WebApp.Models.Dashboard
+@{
+    var showsReturns = Model.Tab == ReturnRecordService.ReturnedTab || Model.Tab == ReturnRecordService.LateTab;
+    var emptyState = Model.Tab switch
+    {
+        ReturnRecordService.OverdueTab => new EmptyStateModel { Heading = "Nothing overdue", Message = "Every item on loan is still within its due time." },
+        ReturnRecordService.ReturnedTab => new EmptyStateModel { Heading = "No returns yet", Message = "Recorded returns will appear here." },
+        ReturnRecordService.LateTab => new EmptyStateModel { Heading = "No late returns", Message = "Returns made after the due time will appear here." },
+        _ => new EmptyStateModel { Heading = "No items on loan", Message = "Released items waiting to come back will appear here." }
+    };
+}
+
+
+<section aria-label="Return and condition records" class="role-page">
+    <div class="mb-4">
+        <p class="mt-1 text-xs text-gray-500">@(showsReturns ? "Newest returns first" : "Earliest due first") · times are Philippine time</p>
+    </div>
+
+    <nav class="filter-tabs" aria-label="Filter returns">
+        @foreach (var tab in Model.Tabs)
+        {
+            var isActive = tab.Value == Model.Tab;
+            <a asp-action="Index" asp-route-tab="@tab.Value" asp-route-search="@Model.Search"
+               class="border px-3 py-2 text-sm @(isActive ? "border-primary bg-tint font-semibold text-primary-strong" : "border-gray-200 bg-white text-gray-700")"
+               aria-current="@(isActive ? "page" : null)">@tab.Label <span class="ml-1 text-xs text-gray-500">@tab.Count</span></a>
+        }
+    </nav>
+
+    <form method="get" asp-action="Index" role="search" class="filter-panel filter-panel--compact mt-4">
+        <input type="hidden" name="tab" value="@Model.Tab" />
+        <div class="min-w-0 flex-1">
+            <label for="return-search" class="mb-1 block text-xs font-medium text-gray-700">Search returns</label>
+            <input id="return-search" name="search" value="@Model.Search" type="search" maxlength="100"
+                   class="input w-full" placeholder="Equipment name or code, borrower name or ID, reservation code (RSV-123)" />
+        </div>
+        <button type="submit" class="btn-primary min-h-10">Search</button>
+        @if (!string.IsNullOrWhiteSpace(Model.Search) && string.IsNullOrWhiteSpace(Model.ValidationMessage))
+        {
+            <a asp-action="Index" asp-route-tab="@Model.Tab" class="btn-secondary min-h-10">Clear search</a>
+        }
+    </form>
+
+    @if (!string.IsNullOrWhiteSpace(Model.ValidationMessage))
+    {
+        <div class="mt-4 border-l-4 border-ink bg-white px-4 py-3 text-sm" role="alert">@Model.ValidationMessage</div>
+    }
+
+    @if (Model.Items.Count == 0)
+    {
+        @if (!string.IsNullOrWhiteSpace(Model.Search))
+        {
+            <div class="mt-5 border border-gray-200 bg-white px-5 py-6" role="status">
+                <h2 class="font-display text-lg font-semibold text-ink">No matching records</h2>
+                <p class="mt-1 text-sm text-gray-500">Try another equipment name or code, borrower name or ID, or reservation code.</p>
+                <a asp-action="Index" asp-route-tab="@Model.Tab" class="btn-secondary mt-4 min-h-10">Clear search</a>
+            </div>
+        }
+        else
+        {
+            <partial name="Components/_EmptyState" model="emptyState" />
+        }
+    }
+    else
+    {
+        <div class="table-surface overflow-x-auto">
+            <table class="w-full min-w-[680px] text-left text-sm">
+                <thead class="border-b border-gray-200 bg-gray-50 font-display text-[11px] uppercase tracking-[0.12em] text-gray-700">
+                    <tr>
+                        <th scope="col" class="px-3 py-3">Reservation</th>
+                        <th scope="col" class="px-3 py-3">Equipment</th>
+                        <th scope="col" class="px-3 py-3">Borrower</th>
+                        <th scope="col" class="px-3 py-3">@(showsReturns ? "Returned" : "Due")</th>
+                        <th scope="col" class="px-3 py-3">Status</th>
+                        <th scope="col" class="px-3 py-3"><span class="sr-only">Actions</span></th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr class="align-middle">
+                            <td class="px-3 py-3">
+                                <p class="item-code">@item.ReservationCode</p>
+                                <p class="mt-1 text-xs text-gray-500">Released @item.ReleasedAtLocal.ToString("d MMM · HH:mm")</p>
+                            </td>
+                            <td class="px-3 py-3">
+                                <p class="font-semibold text-ink">@item.ItemName</p>
+                                <p class="mt-1 text-xs text-gray-500">@item.ItemCode · @item.CategoryName</p>
+                            </td>
+                            <td class="px-3 py-3">
+                                <p class="text-gray-700">@item.BorrowerName</p>
+                                <p class="mt-1 text-xs text-gray-500">@item.SchoolId</p>
+                            </td>
+                            <td class="px-3 py-3 text-gray-700">
+                                @if (showsReturns)
+                                {
+                                    @item.ReturnedAtLocal?.ToString("ddd d MMM · HH:mm")<br />
+                                    <span class="text-xs text-gray-500">due @item.EndLabel</span>
+                                }
+                                else
+                                {
+                                    @item.EndLabel
+                                }
+                            </td>
+                            <td class="px-3 py-3">
+                                <partial name="Components/_StatusBadge" model="item.DisplayStatus" />
+                                @if (showsReturns)
+                                {
+                                    <p class="mt-1 text-xs text-gray-500">@ReturnInspection.Label(item.ReturnedCondition)@(item.DaysLate.HasValue ? $" · {item.DaysLate} day{(item.DaysLate == 1 ? "" : "s")} late" : "")</p>
+                                }
+                            </td>
+                            <td class="px-3 py-3 text-right">
+                                @if (showsReturns)
+                                {
+                                    <a asp-action="Details" asp-route-id="@item.ReturnRecordId" asp-route-tab="@Model.Tab" asp-route-search="@Model.Search" asp-route-page="@Model.Page" class="btn-secondary min-h-9 text-sm">View<span class="sr-only"> return for @item.ReservationCode</span></a>
+                                }
+                                else
+                                {
+                                    <a asp-action="Create" asp-route-releaseRecordId="@item.ReleaseRecordId" asp-route-tab="@Model.Tab" asp-route-search="@Model.Search" asp-route-page="@Model.Page" class="btn-secondary min-h-9 text-sm">Record return<span class="sr-only"> for @item.ReservationCode</span></a>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <partial name="Components/_Pagination" model="@(new PaginationViewModel
+        {
+            Page = Model.Page, TotalPages = Model.TotalPages, TotalCount = Model.TotalCount,
+            Label = "Return pages",
+            Routes = { ["tab"] = Model.Tab, ["search"] = Model.Search }
+        })" />
+    }
+</section>

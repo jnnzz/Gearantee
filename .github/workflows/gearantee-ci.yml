@@ -34,6 +34,22 @@ jobs:
         with:
           global-json-file: global.json
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: ASI.Basecode.WebApp/package-lock.json
+
+      - name: Build Tailwind and calendar assets
+        working-directory: ASI.Basecode.WebApp
+        run: |
+          npm ci
+          npm run assets:build
+
+      - name: Verify generated assets are current
+        run: git diff --ignore-space-at-eol --exit-code -- ASI.Basecode.WebApp/wwwroot/css/app.css ASI.Basecode.WebApp/wwwroot/lib/fullcalendar
+
       - name: Cache NuGet packages
         uses: actions/cache@v4
         with:

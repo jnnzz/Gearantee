@@ -1,0 +1,36 @@
+@model ASI.Basecode.Services.ServiceModels.EquipmentItem.EquipmentItemFormViewModel
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin-inventory.css" asp-append-version="true" />
+}
+
+<div class="role-page form-layout form-layout--wide">
+    <a asp-action="Index" asp-route-tab="equipment" class="mb-5 inline-flex text-sm font-semibold text-primary-strong underline underline-offset-4">&larr; Back to equipment items</a>
+    <section class="surface">
+        <h2 class="font-display text-xl font-semibold">Item details</h2>
+        <p class="mt-1 text-sm text-gray-500">Add an individually tracked item to the equipment inventory.</p>
+
+        @if ((Model?.Categories?.Count ?? 0) == 0)
+        {
+            <div class="mt-5 border-l-4 border-ink bg-gray-50 px-4 py-3 text-sm" role="status">
+                Create and activate a category before registering equipment.
+                <a asp-action="Create" class="ml-1 font-semibold text-primary-strong underline">Create category</a>
+            </div>
+        }
+
+        <form asp-action="CreateEquipment" method="post" enctype="multipart/form-data" class="mt-6">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="validation-summary-errors" role="alert"></div>
+            @await Html.PartialAsync("_EquipmentItemFields", Model)
+            <div class="mt-6 flex flex-wrap justify-end gap-3 border-t border-gray-100 pt-5">
+                <a asp-action="Index" asp-route-tab="equipment" class="btn-secondary">Cancel</a>
+                <button type="submit" class="btn-primary" disabled="@((Model?.Categories?.Count ?? 0) == 0)">Register equipment</button>
+            </div>
+        </form>
+    </section>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/equipment-image-upload.js" asp-append-version="true"></script>
+}

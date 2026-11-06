@@ -1,0 +1,118 @@
+@model ASI.Basecode.Services.ServiceModels.EquipmentItem.EquipmentItemFormViewModel
+@inject ASI.Basecode.Services.Interfaces.IImageStorageService ImageStorage
+
+@{
+    var uploadConfigured = (ViewData["ImageUploadConfigured"] as bool? ?? ViewData["ImageUploadEnabled"] as bool?) ?? false;
+    var maxBytes = (long)(ViewData["ImageMaxFileBytes"] ?? 2097152L);
+    var maxMb = Math.Max(1, maxBytes / (1024 * 1024));
+    var previewSrc = string.IsNullOrWhiteSpace(Model.ImageUrl)
+        ? null
+        : await ImageStorage.CreateSignedUrlAsync(Model.ImageUrl, System.TimeSpan.FromMinutes(60));
+}
+
+<div class="form-grid grid gap-4 sm:grid-cols-2">
+    @if (Model.EquipmentId > 0)
+    {
+        <div><span class="field-label">Item code</span><p class="item-code">@Model.ItemCode</p></div>
+    }
+    <div>
+        <label asp-for="ItemName" class="mb-1 block text-sm font-medium"></label>
+        <input asp-for="ItemName" class="input" placeholder="e.g. Portable projector" />
+        <span asp-validation-for="ItemName" class="field-validation-error"></span>
+    </div>
+
+    <div>
+        <label asp-for="CategoryId" class="mb-1 block text-sm font-medium"></label>
+        <select asp-for="CategoryId" class="input">
+            <option value="0">Choose a category</option>
+            @foreach (var category in Model.Categories ?? Enumerable.Empty<ASI.Basecode.Services.ServiceModels.EquipmentItem.EquipmentCategoryOptionViewModel>())
+            {
+                <option value="@category.CategoryId">@category.CategoryCode - @category.CategoryName@(category.IsActive ? "" : " (Inactive - existing item)")</option>
+            }
+        </select>
+        <span asp-validation-for="CategoryId" class="field-validation-error"></span>
+        @if (Model.IsCategoryInactive)
+        {
+            <p class="mt-1 text-xs text-amber-700">The current category is inactive. Keep it or choose an active category.</p>
+        }
+    </div>
+    <div>
+        <label asp-for="Location" class="mb-1 block text-sm font-medium"></label>
+        <input asp-for="Location" class="input" placeholder="e.g. Main Store, Shelf A2" />
+        <span asp-validation-for="Location" class="field-validation-error"></span>
+    </div>
+
+    <div>
+        <label asp-for="Brand" class="mb-1 block text-sm font-medium"></label>
+        <input asp-for="Brand" class="input" placeholder="e.g. Epson" />
+        <span asp-validation-for="Brand" class="field-validation-error"></span>
+    </div>
+    <div>
+        <label asp-for="ModelName" class="mb-1 block text-sm font-medium"></label>
+        <input asp-for="ModelName" class="input" placeholder="e.g. EB-X51" />
+        <span asp-validation-for="ModelName" class="field-validation-error"></span>
+    </div>
+
+    <div class="sm:col-span-2">
+        <label class="mb-1 block text-sm font-medium">Item photo</label>
+        <input asp-for="ImageUrl" type="hidden" />
+        <label data-image-drop-zone class="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-center transition hover:border-primary-strong hover:bg-white">
+            <input data-image-input type="file" name="imageFile" accept="image/png,image/jpeg,image/webp" data-image-max-bytes="@maxBytes" class="sr-only" @(uploadConfigured ? null : "disabled") />
+            <span data-image-prompt class="text-sm font-medium text-gray-700">@(string.IsNullOrEmpty(Model.ImageUrl) ? "Drag & drop an image here, or click to browse" : "Drag & drop a new image here, or click to replace the current photo")</span>
+            <span class="text-xs text-gray-500">JPEG, PNG, or WebP. @(maxMb) MB maximum.</span>
+            <span data-image-filename class="text-xs font-semibold text-primary-strong"></span>
+        </label>
+        <div data-image-preview-wrap class="mt-3" hidden="@(string.IsNullOrEmpty(Model.ImageUrl) ? "hidden" : null)">
+            <img data-image-preview src="@previewSrc" alt="Equipment photo preview" class="h-40 w-full max-w-sm rounded-lg border border-gray-200 object-cover" />
+        </div>
+        @if (!string.IsNullOrEmpty(Model.ImageUrl))
+        {
+            <label class="mt-3 inline-flex items-center gap-2 text-sm text-gray-700">
+                <input data-image-remove type="checkbox" name="removeImage" value="true" class="h-4 w-4 rounded border-gray-300" @(uploadConfigured ? null : "disabled") />
+                Remove the current photo
+            </label>
+        }
+        <span data-image-error class="field-validation-error mt-1 block text-sm" role="alert">@Html.ValidationMessage("imageFile")</span>
+        @if (uploadConfigured)
+        {
+            <p class="mt-1 text-xs text-gray-500">Optional. Upload a photo of the item.</p>
+        }
+        else
+        {
+            <p class="mt-1 text-xs text-amber-700">Image upload is unavailable until Supabase storage is configured. The item can still be saved without a photo.</p>
+        }
+    </div>
+
+    <div>
+        <label asp-for="SerialNumber" class="mb-1 block text-sm font-medium"></label>
+        <input asp-for="SerialNumber" class="input" autocomplete="off" />
+        <span asp-validation-for="SerialNumber" class="field-validation-error"></span>
+        <p class="mt-1 text-xs text-gray-500">Leave blank if the item has no serial number. Entered serial numbers must be unique.</p>
+    </div>
+    <div>
+        <label asp-for="ConditionStatus" class="mb-1 block text-sm font-medium"></label>
+        <select asp-for="ConditionStatus" class="input">
+            <option value="@DomainValues.ReturnConditions.Good">Good</option>
+            <option value="@DomainValues.ReturnConditions.Damaged">Damaged</option>
+            <option value="@DomainValues.ReturnConditions.NeedsInspection">Needs inspection</option>
+            <option value="@DomainValues.ReturnConditions.UnderRepair">Under repair</option>
+        </select>
+        <span asp-validation-for="ConditionStatus" class="field-validation-error"></span>
+    </div>
+
+    <div>
+        <label asp-for="ItemStatus" class="mb-1 block text-sm font-medium"></label>
+        <select asp-for="ItemStatus" class="input">
+            <option value="@DomainValues.EquipmentStatuses.Available">Available</option>
+            <option value="@DomainValues.EquipmentStatuses.UnderMaintenance">Under maintenance</option>
+            <option value="@DomainValues.EquipmentStatuses.Unavailable">Unavailable</option>
+        </select>
+        <span asp-validation-for="ItemStatus" class="field-validation-error"></span>
+        <p class="mt-1 text-xs text-gray-500">Borrowed status is set by the equipment release and return workflow.</p>
+    </div>
+    <div class="sm:col-span-2">
+        <label asp-for="Description" class="mb-1 block text-sm font-medium"></label>
+        <textarea asp-for="Description" rows="3" class="input" placeholder="Specifications or other inventory notes..."></textarea>
+        <span asp-validation-for="Description" class="field-validation-error"></span>
+    </div>
+</div>

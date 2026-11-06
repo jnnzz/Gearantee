@@ -12,7 +12,7 @@ An ASP.NET Core MVC application for managing school equipment reservations, appr
 - SQL Server Management Studio (SSMS) as an optional administration tool
 - Tailwind CSS with minimal custom CSS
 - Brevo transactional email API for password-reset OTP delivery
-- FullCalendar for daily/weekly availability
+- FullCalendar Standard for daily/weekly availability (no Premium Scheduler)
 
 The canonical database design is documented in [the ERD and data dictionary](doc/Campus_Equipment_Borrowing_ERD_Data_Dictionary.md).
 
@@ -38,7 +38,7 @@ The canonical database design is documented in [the ERD and data dictionary](doc
 - .NET 9 SDK
 - Microsoft SQL Server (Developer or Express is sufficient for local development)
 - SSMS, Azure Data Studio, or another SQL client (optional)
-- Node.js/npm for the Tailwind CSS build
+- Node.js 24/npm when rebuilding Tailwind or FullCalendar assets
 - Visual Studio 2022 or another compatible editor
 
 The repository includes a `global.json` pin and a local `dotnet-ef` tool manifest. Restore the tool after cloning:
@@ -57,7 +57,14 @@ dotnet user-secrets --project .\ASI.Basecode.WebApp\ASI.Basecode.WebApp.csproj s
 dotnet user-secrets --project .\ASI.Basecode.WebApp\ASI.Basecode.WebApp.csproj set "Brevo:SenderEmail" "your-verified-email@example.com"
 ```
 
-Production connection strings and Brevo credentials belong in protected IIS, Azure, or environment configuration. Use `Brevo__ApiKey` and `Brevo__SenderEmail` as production environment variable names.
+Equipment images are uploaded to a **private** Supabase Storage bucket when it is configured, and displayed through short-lived signed URLs. Create a private bucket (`equipment-images` by default) and store the project URL and `service_role` key locally with User Secrets. The register/edit forms always show the drag/drop upload control; it stays disabled (no uploads attempted) until Supabase is configured. Never commit the `service_role` key:
+
+```powershell
+dotnet user-secrets --project .\ASI.Basecode.WebApp\ASI.Basecode.WebApp.csproj set "Supabase:Url" "https://YOUR-PROJECT.supabase.co"
+dotnet user-secrets --project .\ASI.Basecode.WebApp\ASI.Basecode.WebApp.csproj set "Supabase:ServiceRoleKey" "YOUR_SERVICE_ROLE_KEY"
+```
+
+Production connection strings, Brevo credentials, and Supabase credentials belong in protected IIS, Azure, or environment configuration. Use `Brevo__ApiKey`, `Brevo__SenderEmail`, `Supabase__Url`, `Supabase__Bucket`, and `Supabase__ServiceRoleKey` as production environment variable names.
 
 ## Database Setup
 
@@ -123,13 +130,13 @@ npm ci
 npm run css:dev
 ```
 
-Before submitting CSS or Razor class changes, create the minified production file:
+Before submitting calendar, JavaScript, CSS, or Razor class changes, prepare the checked-in frontend assets:
 
 ```powershell
-npm run css:build
+npm run assets:build
 ```
 
-The application layout loads the generated stylesheet. Bootstrap and the old template CSS have been removed; use Tailwind utility classes and the shared `.input` / `.btn-primary` component classes.
+This copies the pinned FullCalendar bundle and its MIT license into `wwwroot/lib/fullcalendar`, then builds the minified Tailwind stylesheet. These generated assets are checked in, so teammates can run the application without Node.js. Bootstrap and the old template CSS have been removed; use Tailwind utility classes and the shared `.input` / `.btn-primary` component classes.
 
 ## Preview the dashboards with sample data
 
@@ -167,6 +174,9 @@ Implemented:
 - Database health endpoint at `/health/database`
 - Password-reset OTP flow with Brevo email delivery
 - Tailwind CSS build, shared responsive shell, and Tailwind-styled authentication pages
+- Permission-protected daily/weekly availability calendar with category, item, and location filters
+- Borrower equipment catalog and reservation request, status, and cancellation pages
+- Searchable borrowing history with filters and CSV export
 - Administrator user management with single and atomic bulk CSV account creation, role assignment, permission matrix, and account activation controls (see [CSV import instructions](doc/USER_CSV_IMPORT.md))
 - SQL-backed borrower, custodian, and administrator dashboard views
 - Development-only role switcher and demo dashboard data seeder
@@ -174,4 +184,4 @@ Implemented:
 Still in progress:
 
 - Dashboard polish and acceptance against the approved screen-size and role test matrix
-- Equipment, reservation, approval/release, return, calendar, and reporting workflows
+- Borrower profile administration and custodian approval, release, and return workflows

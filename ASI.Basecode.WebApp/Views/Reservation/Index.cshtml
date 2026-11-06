@@ -1,0 +1,92 @@
+@model ASI.Basecode.Services.ServiceModels.Reservations.ReservationIndexViewModel
+@using ASI.Basecode.WebApp.Models.Dashboard
+@{
+    var activeTab = Model.Tabs.FirstOrDefault(tab => tab.Value == Model.StatusFilter);
+}
+
+
+<section aria-label="Borrowing history results" class="role-page min-w-0">
+    <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div>
+            <p class="mt-1 text-xs text-gray-500">Newest requests first · times are Philippine time</p>
+        </div>
+        @if (User.HasClaim("permission", DomainValues.Permissions.HistoryView) &&
+            !User.IsInRole(DomainValues.Roles.Administrator) && !User.IsInRole(DomainValues.Roles.Custodian))
+        {
+            <a asp-controller="BorrowingHistory" asp-action="Index" class="btn-secondary">Borrowing report</a>
+        }
+        @if (User.HasClaim("permission", DomainValues.Permissions.ReservationCreate) &&
+            User.HasClaim("permission", DomainValues.Permissions.EquipmentBrowse))
+        {
+            <a asp-controller="Catalog" asp-action="Index" class="btn-primary min-h-10">Browse equipment</a>
+        }
+    </div>
+
+    <nav class="filter-tabs" aria-label="Filter by status">
+        @foreach (var tab in Model.Tabs)
+        {
+            var isActive = tab.Value == Model.StatusFilter;
+            <a asp-action="Index" asp-route-status="@(string.IsNullOrEmpty(tab.Value) ? null : tab.Value)" asp-route-search="@Model.Search"
+               class="border px-3 py-2 text-sm @(isActive ? "border-primary bg-tint font-semibold text-primary-strong" : "border-gray-200 bg-white text-gray-700")"
+               aria-current="@(isActive ? "page" : null)">@tab.Label <span class="ml-1 text-xs text-gray-500">@tab.Count</span></a>
+        }
+    </nav>
+    <form method="get" asp-action="Index" class="filter-panel filter-panel--compact" role="search">
+        <input type="hidden" name="status" value="@Model.StatusFilter" />
+        <div class="flex-1"><label class="sr-only" for="borrowing-search">Search my borrowing history</label><input id="borrowing-search" type="search" name="search" value="@Model.Search" maxlength="100" class="input w-full" placeholder="Reservation code, equipment name or item code" /></div>
+        <button type="submit" class="btn-primary">Search</button>
+        <a asp-action="Index" asp-route-status="@Model.StatusFilter" class="btn-secondary">Clear</a>
+    </form>
+
+    @if (Model.Items.Count == 0)
+    {
+        var heading = !string.IsNullOrEmpty(Model.Search) ? "No matching reservations" : string.IsNullOrEmpty(Model.StatusFilter) ? "No reservations yet" : $"No {activeTab?.Label.ToLowerInvariant()} reservations";
+        <partial name="Components/_EmptyState" model="@(new EmptyStateModel { Heading = heading, Message = string.IsNullOrEmpty(Model.Search) ? "Browse the equipment catalog and pick an item to request it." : "Try another reservation code, item name or item code." })" />
+    }
+    else
+    {
+        <div class="table-surface">
+            <table class="w-full min-w-[680px] text-left text-sm">
+                <thead class="border-b border-gray-200 bg-gray-50 font-display text-[11px] uppercase tracking-[0.12em] text-gray-700">
+                    <tr>
+                        <th scope="col" class="px-3 py-3">Reservation</th>
+                        <th scope="col" class="px-3 py-3">Equipment</th>
+                        <th scope="col" class="px-3 py-3">When</th>
+                        <th scope="col" class="px-3 py-3">Status</th>
+                        <th scope="col" class="px-3 py-3"><span class="sr-only">Actions</span></th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    @foreach (var reservation in Model.Items)
+                    {
+                        <tr class="align-middle">
+                            <td class="px-3 py-3">
+                                <p class="item-code">@reservation.ReservationCode</p>
+                                <p class="mt-1 text-xs text-gray-500">Requested @reservation.RequestedAtLocal.ToString("d MMM · HH:mm")</p>
+                            </td>
+                            <td class="px-3 py-3">
+                                <p class="font-semibold text-ink">@reservation.ItemName</p>
+                                <p class="mt-1 text-xs text-gray-500">@reservation.ItemCode · @reservation.CategoryName</p>
+                            </td>
+                            <td class="px-3 py-3 text-gray-700">
+                                @reservation.StartLabel<br />
+                                <span class="text-xs text-gray-500">to @reservation.EndLabel</span>
+                            </td>
+                            <td class="px-3 py-3"><partial name="Components/_StatusBadge" model="reservation.DisplayStatus" /></td>
+                            <td class="px-3 py-3 text-right">
+                                <a asp-action="Details" asp-route-id="@reservation.ReservationId" class="text-sm font-semibold text-primary-strong underline underline-offset-4">View<span class="sr-only"> @reservation.ReservationCode</span></a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <partial name="Components/_Pagination" model="@(new PaginationViewModel
+        {
+            Page = Model.Page, TotalPages = Model.TotalPages, TotalCount = Model.TotalCount,
+            Label = "Reservation pages",
+            Routes = { ["search"] = Model.Search, ["status"] = Model.StatusFilter }
+        })" />
+    }
+</section>

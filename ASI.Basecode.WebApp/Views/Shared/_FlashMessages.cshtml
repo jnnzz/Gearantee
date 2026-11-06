@@ -1,0 +1,15 @@
+@{
+    var variants = new[] { ("SuccessMessage", "success"), ("ErrorMessage", "error"), ("WarningMessage", "warning"), ("InfoMessage", "info") };
+}
+<div class="flash-messages" aria-label="Action feedback">
+    @foreach (var (key, variant) in variants)
+    {
+        // Controllers that consume TempData copy it into ViewData before rendering.
+        var temporaryMessage = TempData[key] as string;
+        var message = (ViewData[key] as string) ?? temporaryMessage;
+        if (!string.IsNullOrWhiteSpace(message))
+        {
+            <div class="flash-message flash-message-@variant" data-flash-message="@variant" role="@(variant == "error" ? "alert" : "status")">@message</div>
+        }
+    }
+</div>

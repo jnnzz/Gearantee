@@ -1,0 +1,44 @@
+@model ASI.Basecode.Services.ServiceModels.NotificationPage
+@using ASI.Basecode.Services.ServiceModels
+@using ASI.Basecode.Services.Utilities
+@{
+    ViewData["Title"] = "Notifications";
+    ViewData["Eyebrow"] = "Your inbox";
+}
+<section class="table-surface notification-center" aria-label="Your notifications">
+    <div class="flex flex-wrap items-center justify-between gap-4 mb-5">
+        <p class="text-sm text-gray-500">Reservation updates and equipment reminders.</p>
+        <form asp-action="MarkAllRead" method="post"><button class="btn-secondary" type="submit">Mark all as read</button></form>
+    </div>
+    @if (Model.Items.Count == 0)
+    {
+        <p class="py-8 text-gray-500">You have no notifications yet.</p>
+    }
+    <ul class="notification-list">
+        @foreach (var item in Model.Items)
+        {
+            <li class="notification-row @(item.ReadAt == null ? "notification-unread" : "")">
+                <div class="min-w-0 flex-1">
+                    <p class="font-semibold">@item.Title @if (item.ReadAt == null) { <span class="notification-unread-label">Unread</span> }</p>
+                    <p class="notification-body">@item.Body</p>
+                    <time class="text-xs text-gray-500" datetime="@item.CreatedAt.ToString("O")">@ManilaClock.ToLocal(item.CreatedAt).ToString("d MMM yyyy · h:mm tt")</time>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    @if (Url.IsLocalUrl(item.LinkUrl))
+                    {
+                        <a href="@Url.Content("~" + item.LinkUrl)" class="action-edit">View details</a>
+                    }
+                    @if (item.ReadAt == null)
+                    {
+                        <form asp-action="MarkRead" method="post">
+                            <input type="hidden" name="id" value="@item.NotificationId" />
+                            <input type="hidden" name="page" value="@Model.Page" />
+                            <button class="btn-secondary" type="submit">Mark as read</button>
+                        </form>
+                    }
+                </div>
+            </li>
+        }
+    </ul>
+</section>
+<partial name="Components/_Pagination" model="@(new PaginationViewModel { Page = Model.Page, TotalPages = Model.TotalPages, TotalCount = Model.TotalCount, Label = "Notification pages" })" />

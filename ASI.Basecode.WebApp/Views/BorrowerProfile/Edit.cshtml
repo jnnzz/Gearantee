@@ -1,0 +1,52 @@
+@using ASI.Basecode.Services.ServiceModels
+@model BorrowerProfileUpdateViewModel
+@{
+    ViewData["Title"] = "Edit borrower profile";
+    var borrowerProfileId = ViewData["BorrowerProfileId"];
+    var schoolId = ViewData["SchoolId"] as string;
+    var borrowerName = ViewData["BorrowerName"] as string;
+    var isEligible = ViewData["IsEligible"] as bool? ?? false;
+}
+
+<div class="role-page form-layout">
+    <a asp-action="Index" class="mb-5 inline-flex text-sm font-semibold text-primary-strong underline underline-offset-4">← Back to borrower profiles</a>
+
+    <section class="surface">
+        <div class="flex flex-wrap items-start justify-between gap-3">
+            <div>
+                <p class="item-code">@schoolId</p>
+                <h2 class="mt-1 font-display text-2xl font-semibold">@borrowerName</h2>
+                <p class="mt-1 text-sm text-gray-500">School ID: <span class="font-semibold text-gray-700">@schoolId</span></p>
+            </div>
+            <span class="inline-flex border px-2 py-1 text-xs @(isEligible ? "border-primary text-primary-strong" : "border-gray-200 text-gray-500")">@(isEligible ? "Eligible" : "Not eligible")</span>
+        </div>
+
+        <form asp-action="Edit" method="post" class="mt-6">
+            <div asp-validation-summary="ModelOnly" class="validation-summary-errors" role="alert"></div>
+            <p class="required-legend"><span class="required-marker" data-required-marker aria-hidden="true">*</span> Required fields</p>
+            <input type="hidden" name="id" value="@borrowerProfileId" />
+            <input type="hidden" name="ConcurrencyStamp" value="@Model.ConcurrencyStamp" />
+            <div class="form-grid grid gap-4 sm:grid-cols-2">
+                <div>
+                    <label asp-for="Department" class="mb-1 block text-sm font-medium">Department <span class="required-marker" data-required-marker aria-hidden="true">*</span></label>
+                    <input asp-for="Department" class="input" aria-required="true" />
+                    <span asp-validation-for="Department" class="field-validation-error"></span>
+                </div>
+                <div>
+                    <label asp-for="ContactNumber" class="mb-1 block text-sm font-medium"></label>
+                    <input asp-for="ContactNumber" class="input" />
+                    <span asp-validation-for="ContactNumber" class="field-validation-error"></span>
+                </div>
+            </div>
+            <p class="mt-3 text-xs text-gray-500">School ID and eligibility are not editable here. Eligibility is managed from the borrower profiles list.</p>
+            <div class="form-actions">
+                <a asp-action="Index" class="btn-secondary">Cancel</a>
+                <button type="submit" class="btn-primary">Save changes</button>
+            </div>
+        </form>
+    </section>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -334,7 +334,7 @@ flowchart TD
     K -->|Yes| M[Generate Borrowing Report]
 ```
 
-The borrowing history includes completed, cancelled, and overdue transactions and supports searching, filtering, and report generation.
+The borrowing history includes reservation, release, return, cancelled, and overdue records. Search covers borrower name, user code, school ID, item name, and item code. Filters include borrower, item/category, scheduled borrowing-start date range, status, and late-return status. Results are paginated and displayed in Philippine time. Authorized users can download a CSV containing all matching filtered records; the download uses the same access scope and filters as the page.
 
 ---
 
@@ -342,27 +342,24 @@ The borrowing history includes completed, cancelled, and overdue transactions an
 
 ```mermaid
 flowchart TD
-    A[Open Availability Calendar] --> B[Select Date / Week]
+    A[Open Availability Calendar] --> B[Select Day / Week]
 
-    B --> C[Load Equipment Schedule]
+    B --> C[Filter by Category, Equipment, and Location]
 
-    C --> D[Check Reservations]
-    D --> E[Check Active Borrowings]
-    E --> F[Check Maintenance Status]
+    C --> D[Load Matching Equipment and Schedule]
 
-    F --> G[Display Timeline]
+    D --> E[Check Approved Reservations and Active Loans]
+    E --> F[Display Reserved, Borrowed, and Overdue Times]
+    F --> G[Show Current Maintenance / Unavailable State]
 
-    G --> H{Apply Filters?}
+    G --> H{Borrower selects an open future interval?}
 
-    H -->|No| I[Display All Equipment]
-    H -->|Yes| J[Filter by Category]
-    J --> K[Filter by Equipment]
-    K --> L[Filter by Location]
-
-    L --> M[Display Filtered Timeline]
+    H -->|No| I[Continue Reviewing Schedule]
+    H -->|Yes| J[Open Reservation Form for Selected Item and Time]
+    J --> K[Recheck Eligibility and Conflicts Before Saving]
 ```
 
-The calendar provides a daily/weekly view of equipment availability, reservations, active borrowing, and maintenance status.
+The calendar is read-only; the reservation service remains responsible for final eligibility and conflict checks. Equipment location is filtered as free text stored on each item. The calendar does not show borrower identity or request purpose. Maintenance and unavailable items have no recorded schedule end date, so the calendar shows their current state without implying a repair completion time.
 
 ---
 
@@ -592,3 +589,16 @@ Check Late Return
 **Important:** The password-reset OTP/token mechanism is an authentication implementation detail and does **not** introduce a custom entity into the business ERD.
 
 ASP.NET Core Identity stores the account in `AspNetUsers` through the `ApplicationUser` model. School-specific borrowing fields and eligibility are stored separately in `BORROWER_PROFILE`.
+
+
+## Workspace refinement — 11/6/2026
+
+New reservation requests use full Philippine calendar days. Start must be tomorrow or later; End may equal Start and includes the whole selected day. Store Start at Manila midnight and End at midnight after the inclusive End date, converted to UTC, with IsFullDay=true. Conflict checks retain half-open intervals [start, end). Existing timed reservations remain unchanged (IsFullDay=false). Releases and actual returns retain timestamps. Scheduled-date labels show the inclusive End for full-day records; overdue and late-return calculations continue using the stored deadline.
+
+My borrowing history supports reservation-code, item-code and item-name search within the signed-in borrower's records, combined with status tabs and 10-row pagination. Custodian Quick Access links open Equipment and Reports under existing permissions.
+
+The calendar uses equipment rows with Week/Day navigation, equipment search and an optional category filter. Location, equipment and view dropdowns are removed. Available future days link to date-only requests for authorized borrowers; submission still rechecks eligibility and conflicts. Existing events stay private; borrower identity is not exposed. Maintenance is current state with no promised completion date.
+
+Equipment and Categories use separate tabs. Delete soft-deletes equipment through the existing archive flag, preserves history and existing transaction restrictions, and retains Restore. New item codes are server-assigned as CATEGORY-001-ASU: a persistent per-category counter, at least three digits, plus the first three letters of the item name uppercased and padded with X if needed. Allocation and insertion share a serializable transaction and category-row lock; the first allocation advances past existing matching codes including archived items. Existing item codes stay unchanged on edits.
+
+Login has no appearance control. Authenticated pages offer a Light/Dark icon toggle; legacy System preferences default to Light. Reports retain both date filters and CSV export, remove the separate item filter and Excel download control. Existing Excel endpoint remains available for compatibility.

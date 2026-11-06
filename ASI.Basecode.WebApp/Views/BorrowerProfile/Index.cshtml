@@ -1,0 +1,77 @@
+@using ASI.Basecode.Services.ServiceModels
+@model BorrowerProfileListViewModel
+@{
+    ViewData["Title"] = "Borrower profiles";
+}
+
+
+<section class="role-page">
+<div class="page-intro mb-4 flex flex-wrap items-center justify-between gap-3">
+    <div>
+        <p class="mt-1 text-xs text-gray-500">@Model.TotalCount record@(Model.TotalCount == 1 ? "" : "s") · eligibility controls who can submit reservation requests</p>
+    </div>
+</div>
+
+<form method="get" asp-action="Index" class="filter-panel filter-panel--compact">
+    <div class="flex-1">
+        <label class="sr-only" for="borrower-search">Search borrower profiles</label>
+        <input id="borrower-search" name="search" value="@Model.Search" type="search" placeholder="Search school ID, name, or department" class="input w-full" />
+    </div>
+    <button type="submit" class="btn-primary">Search</button>
+    @if (!string.IsNullOrWhiteSpace(Model.Search))
+    {
+        <a asp-action="Index" class="btn-secondary">Clear</a>
+    }
+</form>
+
+<div class="table-surface overflow-x-auto">
+    <table class="w-full min-w-[620px] text-left text-sm">
+        <thead class="border-b border-gray-200 bg-gray-50 font-display text-[11px] uppercase tracking-[0.12em] text-gray-700">
+            <tr>
+                <th scope="col" class="px-3 py-3">School ID</th>
+                <th scope="col" class="px-3 py-3">Name</th>
+                <th scope="col" class="px-3 py-3">Department</th>
+                <th scope="col" class="px-3 py-3">Contact number</th>
+                <th scope="col" class="px-3 py-3">Eligibility</th>
+                <th scope="col" class="table-actions-heading px-3 py-3">Actions</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-200">
+            @if (Model.Borrowers.Count == 0)
+            {
+                <tr><td colspan="6" class="px-4 py-12 text-center text-sm text-gray-500">@(string.IsNullOrWhiteSpace(Model.Search) ? "No borrower profiles yet." : "No borrower profiles match that search.")</td></tr>
+            }
+            @foreach (var borrower in Model.Borrowers)
+            {
+                <tr class="align-middle">
+                    <td class="px-3 py-3 item-code">@borrower.SchoolId</td>
+                    <td class="px-3 py-3 font-semibold text-ink">@borrower.BorrowerName</td>
+                    <td class="px-3 py-3 text-gray-700">@borrower.Department</td>
+                    <td class="px-3 py-3 text-gray-700">@borrower.ContactNumber</td>
+                    <td class="px-3 py-3">
+                        <partial name="Components/_StatusBadge" model="@(borrower.IsEligible ? "Eligible" : "Ineligible")" />
+                    </td>
+                    <td class="px-3 py-3 text-right">
+                        <div class="table-row-actions table-row-actions--eligibility">
+                            <a asp-action="Edit" asp-route-id="@borrower.BorrowerProfileId" class="action-edit">Edit</a>
+                            <form asp-action="UpdateEligibility" method="post" class="inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@borrower.BorrowerProfileId" />
+                                <input type="hidden" name="isEligible" value="@(!borrower.IsEligible ? "true" : "false")" />
+                                <button type="submit" class="@(borrower.IsEligible ? "action-delete" : "action-edit")">@(borrower.IsEligible ? "Mark ineligible" : "Mark eligible")</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<partial name="Components/_Pagination" model="@(new PaginationViewModel
+        {
+            Page = Model.Page, TotalPages = Model.TotalPages, TotalCount = Model.TotalCount,
+            Label = "Borrower profile pages",
+            Routes = { ["search"] = Model.Search }
+        })" />
+</section>
