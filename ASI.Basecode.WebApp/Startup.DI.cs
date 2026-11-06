@@ -23,6 +23,13 @@ namespace ASI.Basecode.WebApp
             _services.TryAddSingleton<IActionContextAccessor, ActionContextAccessor>();
             _services.TryAddSingleton<TimeProvider>(TimeProvider.System);
             _services.AddScoped<IUnitOfWork, UnitOfWork>();
+            _services.Configure<NotificationOptions>(Configuration.GetSection(NotificationOptions.SectionName));
+            _services.AddScoped<INotificationRepository, NotificationRepository>();
+            _services.AddScoped<INotificationDispatcher, NotificationDispatcher>();
+            _services.AddScoped<INotificationService, NotificationService>();
+            _services.AddScoped<NotificationReminderService>();
+            _services.AddScoped<NotificationEmailProcessor>();
+            _services.AddHostedService<ASI.Basecode.WebApp.Services.NotificationWorker>();
             _services.AddScoped<IAccountService, AccountService>();
             _services.AddScoped<IAuditService, AuditService>();
 

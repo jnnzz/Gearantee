@@ -1,0 +1,15 @@
+@inject Microsoft.Extensions.Options.IOptions<ASI.Basecode.Services.Configuration.NotificationOptions> NotificationOptions
+@if (NotificationOptions.Value.Enabled && User.Identity?.IsAuthenticated == true)
+{
+    <details class="notification-bell" data-notification-bell data-count-url="@Url.Action("UnreadCount", "Notification")" data-recent-url="@Url.Action("Recent", "Notification")" data-base-path="@Url.Content("~/")">
+        <summary class="notification-toggle" aria-label="Notifications">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" /></svg>
+            <span class="notification-count" data-unread-count hidden></span>
+        </summary>
+        <div class="notification-dropdown">
+            <div class="flex items-center justify-between gap-3 mb-3"><strong>Notifications</strong><a asp-controller="Notification" asp-action="Index" class="action-edit">View all</a></div>
+            <p data-notification-status role="status">Open your inbox to view notifications.</p>
+            <ul data-notification-list class="notification-list"></ul>
+        </div>
+    </details>
+}

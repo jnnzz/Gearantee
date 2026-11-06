@@ -29,7 +29,7 @@ The initial release is intentionally focused on the core borrowing workflow and 
 ### 3.1 Authentication
 
 #### User Login
-- Users sign in with their registered email/student-faculty ID and password.
+- Users sign in with their School ID (the canonical account UserName) and password. Email login is not supported.
 - The system validates credentials before granting access.
 - Unauthenticated users cannot use protected system features.
 
@@ -40,7 +40,7 @@ The initial release is intentionally focused on the core borrowing workflow and 
 - Administrators see management and reporting functions.
 
 #### Password Reset Request
-- A user can request a six-digit OTP using their registered email address.
+- A user can request a six-digit OTP using their School ID. The server sends it to that account’s registered email without exposing the email in the response.
 - The OTP is hashed and stored in the existing ASP.NET Core Identity user-token table for ten minutes, with a maximum of five checked attempts.
 - OTP attempts are reserved atomically so concurrent requests cannot bypass the attempt limit.
 - Requests are rate-limited and resend requests use a per-account cooldown and hourly issuance cap.

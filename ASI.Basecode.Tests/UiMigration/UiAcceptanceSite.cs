@@ -32,6 +32,8 @@ using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.RateLimiting;
 using Xunit;
 
 namespace ASI.Basecode.Tests.UiMigration
@@ -54,9 +56,12 @@ namespace ASI.Basecode.Tests.UiMigration
         public long LockedItemId { get; private set; }
         public long BorrowerProfileId { get; private set; }
         public string BorrowerId { get; private set; }
+        public string LastOtpEmail { get; private set; }
+        public string LastOtp { get; private set; }
+        public int OtpSendCount { get; private set; }
         public Exception LastRequestFailure { get; private set; }
 
-        public static async Task<UiAcceptanceSite> CreateAsync()
+        public static async Task<UiAcceptanceSite> CreateAsync(bool notifications = false, bool dashboardFails = false)
         {
             var site = new UiAcceptanceSite();
             var root = new DirectoryInfo(AppContext.BaseDirectory);
@@ -84,6 +89,15 @@ namespace ASI.Basecode.Tests.UiMigration
             services.AddMemoryCache();
             services.AddDistributedMemoryCache();
             services.AddSession();
+            services.AddRateLimiter(options => {
+                options.RejectionStatusCode = 429;
+                options.AddFixedWindowLimiter(PasswordResetOtpService.RequestRateLimitPolicyName, policy => {
+                    policy.PermitLimit = 5; policy.Window = TimeSpan.FromMinutes(1); policy.QueueLimit = 0;
+                });
+                options.AddFixedWindowLimiter(PasswordResetOtpService.VerifyRateLimitPolicyName, policy => {
+                    policy.PermitLimit = 20; policy.Window = TimeSpan.FromMinutes(1); policy.QueueLimit = 0;
+                });
+            });
             services.AddHttpContextAccessor();
             services.AddSingleton(TimeProvider.System);
             services.AddDbContext<SqliteDashboardDbContext>(options => options.UseSqlite(site.sqlite.Connection));
@@ -121,8 +135,13 @@ namespace ASI.Basecode.Tests.UiMigration
             services.AddScoped<IBorrowerProfileRepository, BorrowerProfileRepository>();
             services.AddScoped<IReservationRepository, ReservationRepository>();
             services.AddScoped<IReturnRecordRepository, ReturnRecordRepository>();
+            services.Configure<NotificationOptions>(options => options.Enabled = notifications);
+            services.AddScoped<INotificationRepository, NotificationRepository>();
+            services.AddScoped<INotificationDispatcher, NotificationDispatcher>();
+            services.AddScoped<INotificationService, NotificationService>();
             services.AddScoped<IAuditService, AuditService>();
             services.AddScoped<IDashboardService, DashboardService>();
+            if (dashboardFails) services.AddScoped<IDashboardService, UnavailableDashboard>();
             services.AddScoped<IUserAdministrationService, UserAdministrationService>();
             services.AddScoped<IBorrowerProfileService, BorrowerProfileService>();
             services.AddScoped<ICategoryService, CategoryService>();
@@ -141,7 +160,7 @@ namespace ASI.Basecode.Tests.UiMigration
                 options.ServiceRoleKey = "test-service-role-key";
             });
             services.AddSingleton<IImageStorageService, FakeImageStorageService>();
-            services.AddSingleton<IBrevoEmailSender, NoExternalEmail>();
+            services.AddSingleton<IBrevoEmailSender>(new NoExternalEmail(site));
             site.App = builder.Build();
             site.App.UseDeveloperExceptionPage();
             site.App.Use(async (context, next) =>
@@ -154,6 +173,7 @@ namespace ASI.Basecode.Tests.UiMigration
             site.App.UseSession();
             site.App.UseAuthentication();
             site.App.UseAuthorization();
+            site.App.UseRateLimiter();
             site.App.MapControllerRoute("default", "{controller=Account}/{action=Login}/{id?}");
             try
             {
@@ -215,10 +235,24 @@ namespace ASI.Basecode.Tests.UiMigration
             sqlite.Dispose();
         }
 
+        private sealed class UnavailableDashboard : IDashboardService
+        {
+            public Task<ASI.Basecode.Services.ServiceModels.Dashboard.BorrowerDashboardModel> GetBorrowerDashboardAsync(string id)
+                => throw new InvalidOperationException("Injected dashboard failure");
+            public Task<ASI.Basecode.Services.ServiceModels.Dashboard.CustodianDashboardModel> GetCustodianDashboardAsync()
+                => throw new InvalidOperationException("Injected dashboard failure");
+            public Task<ASI.Basecode.Services.ServiceModels.Dashboard.AdministratorDashboardModel> GetAdministratorDashboardAsync()
+                => throw new InvalidOperationException("Injected dashboard failure");
+        }
+
         private sealed class NoExternalEmail : IBrevoEmailSender
         {
+            private readonly UiAcceptanceSite _site;
+            public NoExternalEmail(UiAcceptanceSite site) => _site = site;
+            public Task SendAsync(string email, string name, string subject, string html, CancellationToken cancellationToken = default)
+                => throw new InvalidOperationException("External email is disabled in this fixture.");
             public Task SendPasswordResetOtpAsync(string email, string name, string otp, CancellationToken cancellationToken = default)
-                => throw new InvalidOperationException("External email is disabled in the UI acceptance fixture.");
+            { _site.LastOtpEmail = email; _site.LastOtp = otp; _site.OtpSendCount++; return Task.CompletedTask; }
         }
     }
 }

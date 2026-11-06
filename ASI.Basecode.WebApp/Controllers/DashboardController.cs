@@ -71,7 +71,8 @@ namespace ASI.Basecode.WebApp.Controllers
             catch (Exception exception)
             {
                 HandleExceptionLog(exception, "Load borrower dashboard");
-                ViewData["DashboardError"] =
+                ViewData["DashboardUnavailable"] = true;
+                ViewData["ErrorMessage"] =
                     "Dashboard information could not be loaded. Refresh the page or contact support.";
             }
 
@@ -98,7 +99,8 @@ namespace ASI.Basecode.WebApp.Controllers
             catch (Exception exception)
             {
                 HandleExceptionLog(exception, "Load custodian dashboard");
-                ViewData["DashboardError"] =
+                ViewData["DashboardUnavailable"] = true;
+                ViewData["ErrorMessage"] =
                     "Dashboard information could not be loaded. Refresh the page or contact support.";
             }
 
@@ -121,7 +123,8 @@ namespace ASI.Basecode.WebApp.Controllers
             catch (Exception exception)
             {
                 HandleExceptionLog(exception, "Load administrator dashboard");
-                ViewData["DashboardError"] =
+                ViewData["DashboardUnavailable"] = true;
+                ViewData["ErrorMessage"] =
                     "Dashboard information could not be loaded. Refresh the page or contact support.";
             }
 

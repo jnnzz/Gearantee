@@ -1,9 +1,10 @@
 // Apply the explicit preference before the stylesheet paints.
 (() => {
     const root = document.documentElement;
+    const forceLight = root.dataset.forceLight === "true";
     let preference = "light";
     try {
-        if (localStorage.getItem("gearantee-theme") === "dark") preference = "dark";
+        if (!forceLight && localStorage.getItem("gearantee-theme") === "dark") preference = "dark";
     } catch { /* Storage may be blocked; the toggle still works for this page. */ }
     function apply() {
         root.dataset.theme = preference;
@@ -17,6 +18,7 @@
     apply();
     document.addEventListener("DOMContentLoaded", () => {
         apply();
+        if (forceLight) return;
         document.querySelectorAll("[data-theme-toggle]").forEach(button => button.addEventListener("click", () => {
             preference = preference === "light" ? "dark" : "light";
             try { localStorage.setItem("gearantee-theme", preference); } catch { /* Keep the page usable. */ }

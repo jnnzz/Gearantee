@@ -12,7 +12,7 @@
         <section class="login-panel" aria-labelledby="login-heading">
             <partial name="_AuthBrand" />
             <h2 id="login-heading">Sign in</h2>
-            <p class="login-intro">Use your school email or student / faculty ID.</p>
+            <p class="login-intro">Use your School ID and password.</p>
 
             <form id="login-form" asp-action="Login" asp-controller="Account" method="post">
                 <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
@@ -20,10 +20,10 @@
                 <div asp-validation-summary="ModelOnly" class="validation-summary-errors" role="alert"></div>
 
                 <div class="login-field">
-                    <label asp-for="UserId">Email or school ID</label>
+                    <label asp-for="UserId">School ID</label>
                     <input asp-for="UserId" class="input"
                            autocomplete="username"
-                           placeholder="mvillanueva@school.edu" />
+                           placeholder="Enter your School ID" />
                     <span asp-validation-for="UserId" class="field-validation-error"></span>
                 </div>
 

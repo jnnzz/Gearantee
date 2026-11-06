@@ -2,6 +2,15 @@
 @using ASI.Basecode.Services.Utilities
 @using ASI.Basecode.WebApp.Models.Dashboard
 
+@if (ViewData["DashboardUnavailable"] is true)
+{
+    <section class="table-surface p-8" aria-label="Dashboard unavailable">
+        <p class="mb-4">Dashboard data is temporarily unavailable.</p>
+        <a asp-action="Custodian" class="btn-secondary">Try again</a>
+    </section>
+    return;
+}
+
 <div class="role-page">
 <section class="role-summary" aria-label="Custodian summary">
     <partial name="Components/_KpiTile" model="@(new KpiTileModel { Label = "Pending approval", Value = Model.PendingCount, Status = "Pending", Caption = $"{Model.PendingStartingSoonCount} starting within 24 hours" })" />

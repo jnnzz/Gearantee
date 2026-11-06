@@ -4,10 +4,10 @@ namespace ASI.Basecode.WebApp.Models
 {
     public class ForgotPasswordViewModel
     {
-        [Required(ErrorMessage = "Enter your registered email.")]
-        [EmailAddress(ErrorMessage = "Enter a valid email address.")]
-        [Display(Name = "Registered email")]
-        public string Email { get; set; }
+        [Required(ErrorMessage = "Enter your School ID.")]
+        [Display(Name = "School ID")]
+        [StringLength(256)]
+        public string SchoolId { get; set; }
     }
 
     public class ResetPasswordViewModel
@@ -34,8 +34,8 @@ namespace ASI.Basecode.WebApp.Models
     public class VerifyPasswordResetOtpViewModel
     {
         [Required]
-        [EmailAddress]
-        public string Email { get; set; }
+        [StringLength(256)]
+        public string SchoolId { get; set; }
 
         [Required(ErrorMessage = "Enter the six-digit verification code.")]
         [RegularExpression(@"^\d{6}$", ErrorMessage = "Enter the six-digit verification code.")]

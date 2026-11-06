@@ -61,14 +61,14 @@ The baseline Release build/test run passed: **348 passed, 17 SQL Server opt-in t
 | --- | --- |
 | Shared shell | `_Layout`, `_Sidebar`, `_Topbar`, components; preserve role/permission predicates, demo role links, sign-out POST, mobile drawer IDs and script sections |
 | S01 login | `Account/Login`; UserId, Password, RememberMe, returnUrl, POST, validation, password visibility and duplicate-submit handling |
-| S02–S05 recovery | `ForgotPassword`, `ForgotPasswordCheckInbox`, `ResetPassword`; preserve six-digit OTP, resend POST, generic account-existence response, hidden email/user/token, expiry and validation |
+| S02–S05 recovery | `ForgotPassword`, `ForgotPasswordCheckInbox`, `ResetPassword`; preserve six-digit OTP, resend POST, generic account-existence response, School ID/user/token, expiry and validation |
 | Supporting access | `Register`, `AccessDenied`; preserve all registration fields and eligibility message; preserve denial routing and sign-out behavior |
 | B01 dashboard | `Dashboard/Borrower`; model-backed four summary counts, current loans, requests, rejection reasons, eligibility and late returns |
 | B02 catalog | `Catalog/Index`, `Details`; Search/CategoryId/From/To, current images/metadata, booked windows, query-preserving pagination, permission-gated reserve link |
 | B03/B05/B06 reservation | `Reservation/Create`; retain one server POST with EquipmentId, ReservationStart, ReservationEnd, Purpose, local-time format and server validation. Use visual sections rather than introducing a new multi-step workflow |
 | Existing reservation screens | `Reservation/Index`, `Details`; retain status tabs, counts, page query, all timeline states, conditional cancellation and the existing confirmation dialog |
 | B04 calendar | `AvailabilityCalendar/Index`; preserve FullCalendar day/week, events endpoint, filters, all data attributes/DOM IDs, permission gating, error handling and selection-to-reservation URL |
-| B07/B08 notifications | Deferred: visual examples have no corresponding current notification workflow. Do not add simulated unread counts or inert notification actions |
+| B07/B08 notifications | Superseded by the approved notification enhancement: real inbox, unread count and workflow-backed notices. See `NOTIFICATIONS.md`; no simulated counts or inert actions |
 
 ### Scope boundaries
 

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
+  <data name="ReservationSubmitted" xml:space="preserve"><value>New reservation request</value></data>
+  <data name="ReservationApproved" xml:space="preserve"><value>Reservation approved</value></data>
+  <data name="ReservationRejected" xml:space="preserve"><value>Reservation rejected</value></data>
+  <data name="ReservationCancelled" xml:space="preserve"><value>Reservation cancelled</value></data>
+  <data name="ReservationExpired" xml:space="preserve"><value>Reservation expired</value></data>
+  <data name="EquipmentReleased" xml:space="preserve"><value>Equipment released</value></data>
+  <data name="ReturnRecorded" xml:space="preserve"><value>Return recorded</value></data>
+  <data name="LateReturnRecorded" xml:space="preserve"><value>Late return recorded</value></data>
+  <data name="LoanOverdue" xml:space="preserve"><value>Equipment return overdue</value></data>
+  <data name="LoanDueSoon" xml:space="preserve"><value>Equipment return due soon</value></data>
+  <data name="ReservationBody" xml:space="preserve"><value>Reservation #{0}: {1} ({2}).</value></data>
+</root>

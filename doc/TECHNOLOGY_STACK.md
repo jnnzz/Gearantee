@@ -73,7 +73,7 @@ Minimal custom CSS may be retained for third-party controls or behavior that is 
 
 ```text
 Browser
-  │  1. User submits a registered email
+  │  1. User submits a School ID; server resolves registered email
   ▼
 ASP.NET Core MVC application
   │  2. Application creates and hashes a six-digit OTP
