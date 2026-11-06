@@ -1,4 +1,4 @@
-﻿using ASI.Basecode.Data.Interfaces;
+using ASI.Basecode.Data.Interfaces;
 using ASI.Basecode.Data.Models;
 using ASI.Basecode.Resources.Constants;
 using ASI.Basecode.Services.Interfaces;
@@ -154,6 +154,7 @@ namespace ASI.Basecode.Services.Services
                 {
                     reservation.ReservationStart,
                     reservation.ReservationEnd,
+                    reservation.IsFullDay,
                     IsOnLoan = reservation.ReleaseRecord != null
                 })
                 .ToList();
@@ -163,6 +164,7 @@ namespace ASI.Basecode.Services.Services
                 {
                     StartLocal = ManilaClock.ToLocal(window.ReservationStart),
                     EndLocal = ManilaClock.ToLocal(window.ReservationEnd),
+                    IsFullDay = window.IsFullDay,
                     Label = window.IsOnLoan ? "On loan" : "Reserved"
                 })
                 .ToList();

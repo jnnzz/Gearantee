@@ -1,4 +1,4 @@
-﻿using ASI.Basecode.Data.Models;
+using ASI.Basecode.Data.Models;
 using ASI.Basecode.Resources.Constants;
 using System;
 
@@ -17,7 +17,7 @@ namespace ASI.Basecode.Services.Utilities
             DateTime endUtc,
             DateTime? releasedAtUtc,
             DateTime? returnedAtUtc,
-            DateTime nowUtc)
+            DateTime nowUtc, bool fullDay = false)
         {
             if (returnedAtUtc.HasValue)
             {
@@ -32,7 +32,8 @@ namespace ASI.Basecode.Services.Utilities
                 }
 
                 var (todayStart, todayEnd) = ManilaClock.TodayUtcRange(nowUtc);
-                return endUtc >= todayStart && endUtc < todayEnd ? "Due today" : "Borrowed";
+                var dueToday = fullDay ? endUtc > todayStart && endUtc <= todayEnd : endUtc >= todayStart && endUtc < todayEnd;
+                return dueToday ? "Due today" : "Borrowed";
             }
 
             if (status == DomainValues.ReservationStatuses.Approved)

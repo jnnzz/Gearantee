@@ -252,6 +252,9 @@ namespace ASI.Basecode.Data.Migrations
                         .HasColumnType("bit")
                         .HasDefaultValue(true);
 
+                    b.Property<long>("NextItemNumber")
+                        .HasColumnType("bigint");
+
                     b.Property<DateTime>("UpdatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
@@ -482,6 +485,9 @@ namespace ASI.Basecode.Data.Migrations
 
                     b.Property<long>("EquipmentId")
                         .HasColumnType("bigint");
+
+                    b.Property<bool>("IsFullDay")
+                        .HasColumnType("bit");
 
                     b.Property<string>("Purpose")
                         .IsRequired()

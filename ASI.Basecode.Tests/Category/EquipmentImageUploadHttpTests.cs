@@ -39,7 +39,7 @@ namespace ASI.Basecode.Tests.Category
 
             using var scope = site.Environment.Provider.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<AsiBasecodeDBContext>();
-            var saved = await db.EquipmentItems.SingleAsync(item => item.ItemCode == "IMG-OK-ITEM");
+            var saved = await db.EquipmentItems.SingleAsync(item => item.ItemName == "Uploaded item");
             Assert.Equal(
                 "https://fake.supabase.co/storage/v1/object/public/equipment-images/items/upload-001.png",
                 saved.ImageUrl);
@@ -72,7 +72,7 @@ namespace ASI.Basecode.Tests.Category
 
             using var scope = site.Environment.Provider.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<AsiBasecodeDBContext>();
-            Assert.False(await db.EquipmentItems.AnyAsync(item => item.ItemCode == "IMG-BAD-ITEM"));
+            Assert.False(await db.EquipmentItems.AnyAsync(item => item.ItemName == "Uploaded item"));
         }
 
         [Fact]
@@ -98,7 +98,7 @@ namespace ASI.Basecode.Tests.Category
 
             using var scope = site.Environment.Provider.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<AsiBasecodeDBContext>();
-            Assert.False(await db.EquipmentItems.AnyAsync(item => item.ItemCode == "IMG-BIG-ITEM"));
+            Assert.False(await db.EquipmentItems.AnyAsync(item => item.ItemName == "Uploaded item"));
         }
 
         [Fact]
@@ -123,15 +123,22 @@ namespace ASI.Basecode.Tests.Category
 
             using var scope = site.Environment.Provider.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<AsiBasecodeDBContext>();
-            Assert.False(await db.EquipmentItems.AnyAsync(item => item.ItemCode == "IMG-2MB-ITEM"));
+            Assert.False(await db.EquipmentItems.AnyAsync(item => item.ItemName == "Uploaded item"));
         }
 
         [Fact]
-        public async Task HttpCreateEquipment_WhenInsertFails_DeletesUploadedImage()
+        public async Task HttpCreateEquipment_WhenCategoryIsInactive_DeletesUnpublishedImage()
         {
             await using var site = await CategoryHttpSite.CreateAsync();
             var categoryId = await SeedCategoryAsync(site, "IMG-DUP");
             await SeedItemAsync(site, categoryId, "IMG-DUP-ITEM", null);
+            await using (var scope = site.Environment.Provider.CreateAsyncScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<AsiBasecodeDBContext>();
+                var category = await db.EquipmentCategories.FindAsync(categoryId);
+                category.IsActive = false;
+                await db.SaveChangesAsync();
+            }
             var token = await site.Token("/Categories/CreateEquipment");
 
             using var form = CreateForm(token, categoryId, "IMG-DUP-ITEM", PngBytes);

@@ -339,6 +339,7 @@ namespace ASI.Basecode.WebApp.Controllers
             }
 
             model.Categories = options.Categories ?? new List<EquipmentCategoryOptionViewModel>();
+            model.ItemCode = options.ItemCode;
             model.IsLocked = options.IsLocked;
             model.IsCategoryInactive = options.IsCategoryInactive;
             return true;

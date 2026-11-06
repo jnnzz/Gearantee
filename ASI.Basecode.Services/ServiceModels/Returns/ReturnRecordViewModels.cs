@@ -47,6 +47,8 @@ namespace ASI.Basecode.Services.ServiceModels.Returns
         // Manila local times
         public DateTime ReleasedAtLocal { get; set; }
         public DateTime DueAtLocal { get; set; }
+        public bool IsFullDay { get; set; }
+        public string EndLabel => Utilities.ReservationDates.EndLabel(DueAtLocal, IsFullDay);
         public DateTime? ReturnedAtLocal { get; set; }
 
         public string ReturnedCondition { get; set; }

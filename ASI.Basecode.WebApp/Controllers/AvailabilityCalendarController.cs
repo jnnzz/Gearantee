@@ -35,6 +35,10 @@ namespace ASI.Basecode.WebApp.Controllers
         public IActionResult Index([FromQuery] AvailabilityCalendarFilterViewModel filter)
         {
             filter ??= new AvailabilityCalendarFilterViewModel();
+            filter.EquipmentId = null;
+            filter.Location = null;
+            ModelState.Remove(nameof(filter.EquipmentId));
+            ModelState.Remove(nameof(filter.Location));
             if (!string.IsNullOrEmpty(filter.Date) &&
                 (!DateOnly.TryParseExact(filter.Date, "yyyy-MM-dd", CultureInfo.InvariantCulture,
                     DateTimeStyles.None, out _) ||

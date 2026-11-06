@@ -39,9 +39,9 @@ namespace ASI.Basecode.WebApp.Controllers
 
         // GET: /Reservation?status=Pending&page=1
         [HttpGet]
-        public IActionResult Index(string status, int page = 1)
+        public IActionResult Index(string status, int page = 1, string search = null)
         {
-            var model = _reservationService.GetMyReservations(UserId, status, page);
+            var model = _reservationService.GetMyReservations(UserId, status, page, search);
             SetPageData("My borrowing history");
             ViewData["SuccessMessage"] = TempData["SuccessMessage"];
             ViewData["ErrorMessage"] = TempData["ErrorMessage"];
@@ -72,8 +72,8 @@ namespace ASI.Basecode.WebApp.Controllers
             var model = new ReservationCreateViewModel
             {
                 EquipmentId = equipmentId,
-                ReservationStart = from,
-                ReservationEnd = to,
+                ReservationStart = from?.Date,
+                ReservationEnd = to?.Date,
                 Item = item
             };
 

@@ -4,8 +4,7 @@
     var filter = Model.Filter;
     var fromDate = filter.FromDate?.ToString("yyyy-MM-dd");
     var toDate = filter.ToDate?.ToString("yyyy-MM-dd");
-    var activeSecondaryFilters = (string.IsNullOrWhiteSpace(filter.Item) ? 0 : 1)
-        + (string.IsNullOrWhiteSpace(filter.Borrower) ? 0 : 1)
+    var activeSecondaryFilters = (string.IsNullOrWhiteSpace(filter.Borrower) ? 0 : 1)
         + (filter.CategoryId.HasValue ? 1 : 0)
         + (filter.FromDate.HasValue ? 1 : 0)
         + (filter.ToDate.HasValue ? 1 : 0)
@@ -21,20 +20,9 @@
             </p>
         </div>
         <div class="flex flex-wrap gap-2">
-            <a asp-action="ExportExcel"
-               asp-route-search="@filter.Search"
-               asp-route-borrower="@filter.Borrower"
-               asp-route-item="@filter.Item"
-               asp-route-categoryId="@filter.CategoryId"
-               asp-route-fromDate="@fromDate"
-               asp-route-toDate="@toDate"
-               asp-route-status="@filter.Status"
-               asp-route-lateReturn="@filter.LateReturn"
-               class="btn-primary min-h-10">Download Excel</a>
             <a asp-action="Export"
                asp-route-search="@filter.Search"
                asp-route-borrower="@filter.Borrower"
-               asp-route-item="@filter.Item"
                asp-route-categoryId="@filter.CategoryId"
                asp-route-fromDate="@fromDate"
                asp-route-toDate="@toDate"
@@ -63,10 +51,6 @@
                 }
             </summary>
             <div class="filter-panel report-filters mt-3">
-                <div>
-                    <label for="history-item" class="mb-1 block text-xs font-medium text-gray-700">Filter by item</label>
-                    <input id="history-item" name="Item" value="@filter.Item" type="search" maxlength="100" class="input" />
-                </div>
                 <div>
                     <label for="history-category" class="mb-1 block text-xs font-medium text-gray-700">Category</label>
                     <select id="history-category" name="CategoryId" class="input">
@@ -114,7 +98,7 @@
         </details>
     </form>
 
-    <p class="mb-4 mt-3 text-xs text-gray-500">Date filters use the requested borrowing start date. Late-return status is based on the recorded late-return event or an actual return after the scheduled due time. If CSV shows #### in Excel, widen or AutoFit that column; Download Excel includes readable date widths.</p>
+    <p class="mb-4 mt-3 text-xs text-gray-500">Date filters use the requested borrowing start date. Late-return status is based on the recorded late-return event or an actual return after the scheduled due time. If CSV shows #### in Excel, widen or AutoFit that column.</p>
 
     @if (!string.IsNullOrWhiteSpace(Model.ValidationMessage))
     {
@@ -152,8 +136,8 @@
                                 <p class="mt-1 text-xs text-gray-500">@row.ItemCode · @row.CategoryName</p>
                             </td>
                             <td class="px-3 py-3 text-gray-700">
-                                <p>@row.StartLocal.ToString("ddd d MMM yyyy · HH:mm")</p>
-                                <p class="mt-1 text-xs text-gray-500">Due @row.DueLocal.ToString("ddd d MMM yyyy · HH:mm")</p>
+                                <p>@row.StartLabel</p>
+                                <p class="mt-1 text-xs text-gray-500">Due @row.EndLabel</p>
                                 <p class="mt-1 text-xs text-gray-500">Requested @row.RequestedAtLocal.ToString("d MMM yyyy · HH:mm")</p>
                             </td>
                             <td class="px-3 py-3 text-gray-700">
@@ -185,7 +169,7 @@
         {
             Page = Model.Page, TotalPages = Model.TotalPages, TotalCount = Model.TotalCount,
             Label = "Borrowing history pages",
-            Routes = { ["search"] = filter.Search, ["borrower"] = filter.Borrower, ["item"] = filter.Item, ["categoryId"] = filter.CategoryId?.ToString(), ["fromDate"] = fromDate, ["toDate"] = toDate, ["status"] = filter.Status, ["lateReturn"] = filter.LateReturn }
+            Routes = { ["search"] = filter.Search, ["borrower"] = filter.Borrower, ["categoryId"] = filter.CategoryId?.ToString(), ["fromDate"] = fromDate, ["toDate"] = toDate, ["status"] = filter.Status, ["lateReturn"] = filter.LateReturn }
         })" />
     }
 </section>

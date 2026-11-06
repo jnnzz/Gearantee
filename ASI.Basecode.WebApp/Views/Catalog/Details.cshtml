@@ -69,7 +69,7 @@
                 @foreach (var window in Model.BookedWindows)
                 {
                     <li class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 text-sm">
-                        <span class="text-gray-700">@window.StartLocal.ToString("ddd d MMM · HH:mm") → @window.EndLocal.ToString("ddd d MMM · HH:mm")</span>
+                        <span class="text-gray-700">@window.StartLabel → @window.EndLabel</span>
                         <partial name="Components/_StatusBadge" model="window.Label" />
                     </li>
                 }

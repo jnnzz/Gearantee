@@ -1,4 +1,4 @@
-﻿using ASI.Basecode.Data;
+using ASI.Basecode.Data;
 using ASI.Basecode.Data.Interfaces;
 using ASI.Basecode.Data.Models;
 using ASI.Basecode.Resources.Constants;
@@ -357,6 +357,7 @@ namespace ASI.Basecode.Services.Services
                 Status = status,
                 RequestedAtLocal = ManilaClock.ToLocal(row.RequestedAtUtc),
                 StartLocal = ManilaClock.ToLocal(row.StartUtc),
+                IsFullDay = row.IsFullDay,
                 DueLocal = ManilaClock.ToLocal(row.DueUtc),
                 ReleasedAtLocal = row.ReleasedAtUtc.HasValue
                     ? ManilaClock.ToLocal(row.ReleasedAtUtc.Value)
@@ -403,6 +404,7 @@ namespace ASI.Basecode.Services.Services
                     RequestedAtUtc = reservation.RequestedAt,
                     StartUtc = reservation.ReservationStart,
                     DueUtc = reservation.ReservationEnd,
+                    IsFullDay = reservation.IsFullDay,
                     ReleaseRecordId = reservation.ReleaseRecord == null
                         ? (long?)null
                         : reservation.ReleaseRecord.ReleaseRecordId,
@@ -440,6 +442,7 @@ namespace ASI.Basecode.Services.Services
             public DateTime RequestedAtUtc { get; set; }
             public DateTime StartUtc { get; set; }
             public DateTime DueUtc { get; set; }
+            public bool IsFullDay { get; set; }
             public long? ReleaseRecordId { get; set; }
             public DateTime? ReleasedAtUtc { get; set; }
             public DateTime? ReturnedAtUtc { get; set; }

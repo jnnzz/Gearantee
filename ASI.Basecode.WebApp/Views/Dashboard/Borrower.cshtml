@@ -71,7 +71,7 @@
                             <partial name="Components/_StatusBadge" model="loan.DisplayStatus" />
                         </div>
                         <dl class="mt-4 grid grid-cols-2 gap-3 text-xs">
-                            <div><dt class="text-gray-500">Due</dt><dd class="mt-1 font-medium text-gray-700">@ManilaClock.ToLocal(loan.EndUtc).ToString("d MMM · HH:mm")</dd></div>
+                            <div><dt class="text-gray-500">Due</dt><dd class="mt-1 font-medium text-gray-700">@loan.EndLabel</dd></div>
                             <div><dt class="text-gray-500">Released</dt><dd class="mt-1 font-medium text-gray-700">@(loan.ReleasedAtUtc.HasValue ? ManilaClock.ToLocal(loan.ReleasedAtUtc.Value).ToString("d MMM · HH:mm") : "—")</dd></div>
                         </dl>
                     </article>
@@ -103,7 +103,7 @@
                                 </div>
                                 <partial name="Components/_StatusBadge" model="request.DisplayStatus" />
                             </div>
-                            <p class="mt-2 text-xs text-gray-500">@ManilaClock.ToLocal(request.StartUtc).ToString("d MMM HH:mm") → @ManilaClock.ToLocal(request.EndUtc).ToString("d MMM HH:mm")</p>
+                            <p class="mt-2 text-xs text-gray-500">@request.StartLabel → @request.EndLabel</p>
                             <p class="mt-2 text-xs leading-5 text-gray-700">
                                 @if (request.Status == "Rejected")
                                 {

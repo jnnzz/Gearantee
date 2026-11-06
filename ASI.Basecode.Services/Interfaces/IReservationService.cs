@@ -10,7 +10,7 @@ namespace ASI.Basecode.Services.Interfaces
         ReservationResult SubmitReservation(ReservationCreateViewModel model, string userId);
 
         /// <summary>The caller's own reservations, newest first. Status is a stored status, or empty for all.</summary>
-        ReservationIndexViewModel GetMyReservations(string userId, string status, int page);
+        ReservationIndexViewModel GetMyReservations(string userId, string status, int page, string search = null);
 
         /// <summary>Returns null when the reservation doesn't exist or belongs to someone else.</summary>
         ReservationDetailsViewModel RetrieveMyReservation(long reservationId, string userId);
