@@ -31,6 +31,9 @@ namespace ASI.Basecode.Services.ServiceModels.BorrowingHistory
         public DateTime RequestedAtLocal { get; set; }
         public DateTime StartLocal { get; set; }
         public DateTime DueLocal { get; set; }
+        public bool IsFullDay { get; set; }
+        public string StartLabel => Utilities.ReservationDates.StartLabel(StartLocal, IsFullDay);
+        public string EndLabel => Utilities.ReservationDates.EndLabel(DueLocal, IsFullDay);
         public DateTime? ReleasedAtLocal { get; set; }
         public DateTime? ReturnedAtLocal { get; set; }
         public string ReturnedCondition { get; set; }

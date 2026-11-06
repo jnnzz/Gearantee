@@ -24,6 +24,15 @@ namespace ASI.Basecode.Data.Repositories
             return BuildForUpdateQuery(equipmentId, includeArchived).SingleOrDefault();
         }
 
+        public async Task<EquipmentCategory> LoadCategoryForRegistrationAsync(long categoryId)
+        {
+            EnsureSerializableTransaction();
+            var query = Context.Database.IsSqlServer()
+                ? Context.EquipmentCategories.FromSqlInterpolated($"SELECT * FROM EquipmentCategory WITH (UPDLOCK, HOLDLOCK) WHERE CategoryId = {categoryId}")
+                : Context.EquipmentCategories.Where(category => category.CategoryId == categoryId);
+            return await query.SingleOrDefaultAsync();
+        }
+
         public async Task<EquipmentItem> LoadForUpdateAsync(
             long equipmentId,
             bool includeArchived = false)

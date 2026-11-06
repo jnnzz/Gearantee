@@ -12,6 +12,40 @@ namespace ASI.Basecode.Tests.UiMigration
     public class SharedUiTests
     {
         [Fact]
+        public async Task Refinement_tabs_actions_and_filters_render_for_the_correct_roles()
+        {
+            await using var site = await UiAcceptanceSite.CreateAsync();
+            using var admin = site.NewClient();
+            using var custodian = site.NewClient();
+            using var borrower = site.NewClient();
+            await site.LoginAsync(admin, "UI-ADMIN");
+            await site.LoginAsync(custodian, "UI-CUST");
+            await site.LoginAsync(borrower, "UI-BORROWER");
+            var inventory = await admin.GetStringAsync("/Categories/Index?tab=equipment");
+            Assert.Matches("<section[^>]*hidden=\"hidden\"[^>]*aria-labelledby=\"categories-heading\"", inventory);
+            Assert.DoesNotMatch("<section[^>]*hidden[^>]*aria-labelledby=\"equipment-heading\"", inventory);
+            var categories = await admin.GetStringAsync("/Categories/Index?tab=categories");
+            Assert.Matches("<section[^>]*hidden=\"hidden\"[^>]*aria-labelledby=\"equipment-heading\"", categories);
+            var create = await admin.GetStringAsync("/Categories/CreateEquipment");
+            Assert.DoesNotContain("name=\"ItemCode\"", create);
+            var dashboard = await custodian.GetStringAsync("/Dashboard/Custodian");
+            var shortcuts = Regex.Match(dashboard, "<section class=\"surface shortcut-card\">[\\s\\S]*?</section>").Value;
+            Assert.Contains("href=\"/Catalog", shortcuts);
+            Assert.Contains("href=\"/BorrowingHistory", shortcuts);
+            Assert.DoesNotContain("Soon", shortcuts);
+            var review = await custodian.GetStringAsync("/ReservationReview/Index");
+            Assert.True(review.IndexOf("aria-label=\"Filter by status\"", StringComparison.Ordinal) < review.IndexOf("id=\"review-search\"", StringComparison.Ordinal));
+            var history = await borrower.GetStringAsync("/Reservation/Index?search=NONEXISTENT");
+            Assert.Contains("No matching reservations", history);
+            Assert.Contains("value=\"NONEXISTENT\"", history);
+            var report = await admin.GetStringAsync("/BorrowingHistory/Index?Item=NONEXISTENT");
+            Assert.DoesNotContain("id=\"history-item\"", report);
+            Assert.Contains("id=\"history-from\"", report);
+            Assert.Contains("id=\"history-to\"", report);
+            Assert.DoesNotContain("Download Excel", report);
+        }
+
+        [Fact]
         public async Task Required_labels_render_one_reusable_marker_in_manual_and_automatic_forms()
         {
             await using var site = await UiAcceptanceSite.CreateAsync();
@@ -23,7 +57,6 @@ namespace ASI.Basecode.Tests.UiMigration
             var cases = new[]
             {
                 (anonymous, "/Account/Login", "Password"),
-                (admin, "/Categories/CreateEquipment", "ItemCode"),
                 (admin, "/Categories/CreateEquipment", "ItemName"),
                 (admin, "/Users/Create", "Password"),
                 (custodian, $"/ReturnRecord/Create?releaseRecordId={site.ReleaseId}", "ActualReturnAt"),
@@ -68,7 +101,8 @@ namespace ASI.Basecode.Tests.UiMigration
             using var borrower = site.NewClient();
             var login = await borrower.GetStringAsync("/Account/Login");
             Assert.Contains("campus-equipment.svg", login);
-            Assert.Contains("data-theme-picker", login);
+            Assert.DoesNotContain("data-theme-toggle", login);
+            Assert.DoesNotContain("data-theme-picker", login);
             Assert.DoesNotContain("Create one", login);
             Assert.DoesNotContain("Remember me", login);
             Assert.Contains("name=\"RememberMe\" value=\"false\"", login);
@@ -92,7 +126,9 @@ namespace ASI.Basecode.Tests.UiMigration
             Assert.DoesNotContain("header-date", dashboard);
             var create = await borrower.GetStringAsync($"/Reservation/Create?equipmentId={site.AvailableItemId}");
             Assert.Matches("<a(?=[^>]*href=\"/Catalog)(?=[^>]*aria-current=\"page\")[^>]*>", create);
-            Assert.Contains("type=\"datetime-local\"", create);
+            Assert.DoesNotContain("type=\"datetime-local\"", create);
+            Assert.Contains("type=\"date\"", create);
+            Assert.Contains("data-theme-toggle", dashboard);
             using var admin = site.NewClient();
             await site.LoginAsync(admin, "UI-ADMIN");
             var users = await admin.GetStringAsync("/Users/Index");
@@ -122,8 +158,10 @@ namespace ASI.Basecode.Tests.UiMigration
             Assert.Contains("id=\"availability-overview\"", calendar);
             Assert.Contains("value=\"DEMO\"", calendar);
             var oldView = await borrower.GetStringAsync("/AvailabilityCalendar/Index?View=timeGridDay");
-            Assert.Contains("data-initial-view=\"timeGridDay\"", oldView);
-            Assert.DoesNotContain("id=\"availability-overview\"", oldView);
+            Assert.Contains("value=\"timeGridDay\"", oldView);
+            Assert.Contains("id=\"availability-overview\"", oldView);
+            Assert.DoesNotContain("id=\"availability-location\"", oldView);
+            Assert.DoesNotContain("id=\"availability-equipment\"", oldView);
             var invalid = await borrower.GetAsync($"/AvailabilityCalendar/Events?Search={new string('x', 101)}&start=2026-11-02T00:00:00Z&end=2026-11-03T00:00:00Z");
             Assert.Equal(HttpStatusCode.BadRequest, invalid.StatusCode);
         }

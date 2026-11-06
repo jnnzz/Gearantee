@@ -9,8 +9,15 @@
     <link rel="stylesheet" href="~/css/admin-inventory.css" asp-append-version="true" />
 }
 
-<div class="role-page inventory-workspace space-y-5">
-    <section class="surface inventory-section" aria-labelledby="categories-heading">
+<div class="role-page inventory-workspace surface">
+    <nav class="filter-tabs" aria-label="Inventory sections">
+        @foreach (var tab in new[] { "equipment", "categories" })
+        {
+            <a asp-action="Index" asp-route-tab="@tab" asp-route-categorySearch="@Model.CategorySearch" asp-route-categoryStatus="@Model.CategoryStatusFilter" asp-route-categoryPage="@Model.CategoryPage" asp-route-equipmentSearch="@Model.Equipment.Search" asp-route-equipmentStatus="@Model.Equipment.StatusFilter" asp-route-equipmentCategoryId="@Model.Equipment.CategoryId" asp-route-equipmentPage="@Model.Equipment.Page" aria-current="@(Model.ActiveTab == tab ? "page" : null)">@(tab == "equipment" ? "Equipment" : "Categories")</a>
+        }
+    </nav>
+
+    <section class="inventory-section inventory-panel" hidden="@(Model.ActiveTab != "categories")" aria-labelledby="categories-heading">
         <div class="surface-heading inventory-section-heading">
             <div>
                 <h2 id="categories-heading" class="surface-title">Equipment categories</h2>
@@ -68,10 +75,10 @@
                             <p class="category-summary-description">@category.Description</p>
                         }
                         <div class="category-summary-actions">
-                            <button type="button" class="btn-open-edit" data-id="@category.CategoryId"
+                            <button type="button" class="action-edit btn-open-edit" data-id="@category.CategoryId"
                                     data-code="@category.CategoryCode" data-name="@category.CategoryName"
                                     data-description="@category.Description" aria-label="Edit @category.CategoryName">Edit</button>
-                            <button type="button" class="btn-open-status" data-id="@category.CategoryId"
+                            <button type="button" class="action-edit btn-open-status" data-id="@category.CategoryId"
                                     data-name="@category.CategoryName" data-active="@category.IsActive.ToString().ToLowerInvariant()">
                                 @(category.IsActive ? "Deactivate" : "Activate")
                             </button>
@@ -93,14 +100,8 @@
         })" />
     </section>
 
-    <section class="surface inventory-section" aria-labelledby="equipment-heading">
-        <div class="surface-heading inventory-section-heading">
-            <div>
-                <h2 id="equipment-heading" class="surface-title">Equipment items</h2>
-                <p class="surface-caption">Track condition, availability, and storage location.</p>
-            </div>
-            <a asp-action="CreateEquipment" class="btn-primary">+ Register item</a>
-        </div>
+    <section class="inventory-section inventory-panel" hidden="@(Model.ActiveTab != "equipment")" aria-labelledby="equipment-heading">
+        <h2 id="equipment-heading" class="sr-only">Equipment items</h2>
 
         <form method="get" asp-action="Index" class="inventory-filter-row equipment-filters" role="search" aria-label="Filter equipment items">
             <input type="hidden" name="tab" value="equipment" />
@@ -133,6 +134,7 @@
                    asp-route-categorySearch="@Model.CategorySearch" asp-route-categoryStatus="@Model.CategoryStatusFilter"
                    asp-route-categoryPage="@Model.CategoryPage" class="inventory-clear-link">Clear</a>
             }
+            <a asp-action="CreateEquipment" class="btn-primary">+ Register item</a>
         </form>
 
         <div class="table-surface inventory-table-wrap">
@@ -197,7 +199,7 @@
                             <td class="inventory-table-actions">
                                 @if (!item.IsArchived && !item.IsLocked)
                                 {
-                                    <a asp-action="EditEquipment" asp-route-id="@item.EquipmentId">Edit</a>
+                                    <a asp-action="EditEquipment" asp-route-id="@item.EquipmentId" class="action-edit">Edit</a>
                                 }
                                 else if (item.IsLocked && !item.IsArchived)
                                 {
@@ -211,7 +213,7 @@
                                     <input type="hidden" name="equipmentStatus" value="@Model.Equipment.StatusFilter" />
                                     <input type="hidden" name="equipmentCategoryId" value="@Model.Equipment.CategoryId" />
                                     <input type="hidden" name="equipmentPage" value="@Model.Equipment.Page" />
-                                    <button type="submit" onclick="return confirm('@(item.IsArchived ? "Restore this item to active inventory?" : "Archive this item from active inventory? Its reservation and return history will be preserved.")')">@(item.IsArchived ? "Restore" : "Archive")</button>
+                                    <button type="submit" class="action-delete" onclick="return confirm('@(item.IsArchived ? "Restore this item to active inventory?" : "Delete this item from active inventory? Its reservation and return history will be preserved.")')">@(item.IsArchived ? "Restore" : "Delete")</button>
                                 </form>
                             </td>
                         </tr>

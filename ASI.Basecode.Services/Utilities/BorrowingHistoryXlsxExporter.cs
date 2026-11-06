@@ -205,7 +205,7 @@ namespace ASI.Basecode.Services.Utilities
                     {
                         8 => row.RequestedAtLocal,
                         9 => row.StartLocal,
-                        10 => row.DueLocal,
+                        10 => row.IsFullDay ? row.DueLocal.AddDays(-1) : row.DueLocal,
                         12 => row.ReleasedAtLocal,
                         _ => row.ReturnedAtLocal
                     };

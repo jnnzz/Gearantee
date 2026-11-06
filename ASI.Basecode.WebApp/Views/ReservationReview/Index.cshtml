@@ -13,6 +13,19 @@
         </div>
     </div>
 
+    <nav class="filter-tabs" aria-label="Filter by status">
+        @foreach (var tab in Model.Tabs)
+        {
+            var isActive = tab.Value == Model.StatusFilter;
+            <form asp-action="Index" method="get" class="inline">
+                <input type="hidden" name="status" value="@tab.Value" />
+                <input type="hidden" name="search" value="@Model.Search" />
+                <button type="submit"
+                        class="border px-3 py-2 text-sm @(isActive ? "border-primary bg-tint font-semibold text-primary-strong" : "border-gray-200 bg-white text-gray-700")"
+                        aria-current="@(isActive ? "page" : null)">@tab.Label <span class="ml-1 text-xs text-gray-500">@tab.Count</span></button>
+            </form>
+        }    </nav>
+
     <form method="get" asp-action="Index" class="filter-panel filter-panel--compact">
         <div class="flex-1">
             <label class="sr-only" for="review-search">Search reservation requests</label>
@@ -26,18 +39,7 @@
         }
     </form>
 
-    <nav class="filter-tabs" aria-label="Filter by status">
-        @foreach (var tab in Model.Tabs)
-        {
-            var isActive = tab.Value == Model.StatusFilter;
-            <form asp-action="Index" method="get" class="inline">
-                <input type="hidden" name="status" value="@tab.Value" />
-                <input type="hidden" name="search" value="@Model.Search" />
-                <button type="submit"
-                        class="border px-3 py-2 text-sm @(isActive ? "border-primary bg-tint font-semibold text-primary-strong" : "border-gray-200 bg-white text-gray-700")"
-                        aria-current="@(isActive ? "page" : null)">@tab.Label <span class="ml-1 text-xs text-gray-500">@tab.Count</span></button>
-            </form>
-        }    </nav>
+
 
     @if (Model.Items.Count == 0)
     {
@@ -85,8 +87,8 @@
                                 <p class="mt-1 text-xs text-gray-500">@reservation.ItemCode · @reservation.CategoryName</p>
                             </td>
                             <td class="px-3 py-3 text-gray-700">
-                                @reservation.StartLocal.ToString("ddd d MMM · HH:mm")<br />
-                                <span class="text-xs text-gray-500">to @reservation.EndLocal.ToString("ddd d MMM · HH:mm")</span>
+                                @reservation.StartLabel<br />
+                                <span class="text-xs text-gray-500">to @reservation.EndLabel</span>
                             </td>
                             <td class="px-3 py-3"><partial name="Components/_StatusBadge" model="reservation.DisplayStatus" /></td>
                             <td class="px-3 py-3 text-right">

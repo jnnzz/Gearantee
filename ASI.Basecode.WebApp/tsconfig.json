@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": false,
+    "noEmit": true
+  },
+  "include": ["wwwroot/js/**/*.js", "scripts/**/*.mjs"],
+  "exclude": ["node_modules", "wwwroot/lib", "bin", "obj"]
+}

@@ -1,4 +1,4 @@
-﻿using ASI.Basecode.Data;
+using ASI.Basecode.Data;
 using ASI.Basecode.Data.Interfaces;
 using ASI.Basecode.Data.Locks;
 using ASI.Basecode.Data.Models;
@@ -425,7 +425,8 @@ namespace ASI.Basecode.Services.Services
                 SchoolId = reservation.BorrowerProfile.User.UserCode,
                 Status = reservation.Status,
                 ReleasedAt = reservation.ReleaseRecord.ActualReleaseAt,
-                DueAt = reservation.ReservationEnd
+                DueAt = reservation.ReservationEnd,
+                IsFullDay = reservation.IsFullDay
             });
         }
 
@@ -446,6 +447,7 @@ namespace ASI.Basecode.Services.Services
                 Status = record.ReleaseRecord.Reservation.Status,
                 ReleasedAt = record.ReleaseRecord.ActualReleaseAt,
                 DueAt = record.ReleaseRecord.Reservation.ReservationEnd,
+                IsFullDay = record.ReleaseRecord.Reservation.IsFullDay,
                 ReturnedAt = record.ActualReturnAt,
                 RecordedAt = record.CreatedAt,
                 ReturnedCondition = record.ReturnedCondition,
@@ -470,11 +472,12 @@ namespace ASI.Basecode.Services.Services
             item.BorrowerName = FullName(row.BorrowerFirstName, row.BorrowerLastName) ?? string.Empty;
             item.SchoolId = row.SchoolId ?? string.Empty;
             item.ReleasedAtLocal = ManilaClock.ToLocal(row.ReleasedAt);
+            item.IsFullDay = row.IsFullDay;
             item.DueAtLocal = ManilaClock.ToLocal(row.DueAt);
             item.ReturnedAtLocal = row.ReturnedAt.HasValue ? ManilaClock.ToLocal(row.ReturnedAt.Value) : (DateTime?)null;
             item.ReturnedCondition = row.ReturnedCondition;
             item.DaysLate = row.DaysLate;
-            item.DisplayStatus = ReservationDisplayStatus.For(row.Status, row.DueAt, row.ReleasedAt, row.ReturnedAt, nowUtc);
+            item.DisplayStatus = ReservationDisplayStatus.For(row.Status, row.DueAt, row.ReleasedAt, row.ReturnedAt, nowUtc, row.IsFullDay);
             return item;
         }
 
@@ -499,6 +502,7 @@ namespace ASI.Basecode.Services.Services
             public string Status { get; set; }
             public DateTime ReleasedAt { get; set; }
             public DateTime DueAt { get; set; }
+            public bool IsFullDay { get; set; }
             public DateTime? ReturnedAt { get; set; }
             public DateTime RecordedAt { get; set; }
             public string ReturnedCondition { get; set; }

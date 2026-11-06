@@ -8,6 +8,9 @@ namespace ASI.Basecode.Data.Interfaces
     {
         IQueryable<EquipmentItem> GetEquipmentItems();
 
+        /// <summary>Locks the category counter inside an active SERIALIZABLE registration transaction.</summary>
+        Task<EquipmentCategory> LoadCategoryForRegistrationAsync(long categoryId);
+
         /// <summary>
         /// Locks a single equipment row for update (SQL Server UPDLOCK/HOLDLOCK/ROWLOCK)
         /// and returns it. Must be called inside an active SERIALIZABLE transaction.

@@ -2,139 +2,43 @@
 @using ASI.Basecode.Services.Utilities
 @using ASI.Basecode.Services.ServiceModels.AvailabilityCalendar
 @{
-    var selectedDate = string.IsNullOrWhiteSpace(Model.Filter.Date)
-        ? ManilaClock.NowLocal.ToString("yyyy-MM-dd")
-        : Model.Filter.Date;
-    var selectedView = Model.Filter.View is "timeGridDay" or "timeGridWeek"
-        ? Model.Filter.View
-        : "overview";
-    var overview = selectedView == "overview";
+    var selectedDate = string.IsNullOrWhiteSpace(Model.Filter.Date) ? ManilaClock.NowLocal.ToString("yyyy-MM-dd") : Model.Filter.Date;
+    var dayView = Model.Filter.View == "timeGridDay";
 }
-
 @section Styles {
-    <link rel="stylesheet" href="~/lib/fullcalendar/skeleton.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/availability-week.css" asp-append-version="true" />
 }
-
-<section aria-label="Equipment availability" class="calendar-page min-w-0">
-    <div class="mb-5">
-        <p class="mt-1 text-sm text-gray-500">Equipment schedule and booking availability · times are Philippine time (UTC+8)</p>
-        <p class="mt-1 text-sm text-gray-500">The calendar shows current scheduling blocks. See borrowing history for completed loans.</p>
-    </div>
-
+<section class="calendar-page" aria-label="Equipment availability">
+    <p class="mb-5 text-sm text-gray-500">A shared view of reservations, active loans and current maintenance.</p>
     @if (!string.IsNullOrWhiteSpace(Model.ValidationMessage))
     {
-        <div class="mb-5 border-l-4 border-ink bg-white px-4 py-3 text-sm" role="alert">@Model.ValidationMessage</div>
+        <div class="validation-summary-errors mb-4" role="alert">@Model.ValidationMessage</div>
     }
-
-    <form id="availability-filters" method="get" asp-controller="AvailabilityCalendar" asp-action="Index" class="filter-panel">
-        <div>
-            <label for="availability-search" class="field-label">Search equipment</label>
-            <input id="availability-search" name="Search" type="search" maxlength="100" value="@Model.Filter.Search" placeholder="Item name or code" class="input" />
-        </div>
-        <div>
-            <label for="availability-date" class="field-label">Date</label>
-            <input id="availability-date" type="date" name="Date" value="@selectedDate" min="@AvailabilityCalendarFilterViewModel.MinDate" max="@AvailabilityCalendarFilterViewModel.MaxDate" class="input" />
-        </div>
-        <div>
-            <label for="availability-view" class="field-label">View</label>
-            <select id="availability-view" name="View" class="input">
-                <option value="overview" selected="@overview">Equipment week</option>
-                <option value="timeGridDay" selected="@(selectedView == "timeGridDay")">Day / time details</option>
-                <option value="timeGridWeek" selected="@(selectedView == "timeGridWeek")">Week / time details</option>
-            </select>
-        </div>
-        <div>
-            <label for="availability-category" class="mb-1 block text-xs font-medium text-gray-700">Category</label>
-            <select id="availability-category" name="CategoryId" class="input">
-                <option value="">All categories</option>
-                @foreach (var category in Model.Categories)
-                {
-                    <option value="@category.CategoryId" selected="@(Model.Filter.CategoryId == category.CategoryId)">@category.CategoryName</option>
-                }
-            </select>
-        </div>
-        <div>
-            <label for="availability-equipment" class="mb-1 block text-xs font-medium text-gray-700">Equipment item</label>
-            <select id="availability-equipment" name="EquipmentId" class="input">
-                <option value="">All equipment</option>
-                @foreach (var item in Model.Equipment)
-                {
-                    <option value="@item.EquipmentId"
-                            data-category="@item.CategoryId"
-                            data-location="@item.Location"
-                            selected="@(Model.Filter.EquipmentId == item.EquipmentId)">@item.ItemCode · @item.ItemName</option>
-                }
-            </select>
-        </div>
-        <div>
-            <label for="availability-location" class="mb-1 block text-xs font-medium text-gray-700">Location</label>
-            <select id="availability-location" name="Location" class="input">
-                <option value="">All locations</option>
-                @foreach (var location in Model.Locations)
-                {
-                    <option value="@location" selected="@(string.Equals(Model.Filter.Location, location, StringComparison.OrdinalIgnoreCase))">@location</option>
-                }
-            </select>
-        </div>
-        <div class="flex items-end gap-2">
-            <button type="submit" class="btn-primary min-h-10">Apply filters</button>
-            <a asp-controller="AvailabilityCalendar" asp-action="Index" class="btn-secondary inline-flex min-h-10 items-center border border-gray-200 bg-white px-3 text-sm font-semibold text-gray-700">Clear</a>
-        </div>
+    <form id="availability-filters" method="get" asp-action="Index" class="calendar-search" role="search">
+        <div class="calendar-search-field"><label class="sr-only" for="availability-search">Search equipment</label><input id="availability-search" type="search" name="Search" maxlength="100" value="@Model.Filter.Search" class="input" placeholder="Search item name or code" /></div>
+        <div><label class="sr-only" for="availability-category">Category</label><select id="availability-category" name="CategoryId" class="input"><option value="">All categories</option>@foreach (var category in Model.Categories) { <option value="@category.CategoryId" selected="@(Model.Filter.CategoryId == category.CategoryId)">@category.CategoryName</option> }</select></div>
+        <input id="availability-date" type="hidden" name="Date" value="@selectedDate" data-min="@AvailabilityCalendarFilterViewModel.MinDate" data-max="@AvailabilityCalendarFilterViewModel.MaxDate" />
+        <input id="availability-view" type="hidden" name="View" value="@(dayView ? "timeGridDay" : "overview")" />
+        <button class="btn-primary" type="submit">Search</button>
+        <a asp-action="Index" class="btn-secondary">Clear</a>
     </form>
-
-    @if (Model.CanCreateReservations && !overview)
-    {
-        <p id="availability-selection-hint" class="mb-4 border-l-4 border-primary bg-white px-4 py-3 text-sm text-gray-700" role="status">
-            Select an equipment item, then select an open time on the calendar to start a reservation.
-        </p>
-    }
-
-    <div class="mb-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-gray-700" aria-label="Calendar status legend">
-        <span class="inline-flex items-center gap-2"><span class="availability-legend-dot availability-legend-reserved" aria-hidden="true"></span>Reserved</span>
-        <span class="inline-flex items-center gap-2"><span class="availability-legend-dot availability-legend-borrowed" aria-hidden="true"></span>Borrowed</span>
-        <span class="inline-flex items-center gap-2"><span class="availability-legend-dot availability-legend-overdue" aria-hidden="true"></span>Overdue</span>
-        <span class="inline-flex items-center gap-2"><span class="availability-legend-dot availability-legend-open" aria-hidden="true"></span>Open time for the selected item</span>
-        <span class="text-gray-500">Maintenance and unavailable items appear in the equipment list; no maintenance end date is recorded.</span>
-    </div>
-
-    <div id="availability-error" class="mb-4 hidden border-l-4 border-ink bg-white px-4 py-3 text-sm" role="alert"></div>
-    @if (overview)
-    {
-        <div class="mb-4 flex flex-wrap gap-2" aria-label="Week navigation">
-            <button type="button" data-week-step="-7" class="btn-secondary">Previous week</button>
-            <button type="button" data-week-step="0" class="btn-secondary">Today</button>
-            <button type="button" data-week-step="7" class="btn-secondary">Next week</button>
+    <div class="surface calendar-surface">
+        <div class="calendar-toolbar">
+            <div class="calendar-view-buttons" aria-label="Calendar view"><button type="button" data-calendar-view="overview" aria-pressed="@((!dayView).ToString().ToLowerInvariant())">Week</button><button type="button" data-calendar-view="timeGridDay" aria-pressed="@(dayView.ToString().ToLowerInvariant())">Day</button></div>
+            <div class="calendar-period"><button type="button" data-period-step="-1" class="calendar-arrow" aria-label="Previous period">‹</button><h2 id="calendar-period-label" class="font-display font-semibold" aria-live="polite"></h2><button type="button" data-period-step="1" class="calendar-arrow" aria-label="Next period">›</button><button type="button" data-period-step="0" class="calendar-today">Today</button></div>
+            <div class="calendar-legend" aria-label="Status legend"><span><i class="legend-available"></i>Available</span><span><i class="legend-reserved"></i>Reserved</span><span><i class="legend-borrowed"></i>Borrowed</span><span><i class="legend-maintenance"></i>Maintenance</span><span><i class="legend-overdue"></i>Overdue</span></div>
         </div>
-        <p class="mb-3 text-sm text-gray-500">Open time details to check specific times.</p>
-        <div class="table-surface mb-4" tabindex="0" role="region" aria-label="Scrollable equipment week">
-            <table id="availability-overview" class="equipment-week"></table>
+        <div id="availability-error" class="validation-summary-errors hidden" role="alert"></div>
+        <p id="availability-loading" class="text-sm text-gray-500" role="status">Loading availability…</p>
+        <button id="availability-retry" type="button" class="btn-secondary hidden">Retry</button>
+        <div id="availability-calendar" class="calendar-scroll" tabindex="0" role="region" aria-label="Equipment schedule" data-events-url="@Url.Action("Events")" data-reservation-url="@Url.Action("Create", "Reservation")" data-can-reserve="@Model.CanCreateReservations" data-today="@ManilaClock.NowLocal.ToString("yyyy-MM-dd")">
+            <div id="availability-overview" class="equipment-calendar"></div>
         </div>
-    }
-    <p id="availability-loading" class="mb-3 text-sm text-gray-500" role="status">Loading availability…</p>
-    <button id="availability-retry" type="button" class="btn-secondary hidden mb-3">Retry</button>
-    <div class="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(18rem,0.32fr)] @(overview ? "hidden" : "")">
-        <div id="availability-calendar"
-             class="availability-calendar min-w-0 border border-gray-200 bg-white p-2 sm:p-4"
-             data-events-url="@Url.Action("Events", "AvailabilityCalendar")"
-             data-reservation-url="@Url.Action("Create", "Reservation")"
-             data-can-reserve="@Model.CanCreateReservations"
-             data-initial-date="@selectedDate"
-             data-initial-view="@selectedView"
-             data-today="@ManilaClock.NowLocal.ToString("yyyy-MM-dd")"></div>
-
-        <aside class="calendar-equipment p-4" aria-labelledby="availability-items-heading">
-            <div class="mb-3 flex items-baseline justify-between gap-2">
-                <h2 id="availability-items-heading" class="font-display text-lg font-semibold text-ink">Equipment</h2>
-                <span id="availability-item-count" class="text-xs text-gray-500" aria-live="polite"></span>
-            </div>
-            <p id="availability-empty" class="hidden py-5 text-sm text-gray-500">No equipment matches these filters.</p>
-            <ul id="availability-items" class="divide-y divide-gray-200" aria-live="polite"></ul>
-        </aside>
+        <p class="mt-5 text-sm text-gray-500">Blocks show approved reservations and active loans. Maintenance shows current condition; no completion date is recorded. Dates use Philippine time.</p>
+        @if (Model.CanCreateReservations) { <p class="mt-2 text-sm text-gray-500">Select an available future day to request the item. Final availability is checked when you submit.</p> }
+        <p class="mt-2 text-sm font-semibold text-primary-strong">Today: @ManilaClock.NowLocal.ToString("dddd d MMMM yyyy")</p>
     </div>
 </section>
-
 @section Scripts {
-    <script src="~/lib/fullcalendar/all.global.js" asp-append-version="true"></script>
     <script src="~/js/availability-calendar.js" asp-append-version="true"></script>
 }

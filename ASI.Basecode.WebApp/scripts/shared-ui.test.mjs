@@ -8,7 +8,7 @@ function theme(saved, dark = false, blocked = false) {
     const listeners = {};
     const root = {dataset: {}, style: {}};
     const media = {matches: dark, addEventListener: (_, callback) => { listeners.system = callback; }};
-    const picker = {value: '', addEventListener: (_, callback) => { listeners.pick = callback; }};
+    const picker = {value: '', setAttribute: (key, value) => { picker[key] = value; }, addEventListener: (_, callback) => { listeners.pick = callback; }};
     const values = [];
     const document = {
         documentElement: root, querySelector: () => null, querySelectorAll: () => [picker],
@@ -24,34 +24,26 @@ function theme(saved, dark = false, blocked = false) {
     return {root, media, picker, values, listeners};
 }
 
-test('saved theme applies before DOM ready; OS changes only affect System', () => {
-    const ui = theme('light', true);
-    assert.equal(ui.root.dataset.theme, 'light');
+test('explicit theme persists and toggles without following the OS', () => {
+    const ui = theme('dark', false);
+    assert.equal(ui.root.dataset.theme, 'dark');
     ui.listeners.ready();
-    assert.equal(ui.picker.value, 'light');
-    ui.media.matches = false;
-    ui.listeners.system();
-    assert.equal(ui.root.dataset.theme, 'light');
-    ui.picker.value = 'dark';
-    ui.listeners.pick();
-    assert.equal(ui.root.dataset.theme, 'dark');
-    assert.deepEqual(ui.values, [['gearantee-theme', 'dark']]);
-    ui.picker.value = 'system';
+    assert.equal(ui.picker['aria-pressed'], 'true');
+    assert.equal(ui.picker['aria-label'], 'Switch to light mode');
+    assert.equal(ui.listeners.system, undefined);
     ui.listeners.pick();
     assert.equal(ui.root.dataset.theme, 'light');
-    ui.media.matches = true;
-    ui.listeners.system();
-    assert.equal(ui.root.dataset.theme, 'dark');
+    assert.deepEqual(ui.values, [['gearantee-theme', 'light']]);
+    ui.listeners.pick();
     assert.equal(ui.root.style.colorScheme, 'dark');
 });
 
-test('invalid or inaccessible storage falls back to System without breaking the picker', () => {
-    for (const ui of [theme('invalid', true), theme(null, true, true)]) {
-        assert.equal(ui.root.dataset.theme, 'dark');
-        ui.listeners.ready();
-        ui.picker.value = 'light';
-        ui.listeners.pick();
+test('legacy System, invalid and blocked storage use Light and remain usable', () => {
+    for (const ui of [theme('system', true), theme('invalid', true), theme(null, true, true)]) {
         assert.equal(ui.root.dataset.theme, 'light');
+        ui.listeners.ready();
+        ui.listeners.pick();
+        assert.equal(ui.root.dataset.theme, 'dark');
     }
 });
 

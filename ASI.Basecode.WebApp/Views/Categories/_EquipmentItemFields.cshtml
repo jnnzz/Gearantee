@@ -11,11 +11,10 @@
 }
 
 <div class="form-grid grid gap-4 sm:grid-cols-2">
-    <div>
-        <label asp-for="ItemCode" class="mb-1 block text-sm font-medium"></label>
-        <input asp-for="ItemCode" class="input uppercase" placeholder="e.g. EQ-PJ-003" autocomplete="off" />
-        <span asp-validation-for="ItemCode" class="field-validation-error"></span>
-    </div>
+    @if (Model.EquipmentId > 0)
+    {
+        <div><span class="field-label">Item code</span><p class="item-code">@Model.ItemCode</p></div>
+    }
     <div>
         <label asp-for="ItemName" class="mb-1 block text-sm font-medium"></label>
         <input asp-for="ItemName" class="input" placeholder="e.g. Portable projector" />

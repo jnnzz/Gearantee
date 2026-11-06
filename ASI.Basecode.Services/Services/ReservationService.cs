@@ -1,4 +1,4 @@
-﻿using ASI.Basecode.Data;
+using ASI.Basecode.Data;
 using ASI.Basecode.Data.Interfaces;
 using ASI.Basecode.Data.Models;
 using ASI.Basecode.Resources.Constants;
@@ -104,7 +104,7 @@ namespace ASI.Basecode.Services.Services
                 return ReservationResult.Fail(eligibilityError);
             }
 
-            var windowError = ReservationAvailability.ValidateWindow(model.ReservationStart, model.ReservationEnd, nowUtc);
+            var windowError = ReservationAvailability.ValidateDates(model.ReservationStart, model.ReservationEnd, nowUtc);
             if (windowError != null)
             {
                 return ReservationResult.Fail(windowError);
@@ -121,8 +121,8 @@ namespace ASI.Basecode.Services.Services
                 return ReservationResult.Fail($"The purpose must be {PurposeMaxLength} characters or fewer.");
             }
 
-            var startUtc = ManilaClock.ToUtc(model.ReservationStart.Value);
-            var endUtc = ManilaClock.ToUtc(model.ReservationEnd.Value);
+            var startUtc = ManilaClock.ToUtc(model.ReservationStart.Value.Date);
+            var endUtc = ManilaClock.ToUtc(model.ReservationEnd.Value.Date.AddDays(1));
 
             var profileId = profile.BorrowerProfileId;
 
@@ -142,6 +142,7 @@ namespace ASI.Basecode.Services.Services
                     EquipmentId = model.EquipmentId,
                     ReservationStart = startUtc,
                     ReservationEnd = endUtc,
+                    IsFullDay = true,
                     Purpose = purpose,
                     Status = DomainValues.ReservationStatuses.Pending,
                     RequestedAt = nowUtc,
@@ -207,9 +208,10 @@ namespace ASI.Basecode.Services.Services
             });
         }
 
-        public ReservationIndexViewModel GetMyReservations(string userId, string status, int page)
+        public ReservationIndexViewModel GetMyReservations(string userId, string status, int page, string search = null)
         {
-            var model = new ReservationIndexViewModel();
+            var model = new ReservationIndexViewModel { Search = (search ?? string.Empty).Trim() };
+            if (model.Search.Length > 100) model.Search = model.Search.Substring(0, 100);
             var profile = FindProfile(userId);
             var statusFilter = NormalizeStatus(status);
             model.StatusFilter = statusFilter ?? string.Empty;
@@ -223,6 +225,15 @@ namespace ASI.Basecode.Services.Services
                 var mine = _reservationRepository.GetReservations()
                     .AsNoTracking()
                     .Where(reservation => reservation.BorrowerProfileId == profile.BorrowerProfileId);
+
+                if (model.Search.Length > 0)
+                {
+                    var term = model.Search.ToUpperInvariant();
+                    var idText = term.StartsWith("RSV-", StringComparison.OrdinalIgnoreCase) ? term.Substring(4) : term;
+                    long.TryParse(idText, out var reservationId);
+                    mine = mine.Where(r => r.ReservationId == reservationId ||
+                        r.EquipmentItem.ItemName.ToUpper().Contains(term) || r.EquipmentItem.ItemCode.ToUpper().Contains(term));
+                }
 
                 counts = mine
                     .GroupBy(reservation => reservation.Status)
@@ -948,6 +959,7 @@ namespace ASI.Basecode.Services.Services
                 ImageUrl = reservation.EquipmentItem.ImageUrl,
                 ReservationStart = reservation.ReservationStart,
                 ReservationEnd = reservation.ReservationEnd,
+                IsFullDay = reservation.IsFullDay,
                 RequestedAt = reservation.RequestedAt,
                 Status = reservation.Status,
                 Purpose = reservation.Purpose,
@@ -984,11 +996,12 @@ namespace ASI.Basecode.Services.Services
             item.ItemCode = row.ItemCode;
             item.ItemName = row.ItemName;
             item.CategoryName = row.CategoryName;
+            item.IsFullDay = row.IsFullDay;
             item.StartLocal = ManilaClock.ToLocal(row.ReservationStart);
             item.EndLocal = ManilaClock.ToLocal(row.ReservationEnd);
             item.RequestedAtLocal = ManilaClock.ToLocal(row.RequestedAt);
             item.Status = row.Status;
-            item.DisplayStatus = ReservationDisplayStatus.For(row.Status, row.ReservationEnd, row.ReleasedAt, row.ReturnedAt, nowUtc);
+            item.DisplayStatus = ReservationDisplayStatus.For(row.Status, row.ReservationEnd, row.ReleasedAt, row.ReturnedAt, nowUtc, row.IsFullDay);
             item.CanCancel = CancelRefusal(row.Status, row.HasRelease, row.ReturnedAt.HasValue) == null;
             return item;
         }
@@ -1030,6 +1043,7 @@ namespace ASI.Basecode.Services.Services
             public string ImageUrl { get; set; }
             public DateTime ReservationStart { get; set; }
             public DateTime ReservationEnd { get; set; }
+            public bool IsFullDay { get; set; }
             public DateTime RequestedAt { get; set; }
             public string Status { get; set; }
             public string Purpose { get; set; }

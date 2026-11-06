@@ -14,6 +14,9 @@ namespace ASI.Basecode.Services.ServiceModels.Reservations
         /// <summary>Manila local time.</summary>
         public DateTime StartLocal { get; set; }
         public DateTime EndLocal { get; set; }
+        public bool IsFullDay { get; set; }
+        public string StartLabel => Utilities.ReservationDates.StartLabel(StartLocal, IsFullDay);
+        public string EndLabel => Utilities.ReservationDates.EndLabel(EndLocal, IsFullDay);
         public DateTime RequestedAtLocal { get; set; }
 
         /// <summary>The stored status: Pending, Approved, Rejected, Cancelled, or Expired.</summary>
@@ -58,6 +61,7 @@ namespace ASI.Basecode.Services.ServiceModels.Reservations
 
         /// <summary>The active stored-status filter, or empty for all.</summary>
         public string StatusFilter { get; set; } = string.Empty;
+        public string Search { get; set; } = string.Empty;
 
         public int TotalCount { get; set; }
         public int Page { get; set; } = 1;

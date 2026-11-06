@@ -18,7 +18,6 @@
     <a class="skip-link" href="#main-content">Skip to main content</a>
     @if (ViewBag.LoginView == true)
     {
-        <div class="auth-appearance"><partial name="_ThemePicker" /></div>
         <main id="main-content" class="auth-page min-h-screen">
             <partial name="_FlashMessages" />
             @RenderBody()

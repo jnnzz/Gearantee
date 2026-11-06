@@ -93,7 +93,8 @@ namespace ASI.Basecode.Tests.UiMigration
             Assert.Single(Regex.Matches(returnSearch, "<h1\\b", RegexOptions.IgnoreCase));
             var historyHtml = await Check(admin, "/BorrowingHistory/Index?Search=NO_MATCH_UI_FIXTURE");
             Assert.Contains("More filters", historyHtml);
-            Assert.Contains("Download Excel", historyHtml);
+            Assert.DoesNotContain("Download Excel", historyHtml);
+            Assert.Contains("Download CSV", historyHtml);
             Assert.Contains("Download CSV", historyHtml);
             Assert.Single(Regex.Matches(historyHtml, "<h1\\b", RegexOptions.IgnoreCase));
             foreach (var path in new[] { "/Dashboard/Borrower", "/Catalog/Index", $"/Catalog/Details?id={site.AvailableItemId}", "/Reservation/Index", $"/Reservation/Create?equipmentId={site.AvailableItemId}", "/AvailabilityCalendar/Index" })

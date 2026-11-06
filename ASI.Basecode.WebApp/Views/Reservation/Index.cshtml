@@ -26,16 +26,22 @@
         @foreach (var tab in Model.Tabs)
         {
             var isActive = tab.Value == Model.StatusFilter;
-            <a asp-action="Index" asp-route-status="@(string.IsNullOrEmpty(tab.Value) ? null : tab.Value)"
+            <a asp-action="Index" asp-route-status="@(string.IsNullOrEmpty(tab.Value) ? null : tab.Value)" asp-route-search="@Model.Search"
                class="border px-3 py-2 text-sm @(isActive ? "border-primary bg-tint font-semibold text-primary-strong" : "border-gray-200 bg-white text-gray-700")"
                aria-current="@(isActive ? "page" : null)">@tab.Label <span class="ml-1 text-xs text-gray-500">@tab.Count</span></a>
         }
     </nav>
+    <form method="get" asp-action="Index" class="filter-panel filter-panel--compact" role="search">
+        <input type="hidden" name="status" value="@Model.StatusFilter" />
+        <div class="flex-1"><label class="sr-only" for="borrowing-search">Search my borrowing history</label><input id="borrowing-search" type="search" name="search" value="@Model.Search" maxlength="100" class="input w-full" placeholder="Reservation code, equipment name or item code" /></div>
+        <button type="submit" class="btn-primary">Search</button>
+        <a asp-action="Index" asp-route-status="@Model.StatusFilter" class="btn-secondary">Clear</a>
+    </form>
 
     @if (Model.Items.Count == 0)
     {
-        var heading = string.IsNullOrEmpty(Model.StatusFilter) ? "No reservations yet" : $"No {activeTab?.Label.ToLowerInvariant()} reservations";
-        <partial name="Components/_EmptyState" model="@(new EmptyStateModel { Heading = heading, Message = "Browse the equipment catalog and pick an item to request it." })" />
+        var heading = !string.IsNullOrEmpty(Model.Search) ? "No matching reservations" : string.IsNullOrEmpty(Model.StatusFilter) ? "No reservations yet" : $"No {activeTab?.Label.ToLowerInvariant()} reservations";
+        <partial name="Components/_EmptyState" model="@(new EmptyStateModel { Heading = heading, Message = string.IsNullOrEmpty(Model.Search) ? "Browse the equipment catalog and pick an item to request it." : "Try another reservation code, item name or item code." })" />
     }
     else
     {
@@ -63,8 +69,8 @@
                                 <p class="mt-1 text-xs text-gray-500">@reservation.ItemCode · @reservation.CategoryName</p>
                             </td>
                             <td class="px-3 py-3 text-gray-700">
-                                @reservation.StartLocal.ToString("ddd d MMM · HH:mm")<br />
-                                <span class="text-xs text-gray-500">to @reservation.EndLocal.ToString("ddd d MMM · HH:mm")</span>
+                                @reservation.StartLabel<br />
+                                <span class="text-xs text-gray-500">to @reservation.EndLabel</span>
                             </td>
                             <td class="px-3 py-3"><partial name="Components/_StatusBadge" model="reservation.DisplayStatus" /></td>
                             <td class="px-3 py-3 text-right">
@@ -80,7 +86,7 @@
         {
             Page = Model.Page, TotalPages = Model.TotalPages, TotalCount = Model.TotalCount,
             Label = "Reservation pages",
-            Routes = { ["status"] = Model.StatusFilter }
+            Routes = { ["search"] = Model.Search, ["status"] = Model.StatusFilter }
         })" />
     }
 </section>
