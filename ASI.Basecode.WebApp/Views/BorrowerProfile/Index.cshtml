@@ -33,7 +33,7 @@
                 <th scope="col" class="px-3 py-3">Department</th>
                 <th scope="col" class="px-3 py-3">Contact number</th>
                 <th scope="col" class="px-3 py-3">Eligibility</th>
-                <th scope="col" class="px-3 py-3">Action</th>
+                <th scope="col" class="table-actions-heading px-3 py-3">Actions</th>
             </tr>
         </thead>
         <tbody class="divide-y divide-gray-200">
@@ -52,7 +52,7 @@
                         <partial name="Components/_StatusBadge" model="@(borrower.IsEligible ? "Eligible" : "Ineligible")" />
                     </td>
                     <td class="px-3 py-3 text-right">
-                        <div class="flex flex-wrap items-center justify-end gap-2">
+                        <div class="table-row-actions table-row-actions--eligibility">
                             <a asp-action="Edit" asp-route-id="@borrower.BorrowerProfileId" class="action-edit">Edit</a>
                             <form asp-action="UpdateEligibility" method="post" class="inline">
                                 @Html.AntiForgeryToken()

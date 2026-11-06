@@ -1,13 +1,16 @@
 /* Page-scoped styles for the Administration dashboard and inventory workspace. */
 .admin-kpi-card { min-height: 160px; }
+.admin-summary > .admin-kpi-card { background: var(--ui-surface); }
 .admin-kpi-heading { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
-.admin-kpi-heading .eyebrow { color: var(--color-gray-500); font-size: .7rem; letter-spacing: .04em; text-transform: none; }
+.admin-summary > .admin-kpi-card .eyebrow { color: var(--color-gray-500); font-size: .7rem; letter-spacing: .04em; text-transform: none; }
 .admin-kpi-icon { display: grid; width: 2.65rem; height: 2.65rem; flex: 0 0 auto; place-items: center; border-radius: 50%; background: var(--color-tint-soft); color: var(--ui-link); }
 .admin-kpi-icon svg { width: 1.25rem; height: 1.25rem; stroke-width: 1.7; }
-.admin-kpi-value { margin-top: .55rem; color: var(--color-ink); font-family: var(--font-display); font-size: 2.25rem; font-weight: 600; line-height: 1.15; font-variant-numeric: tabular-nums; }
-.admin-kpi-caption { margin-top: .3rem; color: var(--color-gray-500); font-size: .72rem; line-height: 1.5; }
-.admin-summary > :last-child .admin-kpi-icon { background: rgb(255 255 255 / .17); color: white; }
-.admin-summary > :last-child .eyebrow { color: rgb(255 255 255 / .84); }
+.admin-summary > .admin-kpi-card .admin-kpi-value { margin-top: .55rem; color: var(--color-ink); font-family: var(--font-display); font-size: 2.25rem; font-weight: 600; line-height: 1.15; font-variant-numeric: tabular-nums; }
+.admin-summary > .admin-kpi-card .admin-kpi-caption { margin-top: .3rem; color: var(--color-gray-500); font-size: .72rem; line-height: 1.5; }
+/* Alternate accents only in dark mode; every light-mode card stays white. */
+[data-theme="dark"] .admin-summary > .admin-kpi-card:nth-child(even) { background: var(--color-primary-strong); }
+[data-theme="dark"] .admin-summary > .admin-kpi-card:nth-child(even) :is(.eyebrow, .admin-kpi-value, .admin-kpi-caption) { color: white; }
+[data-theme="dark"] .admin-summary > .admin-kpi-card:nth-child(even) .admin-kpi-icon { background: rgb(255 255 255 / .17); color: white; }
 .admin-dashboard-caption { margin: -.35rem 0 1rem; color: var(--color-gray-500); font-size: .8rem; line-height: 1.5; }
 .admin-operations-grid { align-items: stretch; }
 .admin-dashboard-support { align-content: stretch; grid-template-rows: minmax(0, 1fr); }
@@ -40,8 +43,8 @@
 .inventory-table td strong { display: block; color: var(--color-ink); font-weight: 600; }
 .inventory-table-subtext { display: block; margin-top: .2rem; color: var(--color-gray-500); font-size: .68rem; }
 .inventory-table-actions { min-width: 130px; white-space: nowrap; }
-.inventory-table-actions > a, .inventory-table-actions form button { color: var(--ui-link); font-size: .72rem; font-weight: 600; }
-.inventory-table-actions form { display: inline; margin-left: .55rem; }
+.inventory-table-actions .action-edit, .inventory-table-actions form button { color: var(--ui-link); font-size: .72rem; font-weight: 600; }
+.inventory-table-actions form { margin: 0; }
 .inventory-table-actions form button { padding: .45rem .85rem; border: 1px solid #f1b5b0; background: var(--ui-surface); color: #b42318; }
 [data-theme="dark"] .inventory-table-actions form button { color: #ffb4ad; border-color: #8f4848; }
 .inventory-table-empty { padding: 2rem 1rem !important; text-align: center; }
