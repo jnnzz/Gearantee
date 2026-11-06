@@ -101,6 +101,30 @@ namespace ASI.Basecode.Tests.Reservations
         }
 
         [Fact]
+        public void Awaiting_release_tab_excludes_released_and_missed_pickup_reservations()
+        {
+            using var fixture = new SqliteDb();
+            using var db = fixture.Create();
+            var profile = DashboardSeed.Profile(db, DashboardSeed.User(db, "BRW-8"));
+            var item = DashboardSeed.Item(db, "ITEM-8");
+            var awaiting = DashboardSeed.Reservation(
+                db, profile, item, Now.AddDays(1), Now.AddDays(2), DomainValues.ReservationStatuses.Approved);
+            var released = DashboardSeed.Reservation(
+                db, profile, item, Now.AddDays(3), Now.AddDays(4), DomainValues.ReservationStatuses.Approved);
+            DashboardSeed.Release(db, released, Now);
+            DashboardSeed.Reservation(
+                db, profile, item, Now.AddDays(-2), Now.AddDays(-1), DomainValues.ReservationStatuses.Approved);
+            Custodian(db, "CUS-8", ReviewPermission);
+
+            var queue = ReservationsFor(db, Now).GetReviewQueue("awaiting-release", null, 1);
+
+            Assert.Equal("awaiting-release", queue.StatusFilter);
+            Assert.Equal(awaiting.ReservationId, Assert.Single(queue.Items).ReservationId);
+            Assert.Equal(1, queue.Tabs.Single(tab => tab.Label == "Awaiting Release").Count);
+            Assert.DoesNotContain(queue.Tabs, tab => tab.Label == DomainValues.ReservationStatuses.Approved);
+        }
+
+        [Fact]
         public void Queue_pages_ten_requests_per_page()
         {
             using var fixture = new SqliteDb();

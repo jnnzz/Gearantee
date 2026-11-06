@@ -334,6 +334,7 @@ Shared rows count for each assigned member.
 
 | Date | Work | Owner | PR |
 | --- | --- | --- | --- |
+| 11/6/2026 | Replaced the custodian Approval & Release queue's Approved tab with an Awaiting Release filter that shows approved reservations without a release record and with a pickup window that has not passed. Existing Approved filter URLs map to the replacement; approval and release actions are unchanged. Focused ReservationReviewTests: 26 passed, 0 failed. WBS rows, owners, statuses, dates, and progress counts unchanged. | Codex | — |
 | 11/6/2026 | Adjusted administrator dashboard summary-card themes: cards 2 and 4 share the blue accent in dark mode; all four use the white theme surface with readable labels in light mode. Scoped overrides preserve other role dashboards. CSS diff/whitespace checked; browser visual acceptance unavailable. WBS rows/counts unchanged. | Codex | — |
 | 11/6/2026 | Aligned inventory and borrower-profile row actions using fixed grid slots and equal button heights; kept Locked/Edit and Delete/Restore in consistent columns and added visible Actions headings. Rebuilt Tailwind; generated asset guard, Release WebApp build (0 warnings/errors) and diff whitespace check pass. Browser visual verification unavailable. WBS rows/counts unchanged. | Codex | — |
 | 11/6/2026 | Fixed the recurring Visual Studio Debug build/IntelliSense errors on `feat/notifications-ui-polish`: stopped the verified Gearantee dotnet-watch/app chain locking DLLs; excluded node_modules/vendor files from the NuGet-generated TypeScriptCompile items (211 dependency files before, 0 after). Full Debug solution build: 0 warnings/errors; explicit JavaScript project check and source-list verification pass. Visual Studio may need Reload Project to discard stale diagnostics. WBS rows and counts unchanged. | Codex | — |
@@ -449,6 +450,7 @@ The first version is complete when borrowers can securely reserve one available 
 
 | Date | Change | By |
 | --- | --- | --- |
+| 11/6/2026 | Replaced the custodian Approved status tab with a true Awaiting Release filter; no approval/release workflow behavior changed. WBS owners, statuses, dates, checkboxes, and progress summary unchanged. | Codex |
 | 11/6/2026 | Updated administrator summary-card theme consistency under Additional work; WBS owners, dates, statuses, checkboxes and summary unchanged. | Codex |
 | 11/6/2026 | Completed the table Actions heading/alignment refinement under Additional work. WBS statuses, owners, dates, checkboxes and summary remain unchanged (8 Done, 33 In Review, 2 In Progress, 1 Not Started, 0 Blocked). | Codex |
 | 11/6/2026 | Completed the recurring DLL lock and dependency TypeScript project-item repair under Additional work. Recounted 44 WBS rows: 8 Done, 33 In Review, 2 In Progress, 1 Not Started, 0 Blocked; owners, baseline dates and milestone checkboxes unchanged. | Codex |
