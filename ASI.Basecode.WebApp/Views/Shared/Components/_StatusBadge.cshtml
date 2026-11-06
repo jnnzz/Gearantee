@@ -1,15 +1,14 @@
 @model string
 @{
-    var status = Model ?? "Unknown";
-    var style = status switch
+    var status = string.IsNullOrWhiteSpace(Model) ? "Unknown" : Model;
+    var key = status.Replace(" ", "").Replace("-", "").ToLowerInvariant();
+    var family = key switch
     {
-        "Pending" or "Borrowed" or "Due today" => "bg-tint-soft text-primary-strong",
-        "Awaiting Release" => "bg-tint text-primary-strong",
-        "Overdue" or "Rejected" or "Ineligible" => "bg-ink text-white",
-        "Active" or "Eligible" => "border border-primary bg-white text-primary-strong",
-        "Under Maintenance" or "Unavailable" => "border border-gray-200 bg-transparent text-gray-700",
-        "Cancelled" or "Expired" or "Missed pickup" or "Returned" or "Archived" => "bg-gray-100 text-gray-500",
-        _ => "border border-gray-200 bg-white text-gray-700"
+        "available" or "active" or "eligible" or "returned" or "good" => "success",
+        "approved" or "awaitingrelease" or "reserved" or "borrowed" => "info",
+        "pending" or "duetoday" or "needsinspection" or "undermaintenance" or "underrepair" => "warning",
+        "overdue" or "rejected" or "damaged" or "ineligible" => "danger",
+        _ => "neutral"
     };
 }
-<span class="inline-flex shrink-0 items-center px-2.5 py-1 font-sans text-[11px] font-medium tracking-[0.04em] @style">@status</span>
+<span class="status-badge status-@family">@status</span>

@@ -1,5 +1,6 @@
-using ASI.Basecode.Data;
+﻿using ASI.Basecode.Data;
 using ASI.Basecode.Data.Models;
+using ASI.Basecode.Resources.Constants;
 using ASI.Basecode.Data.Repositories;
 using ASI.Basecode.Services.Services;
 using ASI.Basecode.Tests.Dashboard;
@@ -19,6 +20,7 @@ namespace ASI.Basecode.Tests.Returns
                 unitOfWork,
                 new ReturnRecordRepository(unitOfWork),
                 new ReservationRepository(unitOfWork),
+                new EquipmentItemRepository(unitOfWork),
                 new FixedTimeProvider(nowUtc));
         }
 

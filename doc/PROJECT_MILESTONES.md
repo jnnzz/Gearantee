@@ -11,16 +11,16 @@ This plan covers the complete first version of the system using ASP.NET Core MVC
 Update this file **in the same PR** that finishes or starts a feature.
 
 1. Find the feature's row in the WBS Feature Tracker (match the WBS number).
-2. Set **Status** to one of: `Not Started` · `In Progress` · `In Review` · `Done` · `Blocked`.
-   - `In Progress` → fill **Actual Start**.
-   - `In Review` → add the PR link (for example, `#12`).
-   - `Done` → fill **Actual End** with the owner-confirmed completion date (use the merge date when no earlier completion date is confirmed) and keep the PR link.
-3. Tick the related `[ ]` → `[x]` item(s) in the matching Milestone section only when *all* WBS rows for that item are `Done`.
+2. Set **Status** to one of: `Not Started` Â· `In Progress` Â· `In Review` Â· `Done` Â· `Blocked`.
+   - `In Progress` â†’ fill **Actual Start**.
+   - `In Review` â†’ add the PR link (for example, `#12`).
+   - `Done` â†’ fill **Actual End** with the owner-confirmed completion date (use the merge date when no earlier completion date is confirmed) and keep the PR link.
+3. Tick the related `[ ]` â†’ `[x]` item(s) in the matching Milestone section only when *all* WBS rows for that item are `Done`.
 4. Recalculate the Progress summary counts.
 5. Add one line to the Change log.
 6. Mirror Actual Start / Actual End in the WBS Google Sheet.
 
-Dates use `M/D/YYYY` (the same format as the WBS sheet). Never change Baseline dates here — change them in the WBS sheet first, then copy them here.
+Dates use `M/D/YYYY` (the same format as the WBS sheet). Never change Baseline dates here â€” change them in the WBS sheet first, then copy them here.
 
 ## Progress summary
 
@@ -42,17 +42,17 @@ Shared rows count for each assigned member.
 
 | Member | Assigned | Done |
 | --- | --- | --- |
-| Member 1 — Gesim | 6 (1.00, 20–23, 56) | 1 |
-| Member 2 — Bansag | 13 (1.00, 9–12, 25–28, 52–55) | 1 |
-| Member 3 — Laroco | 12 (1.00, 3, 5–7, 14–18, 49–50) | 5 |
-| Member 4 — Canencia | 7 (30–32, 39–42) | 3 |
-| Member 5 — Cataraja | 9 (34–37, 44–47, 56) | 0 |
+| Member 1 â€” Gesim | 6 (1.00, 20â€“23, 56) | 1 |
+| Member 2 â€” Bansag | 13 (1.00, 9â€“12, 25â€“28, 52â€“55) | 1 |
+| Member 3 â€” Laroco | 12 (1.00, 3, 5â€“7, 14â€“18, 49â€“50) | 5 |
+| Member 4 â€” Canencia | 7 (30â€“32, 39â€“42) | 3 |
+| Member 5 â€” Cataraja | 9 (34â€“37, 44â€“47, 56) | 0 |
 
 ## WBS Feature Tracker
 
 | WBS | Feature | Owner | Baseline Start | Baseline End | Days | Actual Start | Actual End | Status | PR | Milestone |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1.00 | Project Architecture & Setup | Gesim, Bansag, Laroco | 9/19/2026 | 9/23/2026 | 4 | 9/20/2026 | 9/24/2026 | Done | — | M1 |
+| 1.00 | Project Architecture & Setup | Gesim, Bansag, Laroco | 9/19/2026 | 9/23/2026 | 4 | 9/20/2026 | 9/24/2026 | Done | â€” | M1 |
 | **2.00** | **Authentication: User Login** | | | | | | | | | |
 | 3.00 | User Login Page | Laroco | 9/24/2026 | 9/25/2026 | 1 | 9/25/2026 | 9/25/2026 | Done | #6 | M2 |
 | **4.00** | **Authentication: Role-Based Dashboard** | | | | | | | | | |
@@ -109,24 +109,24 @@ Shared rows count for each assigned member.
 | 55.00 | Generate Borrowing Report | Bansag | 10/18/2026 | 10/21/2026 | 3 | 10/14/2026 | | In Review | #29 | M6 |
 | 56.00 | Testing and Debugging | Gesim, Cataraja | 10/22/2026 | 10/26/2026 | 4 | | | Not Started | | M7 |
 
-> Feature names correct spelling in the WBS sheet, including “Receive,” “Equipment,” and “items.” Correct the sheet as well, or use its spelling here if the team decides an exact match is required.
+> Feature names correct spelling in the WBS sheet, including â€œReceive,â€ â€œEquipment,â€ and â€œitems.â€ Correct the sheet as well, or use its spelling here if the team decides an exact match is required.
 
 ## Milestone Overview
 
 | Milestone | Focus | Main deliverable | WBS items |
 | --- | --- | --- | --- |
 | 1 | Project foundation | Running ASP.NET Core MVC project connected to SQL Server | 1.00 |
-| 2 | Authentication and access | Secure sign-in, password recovery, and role-based dashboards | 3.00, 5.00–7.00, 9.00–12.00 |
-| 3 | Master data | Managed users, borrower profiles, categories, and equipment items | 14.00–18.00, 20.00–23.00, 25.00–28.00, 30.00–32.00 |
-| 4 | Reservations | Searchable catalog, availability checking, and reservation requests | 34.00–37.00 |
-| 5 | Custodian workflow | Approval, rejection, release, and return/condition processing | 39.00–42.00, 44.00–47.00 |
-| 6 | Calendar and reporting | Availability calendar and filterable operational reports | 49.00–50.00, 52.00–55.00 |
+| 2 | Authentication and access | Secure sign-in, password recovery, and role-based dashboards | 3.00, 5.00â€“7.00, 9.00â€“12.00 |
+| 3 | Master data | Managed users, borrower profiles, categories, and equipment items | 14.00â€“18.00, 20.00â€“23.00, 25.00â€“28.00, 30.00â€“32.00 |
+| 4 | Reservations | Searchable catalog, availability checking, and reservation requests | 34.00â€“37.00 |
+| 5 | Custodian workflow | Approval, rejection, release, and return/condition processing | 39.00â€“42.00, 44.00â€“47.00 |
+| 6 | Calendar and reporting | Availability calendar and filterable operational reports | 49.00â€“50.00, 52.00â€“55.00 |
 | 7 | Quality assurance | Tested, secure, responsive, and documented system | 56.00 |
-| 8 | Deployment and handover | Production-ready deployment and administrator handover | No WBS rows yet — add when scheduled |
+| 8 | Deployment and handover | Production-ready deployment and administrator handover | No WBS rows yet â€” add when scheduled |
 
 ---
 
-## Milestone 1 — Project Foundation
+## Milestone 1 â€” Project Foundation
 
 **WBS:** 1.00
 
@@ -154,9 +154,9 @@ Shared rows count for each assigned member.
 
 ---
 
-## Milestone 2 — Authentication and Access Control
+## Milestone 2 â€” Authentication and Access Control
 
-**WBS:** 3.00, 5.00–7.00, 9.00–12.00
+**WBS:** 3.00, 5.00â€“7.00, 9.00â€“12.00
 
 **Goal:** Allow secure access and ensure each person sees only their authorized functions.
 
@@ -179,9 +179,9 @@ Shared rows count for each assigned member.
 
 ---
 
-## Milestone 3 — Master Data Management
+## Milestone 3 â€” Master Data Management
 
-**WBS:** 14.00–18.00, 20.00–23.00, 25.00–28.00, 30.00–32.00
+**WBS:** 14.00â€“18.00, 20.00â€“23.00, 25.00â€“28.00, 30.00â€“32.00
 
 **Goal:** Make the users and inventory ready for real borrowing transactions.
 
@@ -203,9 +203,9 @@ Shared rows count for each assigned member.
 
 ---
 
-## Milestone 4 — Equipment Discovery and Reservations
+## Milestone 4 â€” Equipment Discovery and Reservations
 
-**WBS:** 34.00–37.00
+**WBS:** 34.00â€“37.00
 
 **Goal:** Let borrowers find equipment and submit valid reservation requests.
 
@@ -217,7 +217,7 @@ Shared rows count for each assigned member.
 - [ ] Validate date/time ranges and borrower eligibility.
 - [ ] Implement reservation status: Pending, Approved, Rejected, Cancelled, and Expired.
 - [ ] Implement overlap detection for approved reservations and active loans of the same item.
-- [ ] Build the borrower’s My Reservations and Active Loans pages.
+- [ ] Build the borrowerâ€™s My Reservations and Active Loans pages.
 - [ ] Allow borrowers to cancel eligible pending reservations.
 
 ### Completion criteria
@@ -229,9 +229,9 @@ Shared rows count for each assigned member.
 
 ---
 
-## Milestone 5 — Approval, Release, and Return Workflow
+## Milestone 5 â€” Approval, Release, and Return Workflow
 
-**WBS:** 39.00–42.00, 44.00–47.00
+**WBS:** 39.00â€“42.00, 44.00â€“47.00
 
 **Goal:** Complete the controlled equipment handover and return lifecycle.
 
@@ -256,9 +256,9 @@ Shared rows count for each assigned member.
 
 ---
 
-## Milestone 6 — Availability Calendar and Reports
+## Milestone 6 â€” Availability Calendar and Reports
 
-**WBS:** 49.00–50.00, 52.00–55.00
+**WBS:** 49.00â€“50.00, 52.00â€“55.00
 
 **Goal:** Give users visibility into schedules and give staff operational accountability.
 
@@ -280,7 +280,7 @@ Shared rows count for each assigned member.
 
 ---
 
-## Milestone 7 — Quality Assurance and Documentation
+## Milestone 7 â€” Quality Assurance and Documentation
 
 **WBS:** 56.00
 
@@ -306,9 +306,9 @@ Shared rows count for each assigned member.
 
 ---
 
-## Milestone 8 — Deployment and Handover
+## Milestone 8 â€” Deployment and Handover
 
-**WBS:** No WBS rows yet — add when scheduled.
+**WBS:** No WBS rows yet â€” add when scheduled.
 
 **Goal:** Publish the system and prepare the responsible school staff to operate it.
 
@@ -334,30 +334,112 @@ Shared rows count for each assigned member.
 
 | Date | Work | Owner | PR |
 | --- | --- | --- | --- |
+| 11/6/2026 | Replaced the custodian Approval & Release queue's Approved tab with an Awaiting Release filter that shows approved reservations without a release record and with a pickup window that has not passed. Existing Approved filter URLs map to the replacement; approval and release actions are unchanged. Focused ReservationReviewTests: 26 passed, 0 failed. WBS rows, owners, statuses, dates, and progress counts unchanged. | Codex | — |
+| 11/6/2026 | Adjusted administrator dashboard summary-card themes: cards 2 and 4 share the blue accent in dark mode; all four use the white theme surface with readable labels in light mode. Scoped overrides preserve other role dashboards. CSS diff/whitespace checked; browser visual acceptance unavailable. WBS rows/counts unchanged. | Codex | — |
+| 11/6/2026 | Aligned inventory and borrower-profile row actions using fixed grid slots and equal button heights; kept Locked/Edit and Delete/Restore in consistent columns and added visible Actions headings. Rebuilt Tailwind; generated asset guard, Release WebApp build (0 warnings/errors) and diff whitespace check pass. Browser visual verification unavailable. WBS rows/counts unchanged. | Codex | — |
+| 11/6/2026 | Fixed the recurring Visual Studio Debug build/IntelliSense errors on `feat/notifications-ui-polish`: stopped the verified Gearantee dotnet-watch/app chain locking DLLs; excluded node_modules/vendor files from the NuGet-generated TypeScriptCompile items (211 dependency files before, 0 after). Full Debug solution build: 0 warnings/errors; explicit JavaScript project check and source-list verification pass. Visual Studio may need Reload Project to discard stale diagnostics. WBS rows and counts unchanged. | Codex | — |
+| 11/6/2026 | **In Progress (implementation complete; acceptance pending):** Implemented persistent notification inbox/bell, transactional workflow notices, deferred approval/rejection email and reminders; School ID-only login/OTP recovery, light authentication pages, borrower Action buttons and dashboard retry/error presentation on `feat/notifications-ui-polish`. Applied `20261106122123_AddNotifications` to local GearanteeDev; Development enabled. Final Release: 485 passed, 30 opt-in/interactive skips, 0 failures. All 9 frontend tests and generated assets pass. SQL workflow run: 20 passed, 2 timed out during fixture migration; separate overlapping-worker SQL test also timed out creating its database. Browser automation disabled; live Brevo not exercised. See `NOTIFICATIONS.md`. WBS statuses/owners/baseline dates unchanged. | Codex | — |
+| 11/6/2026 | Prepared the scoped workspace/calendar refinement and follow-up fixes for Git handoff on feat/workspace-calendar-refinement, based on fix/supabase-image-safety. Final standard Release suite: 460 passed, 29 opt-in/interactive skips, 0 failures; earlier targeted equipment/upload/SQL concurrency/retry run: 45 passed with no skips. All 6 frontend tests, generated asset guard, TypeScript scope check and Debug build (0 warnings/errors) pass. Migration applied locally; manual browser visual acceptance remains pending. Unrelated design/review files and local identifier backups excluded. WBS rows and counts unchanged. | Codex | — |
+| 11/6/2026 | Resolved the local Visual Studio build errors: stopped the verified Debug web app process holding output DLLs and added an explicit JavaScript/TypeScript project scope excluding node_modules, vendor files and build outputs. Debug WebApp build succeeds with 0 warnings/errors; TypeScript project check and file-list verification pass with npm dependency sources excluded. Visual Studio IntelliSense refresh may require solution reload. WBS rows, owners, dates and progress counts unchanged. | Codex | — |
+| 11/6/2026 | Applied the pending NormalizeUserAndBorrowerSchema and FullDayReservationsAndEquipmentNumbers migrations to local GearanteeDev using EF-generated SQL through the running LocalDB pipe. With explicit user approval, aligned 21 conflicting profile School IDs to existing account login IDs after saving original mappings under ignored artifacts; account login IDs/passwords unchanged. Verified both migration-history entries, Reservation.IsFullDay and EquipmentCategory.NextItemNumber; all 14 existing reservations retain IsFullDay=false. WBS owners, dates, statuses and counts unchanged. | Codex | — |
+| 11/6/2026 | Fixed the calendar CSS review finding: removed obsolete FullCalendar desktop/mobile layout selectors that treated the new equipment grid as a toolbar, moved retained calendar typography into availability-week.css, and rebuilt app.css with the asset guard passing. Three calendar JavaScript tests, compiled CSS checks (legacy child selectors absent, Week/Day widths and row grid retained) and whitespace checks pass. Browser visual verification remains unavailable because local browser automation is disabled. WBS rows and counts unchanged. | Codex | — |
+| 11/6/2026 | Completed both workspace-refinement registration review fixes: SQL Server deadlocks reach the retry strategy, duplicate-key errors retain their validation message, and commit verification returns the original saved item after a lost acknowledgement. Added five disposable SQL Server cases covering cross-category registration and failures before/after commit, with and without serial numbers; three failed before the fix. All 45 targeted equipment service, upload, concurrency and retry tests pass with no skips; whitespace checks pass. Application database unchanged. Recounted 44 WBS leaf rows: 8 Done, 33 In Review, 2 In Progress, 1 Not Started, 0 Blocked; owners, dates and milestone checkboxes unchanged. | Codex | — |
+| 11/6/2026 | Implemented the six-phase workspace/calendar refinement locally on `feat/workspace-calendar-refinement`, based on `fix/supabase-image-safety`: Light/Dark icon toggle with no login control, date-only full-day reservations with inclusive End labels and preserved legacy times, borrower search, Week/Day equipment-row calendar, inventory tabs, immutable server-generated category item codes, history-preserving Delete, functional custodian shortcuts, action styling and report cleanup. Added `FullDayReservationsAndEquipmentNumbers` migration; application database not migrated. Verification: full Release suite 460 passed / 27 skipped; final targeted run 21 passed including 15 opt-in SQL Server migration/concurrency/retry cases and 6 HTTP UI tests; 6 frontend tests, CSS asset guard and whitespace checks passed. Desktop/mobile visual acceptance remains pending because browser automation is disabled in Work settings. No WBS owners, statuses or baseline dates changed. | Codex | — |
+| 11/6/2026 | Completed PR #39 findings 1, 3 and 4 locally on `fix/supabase-image-safety`, based directly on PR head `8677f67`. Managed references now require the canonical configured project and a safe flat items path before privileged signing/deletion. Signing handles network failures, timeouts and malformed responses while preserving caller cancellation. Published objects are retained for shared references; failed saves still clean up new unpublished uploads. All 17 new safety checks pass (16 failed before the fix), and the full Release suite passes 451 tests with 26 opt-in/interactive skips. All 3 frontend tests, the asset guard and whitespace checks passed. Finding 2 (local-image migration) was excluded at the user's request. Recounted 44 WBS leaf rows: 8 Done, 33 In Review, 2 In Progress, 1 Not Started, 0 Blocked. | Codex | — |
+| 11/3/2026 | Implemented backend image upload validation (Additional work, not in WBS): strictly enforces 2 MB maximum file length on stream inspection, validates image magic bytes and MIME content matching (JPEG/PNG/WebP), rejects invalid or spoofed files before any Supabase Storage upload, and verified with new HTTP regression test. Full suite: 410 passed / 26 skipped / 0 failed. | opencode | â€” |
+| 11/3/2026 | Added immediate frontend validation for equipment image selection: checks file size (max 2 MB), extension (.jpg, .jpeg, .png, .webp) and MIME type immediately on file select and drop; rejects invalid files with immediate inline and alert error messaging (Image size exceeds the maximum allowed size of 2 MB. Please select a smaller image.); clears input to prevent invalid submission, and intercepts form submit to block submission while an image error is active; aligned controller/view ViewData keys. Full suite: 410 passed / 26 skipped / 0 failed. | opencode | â€” |
+| 11/3/2026 | Removed the committed Supabase `service_role` key (and project URL) from `appsettings.json`, leaving only the bucket name and size cap; the URL and key now come from User Secrets in Development and `Supabase__Url`/`Supabase__ServiceRoleKey` environment variables in production. Also made the equipment upload JS read its size cap from the view-rendered `data-image-max-bytes` attribute instead of a hardcoded value. Verified against the real Supabase project using User Secrets alone: upload input enabled, a valid image uploads and persists its public URL, and a 3 MB image is rejected with the friendly size message; full suite 411 passed / 26 skipped / 0 failed. | opencode | â€” |
+| 11/3/2026 | Fixed the equipment registration crash on image upload: removed a duplicate `appsettings.json` configuration provider that shadowed User Secrets (empty `Supabase:Url`), always rendered the drag/drop upload control, raised the image cap to 10 MB with a 25 MB request ceiling so oversize photos are rejected with a friendly message instead of aborting the connection, wrapped image validation in the controller's error handling, and updated the Supabase bucket size limit. Verified end-to-end against the real Supabase project: small and 7 MB images upload, 11 MB is rejected with a message; full suite 409 passed / 26 skipped / 0 failed. | opencode | â€” |
+| 11/3/2026 | Implemented the Supabase equipment image upload plan (`doc/SUPABASE_IMAGE_UPLOAD_PLAN.md`) under Additional work: server-side validation (extension, MIME, magic bytes, size), a Supabase Storage client, DI/config binding, drag/drop preview with replace/remove, compensating deletes when the database write fails or an image is replaced, and offline HTTP regressions. The upload UI is gated on `Supabase:Url`; when it is empty the legacy image-URL field remains. Verification: clean build 0 warnings and full suite passing. | opencode | â€” |
+| 11/3/2026 | Fixed equipment schedule links so they follow the active calendar date and Day or Week view. | Unassigned | â€” |
+| 11/3/2026 | Fixed detailed calendar block counts so they refresh for the visible range when switching between Week and Day. | Unassigned | â€” |
+| 11/3/2026 | Clarified that both availability calendar views show current scheduling blocks and directed users to borrowing history for completed loans. | Unassigned | â€” |
+| 11/3/2026 | Fixed the Assignment B calendar review findings. The time grid opens past dates, and calendar input and navigation stay within complete weeks supported by the API. | Unassigned | â€” |
+| 11/3/2026 | Implemented Assignment B on `feat/student-calendar-refinement` from Assignment A commit `100b465`. Refined borrower catalog, history, and reservation presentation. Added a shared equipment week with server-side search and retained the detailed booking grid. Targeted checks passed with 123 tests and 11 opt-in skips. See `doc/UI_MIGRATION.md` for browser evidence and limits. | Unassigned | â€” |
+| 11/3/2026 | Applied theme-aware link colors to the password toggle and recovery controls. Stylesheet build and asset guard passed. | Unassigned | â€” |
+| 11/3/2026 | Fixed unreadable login validation messages by using the shared danger background and text colors. Stylesheet build and asset checks passed. | Unassigned | â€” |
+| 11/2/2026 | Fixed the subsequent Ponytail dark-mode contrast finding: Users/Edit School ID uses theme-aware body text, and the shared file-selection button uses the theme-aware link color. Rebuilt CSS/utility guard passed; 6 MVC UI tests passed, 1 interactive skipped. Browser light/dark contrast assertions passed: School ID 9.11:1 / 9.61:1; upload button 6.15:1 / 7.51:1. No business rules or production data changed. Details: `doc/SHARED_UI.md`. | Unassigned | â€” |
+| 11/2/2026 | Replaced the dark Gearantee logo's navy background with genuine transparent alpha at the user's request, keeping the original light asset and shared theme integration. PNG alpha samples and real login browser assertions passed. Restored a generated stylesheet truncated by the earlier line-ending cleanup; rebuilt CSS/utility guard passed and the styled preview was verified. Current asset/prompt: `doc/SHARED_UI.md`. | Unassigned | â€” |
+| 11/2/2026 | Created and integrated the requested dark Gearantee logo on the existing shared UI branch: light lettering/blue artwork on navy, shared authentication/registration/sidebar logo partial, CSS theme selection and removal of the white dark-mode panel. Original light asset preserved. Production CSS/guard, 3 focused MVC tests and 3 JavaScript checks passed; real local login browser verified both themes. Asset/prompt/checks: `doc/SHARED_UI.md`. | Unassigned | â€” |
+| 11/2/2026 | Fixed Assignment A Ponytail finding 1: migrated late-return/403/Error badges and Reject/Cancel buttons from heading-color fills to shared danger styles. Added a real-MVC regression (verified red before fix); 6 UI tests passed, 1 interactive skipped; production CSS/guard passed. Browser light/dark contrast assertions passed (badges 5.86:1 / 7.63:1, hovered buttons 9.21:1). Existing confirmation/security/workflow behavior retained. | Unassigned | â€” |
+| 11/2/2026 | Completed Assignment A shared UI/login implementation on `feat/shared-ui-login-refinement`: Light/Dark/System, Barlow controls, status/required patterns, toasts across roles with local assets, coordinated shell/search changes, login control cleanup and user-authorized campus-equipment SVG. Release: 380 passed, 26 opt-in skipped; 3 JS checks passed; production CSS/utility guard and scoped responsive SQLite browser checks passed. Contract/limits: `doc/SHARED_UI.md`. B/C/D implementation remains separate. | Unassigned | â€” |
+| 11/2/2026 | Started Assignment A shared UI/login refinement on `feat/shared-ui-login-refinement` from `develop@2c1293b`: shared themes/controls/statuses, toast infrastructure, coordinated shell updates and login controls. User authorized creating an SVG illustration instead of supplying the previously pending picture. Baseline Release: 378 passed, 26 opt-in skipped, 0 failed. | Unassigned | â€” |
+| 10/31/2026 | Prepared the post-migration UI refinement [implementation plan and four standalone assignment handoffs](ui-refinement-handoffs/00-IMPLEMENTATION-PLAN.md): A shared UI/toasts/login; B student/calendar; C admin/inventory; D custodian/reporting/acceptance coordination. Each includes its detailed topic instructions; original ten topic files remain references. Recorded the user's confirmed all-status personal history, date-only filters with scheduling times preserved, and XLSX alongside CSV. Planning only; implementation remains Not started, no named assignees or WBS feature statuses changed. | Unassigned | â€” |
+| 10/30/2026 | Addressed the PR #35 Ponytail re-review must-fix finding in `doc/Handoff.md`: `ReservationService.SubmitReservation` and `ReturnRecordService.AddReturnRecord` now build a fresh reservation / return record (and its late-return child) inside each retry attempt, so a rolled-back insert no longer replays a database-generated ID when the execution strategy retries. Added two opt-in SQL Server regressions that fail the first commit, force a retry, and assert exactly one committed reservation and one return (verified red before the fix). Verification: clean build 0 warnings, 404 passed / 1 UI skip / 0 failed with `GEARANTEE_TEST_SQLSERVER=1`. | opencode | â€” |
+| 10/29/2026 | Addressed the PR #35 should-fix review findings in `doc/Handoff.md` (6â€“9): made the borrower school ID read-only (derived from the user code) on Create/Edit and removed the silently-ignored inputs and validations; restored distinct `SchoolId` values in the `NormalizeUserAndBorrowerSchema` rollback before the unique index; corrected the setup docs (migration required, explicit `--seed` command) and the architecture table inventory (`AspNetUserLogins` removed); removed the shadowed `Succeeded`/`Message` properties so result state is consistent through the `ServiceResult` base. Verification: clean build 0 warnings, 399 passed / 1 UI skip / 0 failed with SQL Server tests enabled. | opencode | â€” |
+| 10/29/2026 | Addressed the PR #35 must-fix review findings in `doc/Handoff.md` (1â€“5): restored the persistent `RolePermissionSeed` marker so reseeding never restores revoked grants; restored the shared administration application lock across borrower-profile, user-administration, and return writes; guarded `NormalizeUserAndBorrowerSchema` against dropping `SchoolId` values that differ from the account identifier; clear the change tracker per retry attempt in equipment writes; repaired the SQL Server test containers (`IAuditService`/`IUnitOfWork` registration) and the return/revocation lock protocol. Full suite with `GEARANTEE_TEST_SQLSERVER=1`: 396 passed, 1 UI-acceptance skip, 0 failed; clean build 0 warnings. This supersedes the 10/28 Option-1 de-serialization entry, which the review found allowed a deactivated administrator to finish a pending write. | opencode | â€” |
+| 10/29/2026 | Executed the full 5-phase codebase refactor (dead code removal, user schema normalization with EF migration, structural decoupling, controller alignment, persistence encapsulation with IAccountService/IAuditService/IApplicationLockManager/ServiceResult and IUnitOfWork-based services). Clean build, 371 passed, 0 failed, 23 opt-in SQL Server tests skipped. | Unassigned | â€” |
+| 10/28/2026 | Executed Option 1 de-serialization: changed administrative and profile writes to ReadCommitted, cleaned up dead no-ops (AcquireAdministrationReadLock) and stale comments, added an AspNetRoles UPDLOCK guard for concurrent last-admin demotions, eliminated the global 15s sp_getapplock pool bottleneck, and wrapped all user transactions in CreateExecutionStrategy. Full test suite: 371 passed, 0 failed, 23 opt-in tests skipped. | Unassigned | â€” |
+| 10/27/2026 | Completed restoration of the original login lockout policy after review and explicit user approval: 5 failed attempts, then a 15-minute lockout. Authentication matches the Git baseline; the checker rejects the earlier local relaxation and preserves unrelated UI/login-copy/CSV work. Release build/regression: 371 passed, 18 opt-in skipped, 0 failed; 51 view contracts and whitespace checks passed. | Unassigned | â€” |
+| 10/26/2026 | Completed the separately authorized borrowing-history CSV export repair: use asynchronous StreamWriter disposal under Kestrel. Download headers/content and formatting preserved. Dedicated real HTTP export regression and unfiltered Release suite passed: 371 passed, 18 opt-in tests skipped, 0 failed. Resolves the earlier UI acceptance CSV exception; existing WBS ownership/statuses unchanged. | Unassigned | â€” |
+| 10/26/2026 | Completed phases 4â€“5 Custodian/Admin UI migration and phase 6 UI consistency checks on `feat/ui-design-migration`; existing functionality, fields, authorization and 10-record pagination preserved. Initial regression: 370 passed, 18 opt-in tests skipped; 41 role-page renders and 51 view contracts verified. The CSV exception was initially reported separately and subsequently resolved by the authorized repair above. See `doc/UI_MIGRATION.md`. | Unassigned | â€” |
+| 10/24/2026 | Completed pagination refresh across all nine paginated lists: maximum 10 records, shared responsive pager, record ranges, numbered links and preserved filters. Release suite: 367 passed, 17 opt-in SQL tests skipped; additional rendered navigation test passed. Desktop/mobile browser checks passed using rendered integration-test pages. | Unassigned | â€” |
+| 10/24/2026 | Completed removal of the disabled catalog-search placeholder from the shared header; verified no header search input on the Borrower, Custodian and Administrator dashboards. Working catalog filters and user-account search remain intact. | Unassigned | â€” |
+| 10/24/2026 | Completed the responsive sidebar follow-up: removed the demo role switcher and visible sidebar scrollbar, bounded the card to the viewport and pinned profile/sign-out below a scrollable menu. CSS build and desktop/mobile/landscape browser checks passed; the separate existing `Startup.Auth.cs` edit still triggers the broader UI-only guard. | Unassigned | â€” |
+| 10/24/2026 | Completed configurable standalone Custodian seed support for `--seed` and `--seed-demo`; existing accounts are preserved on rerun. All 15 seed tests passed. Configured local `CUST-001` and verified Custodian sign-in after creation through the running app's administrator workflow; standalone seed integration was unavailable because LocalDB failed to start in the execution environment. | Unassigned | â€” |
+| 10/24/2026 | Completed UI migration phases 0â€“3 on `feat/ui-design-migration`: baseline, shared foundation, authentication and Borrower pages; presentation only. Release verification: 348 passed, 17 opt-in tests skipped; form contracts and scoped browser checks passed. Phases 4â€“6 await user instruction. See `doc/UI_MIGRATION.md`. | Unassigned | â€” |
+| 11/5/2026 | Completed the PR #38 review follow-up locally on `fix/equipment-image-recovery`. Return search now combines reservation-ID matches with equipment and borrower matches across all four tabs. Required labels reuse existing markers, including conditional return notes and rejection reasons. Five regression cases failed before the fixes; the full Release suite now passes 413 tests with 26 opt-in/interactive skips. All 6 frontend tests, the asset guard and whitespace checks passed. Recounted 44 WBS leaf rows: 8 Done, 33 In Review, 2 In Progress, 1 Not Started, 0 Blocked. | Codex | #38 |
+| 11/5/2026 | Restored the login password toggle's initial visible Show label and verified both toggle states. | Codex | — |
+| 11/5/2026 | Completed the merged PR #36/#37 equipment image follow-up on `fix/equipment-image-recovery`. Hidden image fields now render refreshed server values after validation errors and repeated save attempts. Published image files are retained when an item removes or replaces its URL so shared links and concurrent edits remain valid. Four regression cases failed before the fix; the category/image and Excel HTTP checks now pass (64 passed, 1 opt-in SQL Server concurrency skip), as do all 6 frontend tests. CSS generation and the asset guard passed using a separate output after local file-access failures. Recounted 44 WBS leaf rows: 8 Done, 33 In Review, 2 In Progress, 1 Not Started, 0 Blocked. | Codex | — |
+| 11/5/2026 | Implemented the Assignment D return/report module follow-up on `feat/custodian-reporting-refinement`, based on `d70f6da5c648c7b286aee3989d960ac02c034f6e`. Added database-side search across all four return tabs before counts/paging, preserved search through tab/page/details/return flows, and refined custodian queue/return/report controls. Added a separate streaming Open XML XLSX export with the CSV's 17-column order, typed Manila date/number cells, literal text identifiers, column widths, wrapped text, frozen header, row-limit handling and temporary-file cleanup. CSV behavior and transaction writes remain unchanged. Full Release suite: 406 passed, 26 opt-in skipped, 0 failed; focused Return/XLSX/MVC checks passed (50 passed, 1 interactive preview skipped); CSS build and `git diff --check` passed. The dedicated default-Kestrel CSV response regression also passed (1 passed). Figma/browser visual comparison, opening the generated workbook in desktop Excel, SQL Server opt-in checks, and final evidence from the other assignment owners remain outstanding. No WBS rows, owners, dates, statuses, milestone checkboxes or progress counts changed. No PR created or merged. | Codex | — |
+| 11/4/2026 | Completed Assignment C code changes and automated verification: full Release suite with LocalDB enabled passed 426, 0 failed, 1 interactive preview skipped; category HTTP/concurrency, storage, client upload-script, and category metadata coverage passed; Tailwind production build/asset guard and 6 UI script tests passed. Added regressions for missing staged-image reselection and browser-side browse/drop validation. Two final live UI checks (drag/drop save-and-reload and responsive inventory screenshots) remain pending because Computer Use was stopped before the editor opened. No WBS rows/statuses/dates changed; PR is pending. | Codex | — |
+| 11/4/2026 | Compared the Assignment C dashboard and inventory views against visible Figma A01/A02 references. Matched the dashboard subtitle and inventory heading/caption, changed alert icons to the reference clock treatment, let Needs attention reflow after the required Shortcuts removal, and made category cards fill the available desktop row responsively. Added an accessible Clear selected image action and kept the preview aligned with the actual file input when the picker is cancelled. The focused MVC UI acceptance test passed (1/1); full Release suite passed with 389 passed, 26 skipped, 0 failed. JavaScript syntax and `git diff --check` passed. Verified Assignment C acceptance items 1–9 with focused MVC and HTTP checks, generated production CSS, and live localhost visual checks: the Users page has one filter search and no topbar search; desktop, intermediate/tablet, and narrow-phone CSS viewport layouts were inspected (narrow viewport emulated with browser zoom); there is one H1; and actions, status badges, and keyboard focus are readable/visible in Light and Dark themes. Corrected the dark-theme Edit link and input focus ring. CSS asset build and targeted MVC/search tests passed (1 each). Screenshots were inspected live but were not saved as files. No WBS rows, owners, dates, statuses, milestone checkboxes, or progress counts changed. | Codex | — |
+| 11/4/2026 | Aligned the account activation action with shared danger/secondary button styles, replaced the Edit account status badge with the shared badge component, and added a visible theme-aware focus ring around the equipment upload area when its transparent file input is keyboard-focused. Added UI acceptance assertions for the action, badge, and served focus CSS. Targeted UI test and Release suite passed: 389 passed, 26 skipped, 0 failed. Recounted WBS progress: 8 Done, 33 In Review, 2 In Progress, 1 Not Started, 0 Blocked; WBS rows, statuses, owners, dates, milestone checkboxes and counts unchanged. | Codex | — |
+| 11/4/2026 | Restored the optional equipment image URL workflow as a secondary form input. Edit forms show the saved URL; HTTPS and same-site path validation remain enforced by the service. Uploaded files take precedence over the URL, and explicit removal clears the image. Added HTTP coverage for create, edit, blank-field preservation, form rendering and upload precedence. Release suite: 389 passed, 26 skipped, 0 failed. Recounted WBS progress: 8 Done, 33 In Review, 2 In Progress, 1 Not Started, 0 Blocked; WBS rows, statuses, owners, dates, milestone checkboxes and counts unchanged. | Codex | — |
+| 11/4/2026 | Completed the Assignment C equipment-upload client validation follow-up: require a matching JPEG/PNG extension and MIME type, verify file signatures, decode and enforce server-matched dimensions, and reject multiple dropped files instead of using only the first. Node smoke checks passed and the Release suite passed: 388 passed, 26 skipped, 0 failed. Recounted WBS progress: 8 Done, 33 In Review, 2 In Progress, 1 Not Started, 0 Blocked; no WBS rows, statuses, owners, dates, milestone checkboxes or counts changed. | Codex | — |
+| 11/4/2026 | Removed the Admin dashboard Shortcuts card to meet Assignment C; kept the inventory summary and Needs attention panel intact and removed now-unused Admin shortcut styles. Recounted the WBS progress summary: 8 Done, 33 In Review, 2 In Progress, 1 Not Started, 0 Blocked; no WBS rows, statuses, owners, dates, milestone checkboxes, or progress counts changed. | Codex | — |
+| 11/4/2026 | Implemented Assignment C admin dashboard, users, borrower profiles, import entry and inventory/category refinements. Added validated staged JPEG/PNG uploads with persistent storage, permission checks, cleanup and regression coverage; metadata edits preserve category activation status. Kept the Admin Shortcuts card at the user's direction to match Figma, despite the assignment's remove-shortcuts bullet. Updated setup guidance and test hosts. Release suite: 388 passed, 26 opt-in tests skipped, 0 failed. WBS rows/statuses, owners, dates, milestone checkboxes and progress counts unchanged. Direct browser comparison against the Figma screens remains unverified because the Windows browser automation service stopped on URL verification. | Codex | — |
+| 11/3/2026 | Fixed equipment schedule links so they follow the active calendar date and Day or Week view. | Unassigned | — |
+| 11/3/2026 | Fixed detailed calendar block counts so they refresh for the visible range when switching between Week and Day. | Unassigned | — |
+| 11/3/2026 | Clarified that both availability calendar views show current scheduling blocks and directed users to borrowing history for completed loans. | Unassigned | — |
+| 11/3/2026 | Fixed the Assignment B calendar review findings. The time grid opens past dates, and calendar input and navigation stay within complete weeks supported by the API. | Unassigned | — |
+| 11/3/2026 | Implemented Assignment B on `feat/student-calendar-refinement` from Assignment A commit `100b465`. Refined borrower catalog, history, and reservation presentation. Added a shared equipment week with server-side search and retained the detailed booking grid. Targeted checks passed with 123 tests and 11 opt-in skips. See `doc/UI_MIGRATION.md` for browser evidence and limits. | Unassigned | — |
+| 11/3/2026 | Applied theme-aware link colors to the password toggle and recovery controls. Stylesheet build and asset guard passed. | Unassigned | — |
+| 11/3/2026 | Fixed unreadable login validation messages by using the shared danger background and text colors. Stylesheet build and asset checks passed. | Unassigned | — |
+| 11/2/2026 | Fixed the subsequent Ponytail dark-mode contrast finding: Users/Edit School ID uses theme-aware body text, and the shared file-selection button uses the theme-aware link color. Rebuilt CSS/utility guard passed; 6 MVC UI tests passed, 1 interactive skipped. Browser light/dark contrast assertions passed: School ID 9.11:1 / 9.61:1; upload button 6.15:1 / 7.51:1. No business rules or production data changed. Details: `doc/SHARED_UI.md`. | Unassigned | — |
+| 11/2/2026 | Replaced the dark Gearantee logo's navy background with genuine transparent alpha at the user's request, keeping the original light asset and shared theme integration. PNG alpha samples and real login browser assertions passed. Restored a generated stylesheet truncated by the earlier line-ending cleanup; rebuilt CSS/utility guard passed and the styled preview was verified. Current asset/prompt: `doc/SHARED_UI.md`. | Unassigned | — |
+| 11/2/2026 | Created and integrated the requested dark Gearantee logo on the existing shared UI branch: light lettering/blue artwork on navy, shared authentication/registration/sidebar logo partial, CSS theme selection and removal of the white dark-mode panel. Original light asset preserved. Production CSS/guard, 3 focused MVC tests and 3 JavaScript checks passed; real local login browser verified both themes. Asset/prompt/checks: `doc/SHARED_UI.md`. | Unassigned | — |
+| 11/2/2026 | Fixed Assignment A Ponytail finding 1: migrated late-return/403/Error badges and Reject/Cancel buttons from heading-color fills to shared danger styles. Added a real-MVC regression (verified red before fix); 6 UI tests passed, 1 interactive skipped; production CSS/guard passed. Browser light/dark contrast assertions passed (badges 5.86:1 / 7.63:1, hovered buttons 9.21:1). Existing confirmation/security/workflow behavior retained. | Unassigned | — |
+| 11/2/2026 | Completed Assignment A shared UI/login implementation on `feat/shared-ui-login-refinement`: Light/Dark/System, Barlow controls, status/required patterns, toasts across roles with local assets, coordinated shell/search changes, login control cleanup and user-authorized campus-equipment SVG. Release: 380 passed, 26 opt-in skipped; 3 JS checks passed; production CSS/utility guard and scoped responsive SQLite browser checks passed. Contract/limits: `doc/SHARED_UI.md`. B/C/D implementation remains separate. | Unassigned | — |
+| 11/2/2026 | Started Assignment A shared UI/login refinement on `feat/shared-ui-login-refinement` from `develop@2c1293b`: shared themes/controls/statuses, toast infrastructure, coordinated shell updates and login controls. User authorized creating an SVG illustration instead of supplying the previously pending picture. Baseline Release: 378 passed, 26 opt-in skipped, 0 failed. | Unassigned | — |
+| 10/31/2026 | Prepared the post-migration UI refinement [implementation plan and four standalone assignment handoffs](ui-refinement-handoffs/00-IMPLEMENTATION-PLAN.md): A shared UI/toasts/login; B student/calendar; C admin/inventory; D custodian/reporting/acceptance coordination. Each includes its detailed topic instructions; original ten topic files remain references. Recorded the user's confirmed all-status personal history, date-only filters with scheduling times preserved, and XLSX alongside CSV. Planning only; implementation remains Not started, no named assignees or WBS feature statuses changed. | Unassigned | — |
+| 10/30/2026 | Addressed the PR #35 Ponytail re-review must-fix finding in `doc/Handoff.md`: `ReservationService.SubmitReservation` and `ReturnRecordService.AddReturnRecord` now build a fresh reservation / return record (and its late-return child) inside each retry attempt, so a rolled-back insert no longer replays a database-generated ID when the execution strategy retries. Added two opt-in SQL Server regressions that fail the first commit, force a retry, and assert exactly one committed reservation and one return (verified red before the fix). Verification: clean build 0 warnings, 404 passed / 1 UI skip / 0 failed with `GEARANTEE_TEST_SQLSERVER=1`. | opencode | — |
+| 10/29/2026 | Addressed the PR #35 should-fix review findings in `doc/Handoff.md` (6–9): made the borrower school ID read-only (derived from the user code) on Create/Edit and removed the silently-ignored inputs and validations; restored distinct `SchoolId` values in the `NormalizeUserAndBorrowerSchema` rollback before the unique index; corrected the setup docs (migration required, explicit `--seed` command) and the architecture table inventory (`AspNetUserLogins` removed); removed the shadowed `Succeeded`/`Message` properties so result state is consistent through the `ServiceResult` base. Verification: clean build 0 warnings, 399 passed / 1 UI skip / 0 failed with SQL Server tests enabled. | opencode | — |
+| 10/29/2026 | Addressed the PR #35 must-fix review findings in `doc/Handoff.md` (1–5): restored the persistent `RolePermissionSeed` marker so reseeding never restores revoked grants; restored the shared administration application lock across borrower-profile, user-administration, and return writes; guarded `NormalizeUserAndBorrowerSchema` against dropping `SchoolId` values that differ from the account identifier; clear the change tracker per retry attempt in equipment writes; repaired the SQL Server test containers (`IAuditService`/`IUnitOfWork` registration) and the return/revocation lock protocol. Full suite with `GEARANTEE_TEST_SQLSERVER=1`: 396 passed, 1 UI-acceptance skip, 0 failed; clean build 0 warnings. This supersedes the 10/28 Option-1 de-serialization entry, which the review found allowed a deactivated administrator to finish a pending write. | opencode | — |
+| 10/29/2026 | Executed the full 5-phase codebase refactor (dead code removal, user schema normalization with EF migration, structural decoupling, controller alignment, persistence encapsulation with IAccountService/IAuditService/IApplicationLockManager/ServiceResult and IUnitOfWork-based services). Clean build, 371 passed, 0 failed, 23 opt-in SQL Server tests skipped. | Unassigned | — |
+| 10/28/2026 | Executed Option 1 de-serialization: changed administrative and profile writes to ReadCommitted, cleaned up dead no-ops (AcquireAdministrationReadLock) and stale comments, added an AspNetRoles UPDLOCK guard for concurrent last-admin demotions, eliminated the global 15s sp_getapplock pool bottleneck, and wrapped all user transactions in CreateExecutionStrategy. Full test suite: 371 passed, 0 failed, 23 opt-in tests skipped. | Unassigned | — |
+| 10/27/2026 | Completed restoration of the original login lockout policy after review and explicit user approval: 5 failed attempts, then a 15-minute lockout. Authentication matches the Git baseline; the checker rejects the earlier local relaxation and preserves unrelated UI/login-copy/CSV work. Release build/regression: 371 passed, 18 opt-in skipped, 0 failed; 51 view contracts and whitespace checks passed. | Unassigned | — |
+| 10/26/2026 | Completed the separately authorized borrowing-history CSV export repair: use asynchronous StreamWriter disposal under Kestrel. Download headers/content and formatting preserved. Dedicated real HTTP export regression and unfiltered Release suite passed: 371 passed, 18 opt-in tests skipped, 0 failed. Resolves the earlier UI acceptance CSV exception; existing WBS ownership/statuses unchanged. | Unassigned | — |
+| 10/26/2026 | Completed phases 4–5 Custodian/Admin UI migration and phase 6 UI consistency checks on `feat/ui-design-migration`; existing functionality, fields, authorization and 10-record pagination preserved. Initial regression: 370 passed, 18 opt-in tests skipped; 41 role-page renders and 51 view contracts verified. The CSV exception was initially reported separately and subsequently resolved by the authorized repair above. See `doc/UI_MIGRATION.md`. | Unassigned | — |
+| 10/24/2026 | Completed pagination refresh across all nine paginated lists: maximum 10 records, shared responsive pager, record ranges, numbered links and preserved filters. Release suite: 367 passed, 17 opt-in SQL tests skipped; additional rendered navigation test passed. Desktop/mobile browser checks passed using rendered integration-test pages. | Unassigned | — |
+| 10/24/2026 | Completed removal of the disabled catalog-search placeholder from the shared header; verified no header search input on the Borrower, Custodian and Administrator dashboards. Working catalog filters and user-account search remain intact. | Unassigned | — |
+| 10/24/2026 | Completed the responsive sidebar follow-up: removed the demo role switcher and visible sidebar scrollbar, bounded the card to the viewport and pinned profile/sign-out below a scrollable menu. CSS build and desktop/mobile/landscape browser checks passed; the separate existing `Startup.Auth.cs` edit still triggers the broader UI-only guard. | Unassigned | — |
+| 10/24/2026 | Completed configurable standalone Custodian seed support for `--seed` and `--seed-demo`; existing accounts are preserved on rerun. All 15 seed tests passed. Configured local `CUST-001` and verified Custodian sign-in after creation through the running app's administrator workflow; standalone seed integration was unavailable because LocalDB failed to start in the execution environment. | Unassigned | — |
+| 10/24/2026 | Completed UI migration phases 0–3 on `feat/ui-design-migration`: baseline, shared foundation, authentication and Borrower pages; presentation only. Release verification: 348 passed, 17 opt-in tests skipped; form contracts and scoped browser checks passed. Phases 4–6 await user instruction. See `doc/UI_MIGRATION.md`. | Unassigned | — |
 | 9/25/2026 | GitHub Actions CI + branch protection on `main` | Laroco | #6 |
 | 9/25/2026 | Patched vulnerable build dependencies | Laroco | #6 |
 | 9/24/2026 | How to run the system guide (`doc/Instruction_On_How_To_Run.md`) | Bansag | #1, #5 |
-| 9/28/2026 | Enabled CI checks for all branches | Laroco | — |
-| 9/29/2026 | Removed Bootstrap/template styling and added Tailwind build assets | Laroco | — |
+| 9/28/2026 | Enabled CI checks for all branches | Laroco | â€” |
+| 9/29/2026 | Removed Bootstrap/template styling and added Tailwind build assets | Laroco | â€” |
 | 9/30/2026 | Addressed dashboard PR review findings and added regression tests | Laroco | #21 |
-| 10/1/2026 | Replaced the equipment location lookup with required `VARCHAR(200)` item text and a data-copy migration | Laroco | — |
-| 10/10/2026 | Moved password-reset, Brevo email, user-administration, and CSV import services plus their shared service models from `ASI.Basecode.WebApp` to `ASI.Basecode.Services` | Bansag | — |
+| 10/1/2026 | Replaced the equipment location lookup with required `VARCHAR(200)` item text and a data-copy migration | Laroco | â€” |
+| 10/10/2026 | Moved password-reset, Brevo email, user-administration, and CSV import services plus their shared service models from `ASI.Basecode.WebApp` to `ASI.Basecode.Services` | Bansag | â€” |
 
 ## Open questions
 
-- **OTP vs reset link (WBS 10.00–11.00).** Resolved for PR #19: the system uses a six-digit OTP delivered through Brevo, stores only its hash in `AspNetUserTokens`, and creates the protected Identity reset token only after successful OTP verification.
+- **OTP vs reset link (WBS 10.00â€“11.00).** Resolved for PR #19: the system uses a six-digit OTP delivered through Brevo, stores only its hash in `AspNetUserTokens`, and creates the protected Identity reset token only after successful OTP verification.
 - **Milestone 8 (Deployment)** has no WBS rows. Decide whether it is in scope for this term.
 
 ## Suggested Implementation Order
 
 ```text
 Foundation
-    → Authentication and roles
-        → Users, profiles, categories, equipment
-            → Reservation and conflict validation
-                → Approval, release, and return
-                    → Calendar and reports
-                        → Testing, deployment, and handover
+    â†’ Authentication and roles
+        â†’ Users, profiles, categories, equipment
+            â†’ Reservation and conflict validation
+                â†’ Approval, release, and return
+                    â†’ Calendar and reports
+                        â†’ Testing, deployment, and handover
 ```
 
 ## Definition of Done for Version 1
@@ -368,20 +450,82 @@ The first version is complete when borrowers can securely reserve one available 
 
 | Date | Change | By |
 | --- | --- | --- |
+| 11/6/2026 | Replaced the custodian Approved status tab with a true Awaiting Release filter; no approval/release workflow behavior changed. WBS owners, statuses, dates, checkboxes, and progress summary unchanged. | Codex |
+| 11/6/2026 | Updated administrator summary-card theme consistency under Additional work; WBS owners, dates, statuses, checkboxes and summary unchanged. | Codex |
+| 11/6/2026 | Completed the table Actions heading/alignment refinement under Additional work. WBS statuses, owners, dates, checkboxes and summary remain unchanged (8 Done, 33 In Review, 2 In Progress, 1 Not Started, 0 Blocked). | Codex |
+| 11/6/2026 | Completed the recurring DLL lock and dependency TypeScript project-item repair under Additional work. Recounted 44 WBS rows: 8 Done, 33 In Review, 2 In Progress, 1 Not Started, 0 Blocked; owners, baseline dates and milestone checkboxes unchanged. | Codex |
+| 11/6/2026 | Prepared the scoped notification/authentication/UI enhancement for Git handoff on `feat/notifications-ui-polish`, based on `feat/workspace-calendar-refinement`; recorded local migration, passing regression checks and outstanding SQL/browser/provider acceptance. Recounted 44 WBS rows: 8 Done, 33 In Review, 2 In Progress, 1 Not Started, 0 Blocked. Milestone checkboxes, owners and baseline dates unchanged. | Codex |
+| 11/6/2026 | Prepared the workspace/calendar refinement for commit/push with final verification recorded under Additional work. Recounted 44 WBS leaf rows: 8 Done, 33 In Review, 2 In Progress, 1 Not Started, 0 Blocked; owners, dates and milestone checkboxes unchanged. | Codex |
+| 11/6/2026 | Completed the local DLL-lock and dependency TypeScript diagnostic repair under Additional work. Recounted 44 WBS leaf rows: 8 Done, 33 In Review, 2 In Progress, 1 Not Started, 0 Blocked; owners, dates and milestone checkboxes unchanged. | Codex |
+| 11/6/2026 | Applied the local workspace schema migrations after user-approved borrower identifier reconciliation and verified the new columns/history. Recounted 44 WBS leaf rows: 8 Done, 33 In Review, 2 In Progress, 1 Not Started, 0 Blocked; owners, dates and milestone checkboxes unchanged. | Codex |
+| 11/6/2026 | Completed calendar CSS collision repair under Additional work and verified generated assets. Recounted 44 WBS leaf rows: 8 Done, 33 In Review, 2 In Progress, 1 Not Started, 0 Blocked; owners, dates and milestone checkboxes unchanged. | Codex |
+| 11/6/2026 | Completed equipment registration deadlock and lost-commit repairs under Additional work; verified 45 targeted tests including five new SQL Server cases. Recounted all 44 WBS leaf rows; progress counts, owners, dates and milestone checkboxes remain unchanged. | Codex |
+| 11/6/2026 | Implemented and automatically verified the approved six-phase workspace/calendar refinement under Additional work. Migration application and manual visual acceptance remain pending. Recounted 44 WBS leaf rows: 8 Done, 33 In Review, 2 In Progress, 1 Not Started, 0 Blocked; ownership, dates and milestone checkboxes unchanged. | Codex |
+| 11/6/2026 | Completed the authorized PR #39 storage safety fixes under Additional work; WBS progress counts remain unchanged. | Codex |
+| 11/4/2026 | Guarded equipment image upload flow against null reference and relative URI crashes (Additional work, not in WBS): added absolute URI fallback resolution in SupabaseImageStorageService, guarded category collection bindings across controller and views, added MIME compatibility matching for JPEG/PNG, and added HTTP test for > 2 MB rejection. Verification: 411 passed / 26 skipped / 0 failed. No WBS statuses, owners, baseline dates, or progress counts changed. | opencode |
+| 11/3/2026 | Aligned backend image upload validation with 2 MB cap and magic byte validation (Additional work, not in WBS): validates stream length, file extension, and content magic bytes; rejects unsupported or oversized uploads prior to calling Supabase Storage; added HTTP regression test. No WBS statuses, owners, baseline dates, or progress counts changed. Verification: 410 passed / 26 skipped / 0 failed. | opencode |
+| 11/3/2026 | Added immediate frontend validation for equipment image selection (Additional work, not in WBS): enforce 2 MB size cap, validate extension (.jpg, .jpeg, .png, .webp) and MIME type on select/drop, display immediate inline error and alert, clear input and block invalid form submissions, and align controller/view ViewData keys. No WBS statuses, owners, baseline dates, or progress counts changed. Verification: 410 passed / 26 skipped / 0 failed. | opencode |
+| 11/3/2026 | Removed the committed Supabase `service_role` key and URL from `appsettings.json` and drove the upload JS size cap from configuration (Additional work, not in WBS). No WBS feature statuses, owners, baseline dates, or progress counts changed. Verification: 411 passed / 26 skipped / 0 failed. | opencode |
+| 11/3/2026 | Fixed the equipment image-upload crash (Additional work, not in WBS): restored configuration precedence by removing the duplicate `appsettings.json` provider that shadowed User Secrets, made the upload control always visible, raised the image cap to 10 MB with a 25 MB request limit and friendly oversize messaging, wrapped controller validation defensively, and raised the Supabase bucket limit. No WBS feature statuses, owners, baseline dates, or progress counts changed. Verification: 409 passed / 26 skipped / 0 failed. | opencode |
+| 11/3/2026 | Completed the Supabase equipment image upload (Additional work, not in WBS): added the server-side storage client and validation, DI/config binding, gated drag/drop UI with preview/replace/remove, and compensating deletes on failed or replaced saves; added offline HTTP regressions and setup documentation. No WBS feature statuses, owners, baseline dates, or progress counts changed. | opencode |
+| 11/5/2026 | Completed and verified the PR #38 search and required-marker fixes under Additional work; WBS progress counts remain unchanged. | Codex |
+| 11/5/2026 | Recorded the login toggle label repair under Additional work. WBS progress remains 8 Done, 33 In Review, 2 In Progress, 1 Not Started and 0 Blocked. | Codex |
+| 11/5/2026 | Completed and verified the merged equipment image review fixes under Additional work; WBS counts remain 8 Done, 33 In Review, 2 In Progress, 1 Not Started and 0 Blocked. | Codex |
+| 11/4/2026 | Recorded Assignment C final automated verification and the two still-pending live UI checks under Additional work. Added browser-script and missing-staged-upload regressions. WBS rows, progress counts, dates and owners unchanged; PR is pending. | Codex |
+| 11/4/2026 | Replaced the raw account activation button and status badge with shared components/styles, and added theme-aware keyboard focus styling for the equipment upload area. UI acceptance and Release tests passed; WBS progress unchanged. | Codex |
+| 11/4/2026 | Restored optional equipment image URL entry and edit behavior, preserving safe URL validation and file-over-URL precedence. Added HTTP coverage; Release suite passed with 389 passed, 26 skipped and 0 failed. WBS progress counts remain unchanged. | Codex |
+| 11/4/2026 | Completed browser-side equipment image validation for file extension, MIME type, signature, decoding and dimensions; multi-file drag/drop now shows an error and rejects the selection. Node smoke checks and the Release test suite passed (388 passed, 26 skipped, 0 failed). WBS counts remain unchanged. | Codex |
+| 11/4/2026 | Removed the Admin Shortcuts card per Assignment C follow-up and recorded the change under Additional work. Recounted the WBS summary; counts and WBS tracking remain unchanged. | Codex |
+| 11/4/2026 | Recorded Assignment C implementation, test results and the pending direct Figma visual comparison under Additional work; WBS rows and progress counts unchanged. | Codex |
+| 11/4/2026 | Completed live Light/Dark and responsive Users page checks at desktop, intermediate/tablet, and narrow-phone CSS viewport widths. Updated the Assignment C verification note; screenshots were inspected live but not saved as files. WBS rows and progress unchanged. | Codex |
+| 11/3/2026 | Recorded the Assignment B schedule link fix under Additional work. | Codex |
+| 11/3/2026 | Recorded the detailed calendar block count fix under Additional work. | Codex |
+| 11/3/2026 | Recorded the Assignment B calendar wording fix under Additional work. | Codex |
+| 11/3/2026 | Recorded the Assignment B calendar date fixes under Additional work. | Codex |
+| 11/3/2026 | Recorded Assignment B under Additional work. The 44 WBS leaf rows still total 8 Done, 33 In Review, 2 In Progress, and 1 Not Started. | Codex |
+| 11/3/2026 | Recorded the password control contrast fix under Additional work. | Codex |
+| 11/3/2026 | Recorded the login error banner contrast fix under Additional work. | Codex |
+| 11/2/2026 | Completed the School ID/upload-button contrast repair under Additional work. Recounted all 44 WBS leaf rows: 8 Done, 33 In Review, 2 In Progress, 1 Not Started. No WBS dates, owners, feature statuses or milestone checkboxes changed. | Codex |
+| 11/2/2026 | Completed the transparent dark-logo follow-up under Additional work and restored/verified generated CSS. Recounted 44 WBS leaf rows: 8 Done, 33 In Review, 2 In Progress, 1 Not Started. No WBS dates, owners, statuses or checkboxes changed. | Codex |
+| 11/2/2026 | Added the user-requested dark logo under Additional work and verified its theme switching. Recounted the 44 WBS leaf rows: 8 Done, 33 In Review, 2 In Progress, 1 Not Started; no WBS dates, owners, statuses or milestone checkboxes changed. | Codex |
+| 11/2/2026 | Resolved the Assignment A contrast review finding and documented the regression/browser checks. Recounted WBS: 8 Done, 33 In Review, 2 In Progress, 1 Not Started; no WBS statuses, owners, actual/baseline dates or checkboxes changed. | Codex |
+| 11/2/2026 | Finished and verified Assignment A under Additional work; published shared component/message/theme instructions for B/C/D. Recounted 44 WBS leaf rows: 8 Done, 33 In Review, 2 In Progress, 1 Not Started. No WBS owners, feature statuses, actual/baseline dates or milestone checkboxes changed. | Codex |
+| 11/2/2026 | Started the authorized Assignment A implementation under Additional work in the original checkout; preserved planning/design/review files. WBS feature statuses, owners, baseline/actual dates and checkboxes unchanged; counts remain 8 Done, 33 In Review, 2 In Progress, 1 Not Started. | Codex |
+| 10/31/2026 | Consolidated the UI refinement plan into four complete files for the user's four-person team. Assigned shared shell/CSS/toast infrastructure to one topic owner, kept module-specific integration/tests with each owner, and assigned final acceptance coordination to the custodian/reporting owner. Retained all ten detailed topic scopes; no implementation, WBS statuses, owners, dates or progress counts changed. | Codex |
+| 10/31/2026 | Added the UI refinement plan and ten name-free assignment packets under Additional work, grounded in the current develop checkout and Figma reference. No application code, branches, PRs or feature statuses changed. Recounted WBS: 8 Done, 33 In Review, 2 In Progress, 1 Not Started; owners, actual/baseline dates and milestone checkboxes unchanged. | Codex |
+| 10/30/2026 | Finished the PR #35 Ponytail re-review must-fix remediation (Additional work, `doc/Handoff.md` finding 1): reservation and return retries now create their records inside the retry attempt (fresh reservation / return plus late-return child), preventing a rolled-back insert from replaying its generated ID; added two SQL Server retry-after-rollback regressions (verified failing pre-fix). Verification: clean build 0 warnings, 404 passed / 1 UI skip / 0 failed with SQL Server tests enabled. No WBS feature statuses, owners or baseline dates changed. | opencode |
+| 10/29/2026 | Finished the PR #35 should-fix review remediation (Additional work, `doc/Handoff.md` findings 6â€“9): school ID is now derived/read-only on Create and Edit (removed ignored inputs and validations); migration rollback backfills distinct `SchoolId` before its unique index; setup and architecture docs corrected; `ReservationResult`/`ReturnRecordResult` no longer shadow `ServiceResult.Succeeded`/`Message` (base-typed regression tests added). Verification: clean build 0 warnings, 399 passed / 1 UI skip / 0 failed with SQL Server tests enabled. No WBS feature statuses, owners or baseline dates changed. | opencode |
+| 10/29/2026 | Finished the PR #35 must-fix review remediation (Additional work, `doc/Handoff.md` findings 1â€“5): restored `RolePermissionSeed` with a `RestoreRolePermissionSeed` migration and reseed regression test; restored exclusive administration locks on Serializable transactions for profile/user-administration writes plus a shared lock for returns; added a data-safety guard before the `SchoolId` drop; clear tracked state per retry attempt in equipment writes (with regression test); fixed the SQL Server test containers. Verification: clean build 0 warnings, 396 passed / 1 UI skip / 0 failed with SQL Server tests enabled. No WBS feature statuses, owners or baseline dates changed. | opencode |
+| 10/29/2026 | Completed the full 5-phase codebase refactor (per `doc/Codebase Refactor Implementation Plan.md`, Additional work): dead code/backup artifacts/unused packages removed; user schema normalized (`IdNumber` alias on UserName, `BorrowerProfile.SchoolId` dropped, `RolePermissionSeed` and `AspNetUserLogins` dropped, migration applied to GearanteeDev); `DomainValues` moved to Resources, `PathManager` to WebApp, `DatabaseSeeder` to Data/Seeding; all 12 controllers inherit `ControllerBase<T>` with centralized PageDate; `IAccountService`, `IAuditService`, `IPasswordResetOtpService`, `IApplicationLockManager`, `ServiceResult` extracted; SQL lock SQL fully encapsulated in Data/Locks and repositories; services depend on `IUnitOfWork` (no concrete DbContext injection or casts). Verification: clean build 0 warnings, 371 passed / 0 failed / 23 opt-in SQL Server tests skipped. No WBS feature statuses, owners or baseline dates changed. | opencode |
+| 10/28/2026 | Executed Option 1: deserialized administrative transactions to ReadCommitted, cleaned up dead no-ops and stale comments, guarded last-admin race via AspNetRoles UPDLOCK, and wrapped transactions in SqlServerRetryingExecutionStrategy. Verified full test suite (371 passed, 0 failed). No WBS status, owner, baseline date or progress-count changes. | Antigravity |
+| 10/27/2026 | Prepared the Custodian/Admin UI continuation and authorized CSV repair for Git handoff on `feat/ui-design-migration`. Original authentication policy retained; separate login-copy/design/review edits excluded from staging. Release verification remains 371 passed, 18 opt-in skipped; contract checker now validates the staged index without local-edit exemptions. WBS counts, feature statuses, owners, dates and checkboxes unchanged. | Codex |
+| 10/27/2026 | Addressed the Ponytail review finding by restoring baseline Identity lockout settings and requiring the complete original authentication file in the continuation checker. Recounted WBS: 8 Done, 33 In Review, 2 In Progress, 1 Not Started; feature statuses, owners, baseline dates and milestone checkboxes unchanged. | Codex |
+| 10/26/2026 | Fixed the previously reported CSV export failure after explicit user authorization, using asynchronous writer disposal without changing report rules. Real Kestrel export regression and unfiltered Release suite passed (371 passed, 18 opt-in skipped); 51 view contracts and whitespace checks passed. Recounted WBS: 8 Done, 33 In Review, 2 In Progress, 1 Not Started; other members' rows, owners, baseline dates and milestone checkboxes unchanged. | Codex |
+| 10/26/2026 | Completed the authorized Custodian/Admin presentation migration and scoped responsive/keyboard/validation checks in the original checkout. Recounted WBS: 8 Done, 33 In Review, 2 In Progress, 1 Not Started; no feature statuses, owners, baseline dates or milestone checkboxes changed. Recorded the existing CSV export failure separately; user explicitly retained UI-only scope, so unqualified full-system acceptance remains outstanding. | Codex |
+| 10/25/2026 | Started the user-authorized UI migration phases 4â€“6 on `feat/ui-design-migration` in the original checkout. Existing local authentication/login-copy/design edits remain preserved; WBS rows, dates, owners and counts unchanged. | Codex |
+| 10/25/2026 | Prepared the scoped UI migration and approved follow-ups for Git handoff on `feat/ui-design-migration`. Release validation: 368 passed, 17 opt-in SQL tests skipped; 22 view/9 pager contracts, asset consistency, EF model drift and NuGet vulnerability checks passed. Separate local authentication/login-copy edits and earlier design/review work remain excluded; WBS rows and counts unchanged. | Codex |
+| 10/24/2026 | Completed the user-requested shared pagination UI and 10-record limit for catalog, reservations, review queue, returns, history, users, borrower profiles, equipment and categories. Recounted WBS: 8 Done, 33 In Review, 2 In Progress, 1 Not Started; no feature statuses, owners, baseline dates or milestone checkboxes changed. | Codex |
+| 10/24/2026 | Removed the disabled catalog-search placeholder from the shared header at the user's request and verified all three role dashboards in the running app. No WBS status, owner, date or progress-count changes. | Codex |
+| 10/24/2026 | Completed the user-requested sidebar cleanup and responsive checks in the running Visual Studio app; preserved navigation permissions and sign-out behavior. WBS counts, owners, dates and milestone checkboxes remain unchanged. | Codex |
+| 10/24/2026 | Completed the Custodian seed addition, local setup documentation and 15 seed tests. Verified `CUST-001` login at the running Visual Studio app through the existing account-management workflow; direct LocalDB seed execution remains an environment limitation. No WBS status, owner, baseline date or progress-count changes. | Codex |
+| 10/24/2026 | Started the user-requested Custodian seed addition under Additional work. Existing WBS counts, owners, dates and milestone checkboxes remain unchanged. | Codex |
+| 10/24/2026 | Relocated the existing UI migration phases 0â€“3 into the original repository checkout on `feat/ui-design-migration` at the user's request; preserved earlier local design/review work and tracker notes. No WBS statuses, owners, dates, milestone checkboxes or progress counts changed. | Codex |
+| 10/24/2026 | Started the approved UI-only migration phases 0â€“3 under Additional work. Baseline: 348 tests passed, 17 opt-in SQL Server tests skipped. No WBS feature statuses, baseline dates, owners or milestone checkboxes changed. | Codex |
+| 10/24/2026 | Completed the scoped UI migration phases 0â€“3 and recorded verification in `doc/UI_MIGRATION.md`: 348 tests passed, 17 skipped, view contracts preserved, real MVC/SQL-backed Borrower and authentication checks passed. Awaiting user instruction for phases 4â€“6; WBS counts and feature statuses remain unchanged. | Codex |
 | 9/25/2026 | Added WBS Feature Tracker; marked 1.00 and 3.00 Done | Laroco |
-| 9/28/2026 | Moved WBS 9.00–12.00 to In Review for PR #19 and aligned password-reset documentation with the OTP/Brevo implementation | Bansag |
-| 9/29/2026 | Added SQL-backed dashboards, shared responsive shell, Tailwind build, and demo seeding for WBS 5.00–7.00 | Laroco |
-| 9/30/2026 | Addressed PR #21 review findings TEST-01, OPS-01, UX-01, and P3-01–P3-05 | Laroco |
+| 9/28/2026 | Moved WBS 9.00â€“12.00 to In Review for PR #19 and aligned password-reset documentation with the OTP/Brevo implementation | Bansag |
+| 9/29/2026 | Added SQL-backed dashboards, shared responsive shell, Tailwind build, and demo seeding for WBS 5.00â€“7.00 | Laroco |
+| 9/30/2026 | Addressed PR #21 review findings TEST-01, OPS-01, UX-01, and P3-01â€“P3-05 | Laroco |
 | 10/1/2026 | Removed the Location entity and updated the schema, dashboards, demo seed, and ERD for item location text | Laroco |
-| 10/1/2026 | Marked WBS 5.00–7.00 Done using owner-confirmed 9/25 start and 9/28 completion dates; PR #21 merged on 10/1 | Laroco |
-| 10/1/2026 | Started WBS 14.00–18.00 implementation for user accounts, role assignment, permissions, and account activation management | Laroco |
+| 10/1/2026 | Marked WBS 5.00â€“7.00 Done using owner-confirmed 9/25 start and 9/28 completion dates; PR #21 merged on 10/1 | Laroco |
+| 10/1/2026 | Started WBS 14.00â€“18.00 implementation for user accounts, role assignment, permissions, and account activation management | Laroco |
 | 10/1/2026 | Implemented the user-administration screens, Identity workflows, permission controls, SQL Server safeguards, documentation, and regression tests; awaiting PR review before advancing WBS status | Laroco |
-| 10/2/2026 | Moved WBS 14.00–18.00 to In Review for PR #22; addressed REQ-01 with atomic CSV account creation, UX/AUDIT-01 with trusted edit redisplay and no-op activation handling, and ROLE-EDGE-01 with inactive-admin demotion; added regression tests and import instructions | Laroco |
-| 10/3/2026 | Started WBS 30.00–32.00 (Borrower Profile Management: view, update, eligibility) | Canencia |
+| 10/2/2026 | Moved WBS 14.00â€“18.00 to In Review for PR #22; addressed REQ-01 with atomic CSV account creation, UX/AUDIT-01 with trusted edit redisplay and no-op activation handling, and ROLE-EDGE-01 with inactive-admin demotion; added regression tests and import instructions | Laroco |
+| 10/3/2026 | Started WBS 30.00â€“32.00 (Borrower Profile Management: view, update, eligibility) | Canencia |
 | 10/4/2026 | Implemented equipment category creation (WBS 20.00) with duplicate checking, admin authorization, Tailwind views, and unit/authorization tests | Gesim |
-| 10/5/2026 | Moved WBS 20.00–23.00 to In Review for PR #25 per review handoff (SEC-01/SEC-02/STATE-01 pending correction; cleared premature Done/Actual End) | Gesim |
+| 10/5/2026 | Moved WBS 20.00â€“23.00 to In Review for PR #25 per review handoff (SEC-01/SEC-02/STATE-01 pending correction; cleared premature Done/Actual End) | Gesim |
 | 10/6/2026 | Addressed PR #25 review handoff findings SEC-01, SEC-02, STATE-01, UX-01, LIST-01, and UX-02; added regression tests; clarified opt-in SQL Server tests and qualified inactive-category item registration | Gesim |
-| 10/9/2026 | Started WBS 25.00–28.00 equipment-item management implementation | Bansag |
+| 10/9/2026 | Started WBS 25.00â€“28.00 equipment-item management implementation | Bansag |
 | 10/9/2026 | Implemented equipment-item inventory listing, search and filters, registration, editing, and safe archive/restore; web app build passes | Bansag |
 | 10/9/2026 | Addressed PR #27 CI findings by registering the item service in the category test host, using encoded form values for equipment pagination, and removing user-supplied item codes from logs | Bansag |
 | 10/9/2026 | Addressed PR #27 review feedback with optional catalog-image persistence, serializable inventory lock checks, and equipment-item service/HTTP regression tests | Bansag |
@@ -392,15 +536,15 @@ The first version is complete when borrowers can securely reserve one available 
 | 10/7/2026 | Started WBS 36.00: My Reservations list with status tabs and a reservation detail page; stale pending requests are marked Expired when viewed | Cataraja |
 | 10/7/2026 | Started WBS 37.00: borrowers cancel their own pending or unreleased approved reservations, with an atomic status check | Cataraja |
 | 10/8/2026 | WBS 37.00: replaced the browser confirm with a reusable confirmation modal (`Components/_ConfirmDialog` + `confirm-dialog.js`) before cancelling a reservation | Cataraja |
-| 10/8/2026 | Moved WBS 34.00–37.00 to In Review for PR #26: borrower catalog, reservation requests, My Reservations status, and cancel with confirmation modal; 69 new tests | Cataraja |
-| 10/9/2026 | Addressed PR #26 review for WBS 34.00–37.00 (still In Review): merged `staging` (PR #25) and resolved conflicts; RES-01 serializes duplicate-check + insert per borrower/item with an app lock; RES-02/PERF-05 expire stale requests with one conditional UPDATE; AUTH-03 opens the catalog to any role with `equipment.browse`; AUTH-04 keeps history and cancel open without `reservation.create`; added SQL Server race and role-matrix tests | Cataraja |
-| 10/14/2026 | Started WBS 52.00–55.00 implementation for searchable, filterable borrowing history and report generation | Bansag |
-| 10/14/2026 | Moved WBS 52.00–55.00 to In Review for PR #29; completed local build/test verification, generated Tailwind CSS, and updated the vulnerable XML cryptography dependency | Bansag |
-| 10/14/2026 | Started WBS 49.00–50.00 availability calendar and equipment/category/location filters | Laroco |
-| 10/14/2026 | Moved WBS 30.00–32.00 to In Review for PR #31; added borrower-profile service and authorization tests | Canencia |
-| 10/17/2026 | Started WBS 39.00–42.00 reservation approval and release: custodian review queue, approve/reject with a required reason, and equipment release recorded under the item lock | Canencia |
-| 10/17/2026 | Merged `staging` (PR #31) into the review branch; WBS 30.00–32.00 verified and moved to Done | Canencia |
-| 10/17/2026 | Started WBS 44.00–47.00: custodian return desk with On loan/Overdue/Returned/Late tabs, return time and receiver, condition and resulting item status (damaged items never auto-Available), automatic late-return records with whole days late, back-dated returns that require a reason note, and SQL Server race tests | Cataraja |
-| 10/17/2026 | Moved WBS 44.00–47.00 to In Review for PR #32; fixed a SQL Server deadlock when two returns are recorded at once and added opt-in SQL Server race tests | Cataraja |
-| 10/17/2026 | Addressed PR #32 review AUTH-01 for WBS 44.00–47.00 (still In Review): the return permission re-check now runs inside the return transaction under the shared administration lock (Shared mode, before the equipment lock); added SQL Server revocation race tests | Cataraja |
-| 10/17/2026 | Moved WBS 39.00–42.00 to In Review for PR #33: custodian review queue, approve/reject with a required reason, and equipment release recorded under the item lock; 20 new tests | Canencia |
+| 10/8/2026 | Moved WBS 34.00â€“37.00 to In Review for PR #26: borrower catalog, reservation requests, My Reservations status, and cancel with confirmation modal; 69 new tests | Cataraja |
+| 10/9/2026 | Addressed PR #26 review for WBS 34.00â€“37.00 (still In Review): merged `staging` (PR #25) and resolved conflicts; RES-01 serializes duplicate-check + insert per borrower/item with an app lock; RES-02/PERF-05 expire stale requests with one conditional UPDATE; AUTH-03 opens the catalog to any role with `equipment.browse`; AUTH-04 keeps history and cancel open without `reservation.create`; added SQL Server race and role-matrix tests | Cataraja |
+| 10/14/2026 | Started WBS 52.00â€“55.00 implementation for searchable, filterable borrowing history and report generation | Bansag |
+| 10/14/2026 | Moved WBS 52.00â€“55.00 to In Review for PR #29; completed local build/test verification, generated Tailwind CSS, and updated the vulnerable XML cryptography dependency | Bansag |
+| 10/14/2026 | Started WBS 49.00â€“50.00 availability calendar and equipment/category/location filters | Laroco |
+| 10/14/2026 | Moved WBS 30.00â€“32.00 to In Review for PR #31; added borrower-profile service and authorization tests | Canencia |
+| 10/17/2026 | Started WBS 39.00â€“42.00 reservation approval and release: custodian review queue, approve/reject with a required reason, and equipment release recorded under the item lock | Canencia |
+| 10/17/2026 | Merged `staging` (PR #31) into the review branch; WBS 30.00â€“32.00 verified and moved to Done | Canencia |
+| 10/17/2026 | Started WBS 44.00â€“47.00: custodian return desk with On loan/Overdue/Returned/Late tabs, return time and receiver, condition and resulting item status (damaged items never auto-Available), automatic late-return records with whole days late, back-dated returns that require a reason note, and SQL Server race tests | Cataraja |
+| 10/17/2026 | Moved WBS 44.00â€“47.00 to In Review for PR #32; fixed a SQL Server deadlock when two returns are recorded at once and added opt-in SQL Server race tests | Cataraja |
+| 10/17/2026 | Addressed PR #32 review AUTH-01 for WBS 44.00â€“47.00 (still In Review): the return permission re-check now runs inside the return transaction under the shared administration lock (Shared mode, before the equipment lock); added SQL Server revocation race tests | Cataraja |
+| 10/17/2026 | Moved WBS 39.00â€“42.00 to In Review for PR #33: custodian review queue, approve/reject with a required reason, and equipment release recorded under the item lock; 20 new tests | Canencia |

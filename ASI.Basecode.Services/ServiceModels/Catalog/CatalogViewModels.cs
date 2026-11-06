@@ -67,6 +67,9 @@ namespace ASI.Basecode.Services.ServiceModels.Catalog
     {
         public DateTime StartLocal { get; set; }
         public DateTime EndLocal { get; set; }
+        public bool IsFullDay { get; set; }
+        public string StartLabel => Utilities.ReservationDates.StartLabel(StartLocal, IsFullDay);
+        public string EndLabel => Utilities.ReservationDates.EndLabel(EndLocal, IsFullDay);
 
         /// <summary>"Reserved" for approved bookings, "On loan" for released items.</summary>
         public string Label { get; set; } = string.Empty;

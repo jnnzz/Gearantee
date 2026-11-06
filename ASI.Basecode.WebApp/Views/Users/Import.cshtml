@@ -1,12 +1,12 @@
 @model ASI.Basecode.Services.ServiceModels.UserAdministration.ImportUsersViewModel
 
-<div class="mx-auto max-w-4xl">
+<div class="role-page form-layout">
     <a asp-action="Index" class="mb-5 inline-flex text-sm font-semibold text-primary-strong underline underline-offset-4">← Back to users &amp; roles</a>
-    <section class="border border-gray-200 bg-white p-5 sm:p-8">
+    <section class="surface">
         <h2 class="font-display text-2xl font-semibold">Import accounts from CSV</h2>
         <p class="mt-2 text-sm text-gray-700">Create up to 100 accounts at once. Every account must pass validation: if any row fails, no accounts are created.</p>
         <a asp-action="ImportTemplate" class="mt-4 inline-flex font-semibold text-primary-strong underline underline-offset-4">Download the CSV template</a>
-        <ul class="mt-4 list-disc space-y-2 pl-5 text-sm text-gray-700">
+        <ul class="import-guidance mt-4 list-disc space-y-2 pl-5 text-sm text-gray-700">
             <li>Use UTF-8 CSV, up to 1 MiB, with all nine template columns. Blank lines are ignored. Keep codes and school IDs as text to preserve leading zeroes.</li>
             <li>Each account needs a unique user code and email, first and last name, an initial role, and its own password.</li>
             <li>Choose Borrower, Custodian, or Administrator. Borrowers also need a unique school ID and department; eligibility starts disabled.</li>
@@ -33,12 +33,12 @@
             </div>
         }
 
-        <form asp-action="Import" method="post" enctype="multipart/form-data" class="mt-6 border-t border-gray-200 pt-5">
+        <form class="upload-panel" asp-action="Import" method="post" enctype="multipart/form-data">
             <label for="csvFile" class="mb-2 block text-sm font-semibold">Account CSV file</label>
             <input id="csvFile" name="csvFile" type="file" accept=".csv,text/csv" required aria-describedby="csv-help" class="input w-full" />
             <p id="csv-help" class="mt-2 text-xs text-gray-500">Maximum 100 accounts, 1 MiB. All rows are validated before committing the import.</p>
             <div class="mt-5 flex flex-wrap justify-end gap-3">
-                <a asp-action="Index" class="border border-gray-200 px-4 py-2 text-sm">Cancel</a>
+                <a asp-action="Index" class="btn-secondary">Cancel</a>
                 <button type="submit" class="btn-primary">Import accounts</button>
             </div>
         </form>

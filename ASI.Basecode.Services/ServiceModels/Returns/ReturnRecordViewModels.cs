@@ -47,6 +47,8 @@ namespace ASI.Basecode.Services.ServiceModels.Returns
         // Manila local times
         public DateTime ReleasedAtLocal { get; set; }
         public DateTime DueAtLocal { get; set; }
+        public bool IsFullDay { get; set; }
+        public string EndLabel => Utilities.ReservationDates.EndLabel(DueAtLocal, IsFullDay);
         public DateTime? ReturnedAtLocal { get; set; }
 
         public string ReturnedCondition { get; set; }
@@ -83,15 +85,15 @@ namespace ASI.Basecode.Services.ServiceModels.Returns
         public List<ReturnRecordListItemViewModel> Items { get; set; } = new List<ReturnRecordListItemViewModel>();
         public List<ReturnRecordTab> Tabs { get; set; } = new List<ReturnRecordTab>();
         public string Tab { get; set; } = string.Empty;
+        public string Search { get; set; } = string.Empty;
+        public string ValidationMessage { get; set; }
         public int TotalCount { get; set; }
         public int Page { get; set; } = 1;
         public int TotalPages { get; set; } = 1;
     }
 
-    public class ReturnRecordResult
+    public class ReturnRecordResult : Common.ServiceResult
     {
-        public bool Succeeded { get; set; }
-        public string Message { get; set; } = string.Empty;
         public long? ReturnRecordId { get; set; }
 
         // Controller returns 404
@@ -102,5 +104,13 @@ namespace ASI.Basecode.Services.ServiceModels.Returns
 
         public static ReturnRecordResult Missing() =>
             new ReturnRecordResult { NotFound = true, Message = "Loan not found." };
+
+        public static ReturnRecordResult Success(string message, long returnRecordId) =>
+            new ReturnRecordResult
+            {
+                Succeeded = true,
+                Message = message,
+                ReturnRecordId = returnRecordId
+            };
     }
 }

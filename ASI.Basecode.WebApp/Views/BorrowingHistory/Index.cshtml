@@ -4,84 +4,101 @@
     var filter = Model.Filter;
     var fromDate = filter.FromDate?.ToString("yyyy-MM-dd");
     var toDate = filter.ToDate?.ToString("yyyy-MM-dd");
+    var activeSecondaryFilters = (string.IsNullOrWhiteSpace(filter.Borrower) ? 0 : 1)
+        + (filter.CategoryId.HasValue ? 1 : 0)
+        + (filter.FromDate.HasValue ? 1 : 0)
+        + (filter.ToDate.HasValue ? 1 : 0)
+        + (string.IsNullOrWhiteSpace(filter.Status) ? 0 : 1)
+        + (string.IsNullOrWhiteSpace(filter.LateReturn) ? 0 : 1);
 }
 
-<section aria-labelledby="borrowing-history-heading" class="min-w-0">
+<section aria-label="Borrowing history report" class="role-page">
     <div class="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
-            <h2 id="borrowing-history-heading" class="font-display text-2xl font-semibold">Borrowing history</h2>
             <p class="mt-1 text-xs text-gray-500">
                 @Model.TotalCount reservation record@(Model.TotalCount == 1 ? "" : "s") · times are Philippine time
             </p>
         </div>
-        <a asp-action="Export"
-           asp-route-search="@filter.Search"
-           asp-route-borrower="@filter.Borrower"
-           asp-route-item="@filter.Item"
-           asp-route-categoryId="@filter.CategoryId"
-           asp-route-fromDate="@fromDate"
-           asp-route-toDate="@toDate"
-           asp-route-status="@filter.Status"
-           asp-route-lateReturn="@filter.LateReturn"
-           class="btn-primary min-h-10">Download CSV</a>
+        <div class="flex flex-wrap gap-2">
+            <a asp-action="Export"
+               asp-route-search="@filter.Search"
+               asp-route-borrower="@filter.Borrower"
+               asp-route-categoryId="@filter.CategoryId"
+               asp-route-fromDate="@fromDate"
+               asp-route-toDate="@toDate"
+               asp-route-status="@filter.Status"
+               asp-route-lateReturn="@filter.LateReturn"
+               class="btn-secondary min-h-10">Download CSV</a>
+        </div>
     </div>
 
-    <form method="get" asp-action="Index" class="mb-5 grid gap-3 border border-gray-200 bg-white p-4 sm:grid-cols-2 xl:grid-cols-4">
-        <div>
-            <label for="history-search" class="mb-1 block text-xs font-medium text-gray-700">Search borrower, ID, or item</label>
-            <input id="history-search" name="Search" value="@filter.Search" type="search" maxlength="100" class="input" placeholder="Name, school ID, user code, item" />
+    <form method="get" asp-action="Index" class="space-y-3">
+        <div class="filter-panel filter-panel--compact">
+            <div class="min-w-0 flex-1">
+                <label for="history-search" class="mb-1 block text-xs font-medium text-gray-700">Search borrower, ID, or item</label>
+                <input id="history-search" name="Search" value="@filter.Search" type="search" maxlength="100" class="input w-full" placeholder="Name, school ID, user code, item" />
+            </div>
+            <button type="submit" class="btn-primary min-h-10">Search</button>
+            <a asp-action="Index" class="btn-secondary min-h-10">Clear filters</a>
         </div>
-        <div>
-            <label for="history-item" class="mb-1 block text-xs font-medium text-gray-700">Filter by item</label>
-            <input id="history-item" name="Item" value="@filter.Item" type="search" maxlength="100" class="input" placeholder="Item name or code" />
-        </div>
-        <div>
-            <label for="history-category" class="mb-1 block text-xs font-medium text-gray-700">Category</label>
-            <select id="history-category" name="CategoryId" class="input">
-                <option value="">All categories</option>
-                @foreach (var category in Model.Categories)
+
+        <details class="report-more-filters" open="@(activeSecondaryFilters > 0 ? "open" : null)">
+            <summary class="cursor-pointer text-sm font-semibold text-primary-strong">
+                More filters
+                @if (activeSecondaryFilters > 0)
                 {
-                    <option value="@category.CategoryId" selected="@(filter.CategoryId == category.CategoryId)">@category.CategoryName</option>
+                    <span class="ml-2 status-badge status-info">@activeSecondaryFilters active</span>
                 }
-            </select>
-        </div>
-        <div>
-            <label for="history-borrower" class="mb-1 block text-xs font-medium text-gray-700">Filter by borrower</label>
-            <input id="history-borrower" name="Borrower" value="@filter.Borrower" type="search" maxlength="100" class="input" placeholder="Name, school ID, or user code" />
-        </div>
-        <div>
-            <label for="history-from" class="mb-1 block text-xs font-medium text-gray-700">Borrowing start from</label>
-            <input id="history-from" name="FromDate" value="@fromDate" type="date" class="input" />
-        </div>
-        <div>
-            <label for="history-to" class="mb-1 block text-xs font-medium text-gray-700">Borrowing start to</label>
-            <input id="history-to" name="ToDate" value="@toDate" type="date" class="input" />
-        </div>
-        <div>
-            <label for="history-status" class="mb-1 block text-xs font-medium text-gray-700">Status</label>
-            <select id="history-status" name="Status" class="input">
-                <option value="">All statuses</option>
-                @foreach (var status in Model.StatusOptions)
-                {
-                    <option value="@status" selected="@(filter.Status == status)">@status</option>
-                }
-            </select>
-        </div>
-        <div>
-            <label for="history-late" class="mb-1 block text-xs font-medium text-gray-700">Late return</label>
-            <select id="history-late" name="LateReturn" class="input">
-                <option value="">Any</option>
-                <option value="yes" selected="@(filter.LateReturn == "yes")">Late returns only</option>
-                <option value="no" selected="@(filter.LateReturn == "no")">No late return / not yet returned</option>
-            </select>
-        </div>
-        <div class="flex items-end gap-2 sm:col-span-2 xl:col-span-4">
-            <button type="submit" class="btn-primary min-h-10">Apply filters</button>
-            <a asp-action="Index" class="inline-flex min-h-10 items-center border border-gray-200 bg-white px-3 text-sm font-semibold text-gray-700">Clear</a>
-        </div>
+            </summary>
+            <div class="filter-panel report-filters mt-3">
+                <div>
+                    <label for="history-category" class="mb-1 block text-xs font-medium text-gray-700">Category</label>
+                    <select id="history-category" name="CategoryId" class="input">
+                        <option value="">All categories</option>
+                        @foreach (var category in Model.Categories)
+                        {
+                            <option value="@category.CategoryId" selected="@(filter.CategoryId == category.CategoryId)">@category.CategoryName</option>
+                        }
+                    </select>
+                </div>
+                <div>
+                    <label for="history-borrower" class="mb-1 block text-xs font-medium text-gray-700">Filter by borrower</label>
+                    <input id="history-borrower" name="Borrower" value="@filter.Borrower" type="search" maxlength="100" class="input" />
+                </div>
+                <div>
+                    <label for="history-from" class="mb-1 block text-xs font-medium text-gray-700">Borrowing start from</label>
+                    <input id="history-from" name="FromDate" value="@fromDate" type="date" class="input" />
+                </div>
+                <div>
+                    <label for="history-to" class="mb-1 block text-xs font-medium text-gray-700">Borrowing start to</label>
+                    <input id="history-to" name="ToDate" value="@toDate" type="date" class="input" />
+                </div>
+                <div>
+                    <label for="history-status" class="mb-1 block text-xs font-medium text-gray-700">Status</label>
+                    <select id="history-status" name="Status" class="input">
+                        <option value="">All statuses</option>
+                        @foreach (var status in Model.StatusOptions)
+                        {
+                            <option value="@status" selected="@(filter.Status == status)">@status</option>
+                        }
+                    </select>
+                </div>
+                <div>
+                    <label for="history-late" class="mb-1 block text-xs font-medium text-gray-700">Late return</label>
+                    <select id="history-late" name="LateReturn" class="input">
+                        <option value="">Any</option>
+                        <option value="yes" selected="@(filter.LateReturn == "yes")">Late returns only</option>
+                        <option value="no" selected="@(filter.LateReturn == "no")">No late return / not yet returned</option>
+                    </select>
+                </div>
+                <div class="flex items-end gap-2 sm:col-span-2 xl:col-span-4">
+                    <button type="submit" class="btn-primary min-h-10">Apply filters</button>
+                </div>
+            </div>
+        </details>
     </form>
 
-    <p class="mb-4 text-xs text-gray-500">Date filters use the requested borrowing start date. Late-return status is based on the recorded late-return event or an actual return after the scheduled due time.</p>
+    <p class="mb-4 mt-3 text-xs text-gray-500">Date filters use the requested borrowing start date. Late-return status is based on the recorded late-return event or an actual return after the scheduled due time. If CSV shows #### in Excel, widen or AutoFit that column.</p>
 
     @if (!string.IsNullOrWhiteSpace(Model.ValidationMessage))
     {
@@ -94,7 +111,7 @@
     }
     else
     {
-        <div class="overflow-x-auto border border-gray-200 bg-white">
+        <div class="table-surface overflow-x-auto">
             <table class="w-full min-w-[1050px] text-left text-sm">
                 <thead class="border-b border-gray-200 bg-gray-50 font-display text-[11px] uppercase tracking-[0.12em] text-gray-700">
                     <tr>
@@ -119,8 +136,8 @@
                                 <p class="mt-1 text-xs text-gray-500">@row.ItemCode · @row.CategoryName</p>
                             </td>
                             <td class="px-3 py-3 text-gray-700">
-                                <p>@row.StartLocal.ToString("ddd d MMM yyyy · HH:mm")</p>
-                                <p class="mt-1 text-xs text-gray-500">Due @row.DueLocal.ToString("ddd d MMM yyyy · HH:mm")</p>
+                                <p>@row.StartLabel</p>
+                                <p class="mt-1 text-xs text-gray-500">Due @row.EndLabel</p>
                                 <p class="mt-1 text-xs text-gray-500">Requested @row.RequestedAtLocal.ToString("d MMM yyyy · HH:mm")</p>
                             </td>
                             <td class="px-3 py-3 text-gray-700">
@@ -135,7 +152,7 @@
                             <td class="px-3 py-3">
                                 @if (row.HasLateReturn)
                                 {
-                                    <span class="inline-flex bg-ink px-2.5 py-1 text-[11px] font-medium text-white">Yes · @row.DaysLate day@(row.DaysLate == 1 ? "" : "s")</span>
+                                    <span class="status-badge status-danger">Yes · @row.DaysLate day@(row.DaysLate == 1 ? "" : "s")</span>
                                 }
                                 else
                                 {
@@ -148,18 +165,11 @@
             </table>
         </div>
 
-        <nav class="mt-6 flex items-center justify-between text-xs text-gray-500" aria-label="Borrowing history pages">
-            <span>Page @Model.Page of @Model.TotalPages · @Model.TotalCount record@(Model.TotalCount == 1 ? "" : "s")</span>
-            <div class="flex gap-2">
-                @if (Model.Page > 1)
-                {
-                    <a asp-action="Index" asp-route-search="@filter.Search" asp-route-borrower="@filter.Borrower" asp-route-item="@filter.Item" asp-route-categoryId="@filter.CategoryId" asp-route-fromDate="@fromDate" asp-route-toDate="@toDate" asp-route-status="@filter.Status" asp-route-lateReturn="@filter.LateReturn" asp-route-page="@(Model.Page - 1)" class="border border-gray-200 bg-white px-3 py-2 text-gray-700">Previous</a>
-                }
-                @if (Model.Page < Model.TotalPages)
-                {
-                    <a asp-action="Index" asp-route-search="@filter.Search" asp-route-borrower="@filter.Borrower" asp-route-item="@filter.Item" asp-route-categoryId="@filter.CategoryId" asp-route-fromDate="@fromDate" asp-route-toDate="@toDate" asp-route-status="@filter.Status" asp-route-lateReturn="@filter.LateReturn" asp-route-page="@(Model.Page + 1)" class="border border-gray-200 bg-white px-3 py-2 text-gray-700">Next</a>
-                }
-            </div>
-        </nav>
+        <partial name="Components/_Pagination" model="@(new PaginationViewModel
+        {
+            Page = Model.Page, TotalPages = Model.TotalPages, TotalCount = Model.TotalCount,
+            Label = "Borrowing history pages",
+            Routes = { ["search"] = filter.Search, ["borrower"] = filter.Borrower, ["categoryId"] = filter.CategoryId?.ToString(), ["fromDate"] = fromDate, ["toDate"] = toDate, ["status"] = filter.Status, ["lateReturn"] = filter.LateReturn }
+        })" />
     }
 </section>

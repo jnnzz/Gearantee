@@ -1,6 +1,6 @@
 @model ASI.Basecode.WebApp.Models.ConfirmDialogModel
 <dialog id="@Model.Id" aria-labelledby="@(Model.Id)-title" aria-describedby="@(Model.Id)-message"
-        class="w-[min(28rem,calc(100%-2rem))] border border-gray-200 bg-white p-0 text-ink shadow-xl backdrop:bg-ink/50">
+        class="confirm-dialog w-[min(28rem,calc(100%-2rem))] border border-gray-200 bg-white p-0 text-ink shadow-xl backdrop:bg-ink/50">
     <div class="border-l-4 border-ink p-5 sm:p-6">
         <h2 id="@(Model.Id)-title" class="font-display text-xl font-semibold text-ink">@Model.Title</h2>
         <p id="@(Model.Id)-message" class="mt-2 text-sm leading-6 text-gray-700">@Model.Message</p>
@@ -9,8 +9,8 @@
             <p class="mt-3 bg-gray-50 px-3 py-2 text-sm font-medium text-gray-700">@Model.Detail</p>
         }
         <div class="mt-6 flex flex-wrap justify-end gap-3">
-            <button type="button" data-confirm-dismiss autofocus class="border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:border-gray-500">@Model.CancelText</button>
-            <button type="button" data-confirm-accept class="border border-ink bg-ink px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700 disabled:cursor-wait disabled:opacity-60">@Model.ConfirmText</button>
+            <button type="button" data-confirm-dismiss autofocus class="btn-secondary">@Model.CancelText</button>
+            <button type="button" data-confirm-accept class="@(Model.IsDestructive ? "btn-danger" : "btn-primary") disabled:cursor-wait disabled:opacity-60">@Model.ConfirmText</button>
         </div>
     </div>
 </dialog>

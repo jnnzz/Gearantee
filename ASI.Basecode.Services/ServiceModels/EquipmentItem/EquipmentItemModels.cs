@@ -1,4 +1,5 @@
 using ASI.Basecode.Data.Models;
+using ASI.Basecode.Resources.Constants;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -44,10 +45,7 @@ namespace ASI.Basecode.Services.ServiceModels.EquipmentItem
         [Display(Name = "Category")]
         public long CategoryId { get; set; }
 
-        [Required(ErrorMessage = "Item code is required.")]
-        [StringLength(100, ErrorMessage = "Item code cannot exceed 100 characters.")]
-        [RegularExpression(@"^[A-Za-z0-9][A-Za-z0-9._-]*$", ErrorMessage = "Use letters, numbers, periods, hyphens, or underscores for the item code.")]
-        [Display(Name = "Item code")]
+        // Assigned by the server; never accepted as a user-editable identifier.
         public string ItemCode { get; set; }
 
         [Required(ErrorMessage = "Item name is required.")]

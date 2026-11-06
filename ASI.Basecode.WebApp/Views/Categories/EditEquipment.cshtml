@@ -1,9 +1,13 @@
 @model ASI.Basecode.Services.ServiceModels.EquipmentItem.EquipmentItemFormViewModel
 
-<div class="mx-auto max-w-4xl">
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin-inventory.css" asp-append-version="true" />
+}
+
+<div class="role-page form-layout form-layout--wide">
     <a asp-action="Index" asp-route-tab="equipment" class="mb-5 inline-flex text-sm font-semibold text-primary-strong underline underline-offset-4">&larr; Back to equipment items</a>
-    <section class="border border-gray-200 bg-white p-5 sm:p-8">
-        <h2 class="font-display text-2xl font-semibold">Edit equipment item</h2>
+    <section class="surface">
+        <h2 class="font-display text-xl font-semibold">Item details</h2>
         <p class="mt-1 text-sm text-gray-500">Update the inventory details, condition, and availability status.</p>
 
         @if (Model.IsLocked)
@@ -14,13 +18,13 @@
         }
         else
         {
-            <form asp-action="EditEquipment" method="post" class="mt-6">
+            <form asp-action="EditEquipment" method="post" enctype="multipart/form-data" class="mt-6">
                 @Html.AntiForgeryToken()
                 <input type="hidden" asp-for="EquipmentId" />
                 <div asp-validation-summary="ModelOnly" class="validation-summary-errors" role="alert"></div>
                 @await Html.PartialAsync("_EquipmentItemFields", Model)
                 <div class="mt-6 flex flex-wrap justify-end gap-3 border-t border-gray-100 pt-5">
-                    <a asp-action="Index" asp-route-tab="equipment" class="border border-gray-200 px-4 py-2 text-sm">Cancel</a>
+                    <a asp-action="Index" asp-route-tab="equipment" class="btn-secondary">Cancel</a>
                     <button type="submit" class="btn-primary">Save changes</button>
                 </div>
             </form>
@@ -30,4 +34,5 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/equipment-image-upload.js" asp-append-version="true"></script>
 }

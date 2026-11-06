@@ -1,5 +1,6 @@
-using ASI.Basecode.Data;
+﻿using ASI.Basecode.Data;
 using ASI.Basecode.Data.Models;
+using ASI.Basecode.Resources.Constants;
 using ASI.Basecode.Tests.Dashboard;
 using System;
 using System.Linq;
@@ -38,7 +39,6 @@ namespace ASI.Basecode.Tests.Dashboard
             var profile = new BorrowerProfile
             {
                 UserId = user.Id,
-                SchoolId = user.UserCode,
                 Department = "BSIT",
                 IsEligible = eligible
             };

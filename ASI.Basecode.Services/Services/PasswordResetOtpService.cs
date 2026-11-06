@@ -1,14 +1,18 @@
+﻿using ASI.Basecode.Data;
 using ASI.Basecode.Data.Models;
 using ASI.Basecode.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Globalization;
+using System.Linq;
+using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace ASI.Basecode.Services.Services
 {
-    public sealed class PasswordResetOtpService
+    public sealed class PasswordResetOtpService : IPasswordResetOtpService
     {
         public const string RequestRateLimitPolicyName =
             "password-reset-request";
@@ -25,14 +29,84 @@ namespace ASI.Basecode.Services.Services
             TimeSpan.FromHours(1);
 
         private readonly IPasswordResetOtpStore _store;
+        private readonly IPasswordHasher<ApplicationUser> _passwordHasher;
+        private readonly IBrevoEmailSender _emailSender;
         private readonly ILogger<PasswordResetOtpService> _logger;
 
         public PasswordResetOtpService(
             IPasswordResetOtpStore store,
+            IPasswordHasher<ApplicationUser> passwordHasher = null,
+            IBrevoEmailSender emailSender = null,
             ILogger<PasswordResetOtpService> logger = null)
         {
             _store = store;
+            _passwordHasher = passwordHasher;
+            _emailSender = emailSender;
             _logger = logger;
+        }
+
+        /// <inheritdoc />
+        public async Task IssueOtpAsync(
+            ApplicationUser user,
+            string fallbackEmail,
+            CancellationToken cancellationToken = default)
+        {
+            var now = DateTimeOffset.UtcNow;
+            var issuance = await TryReserveIssuanceAsync(user, now, cancellationToken);
+            if (!issuance.IsReserved)
+            {
+                // The controller keeps silent about rate limiting to avoid account enumeration.
+                return;
+            }
+
+            var otp = RandomNumberGenerator
+                .GetInt32(100000, 1000000)
+                .ToString("D6", CultureInfo.InvariantCulture);
+            var expiresAt = now.AddMinutes(LifetimeMinutes);
+            var otpHash = _passwordHasher.HashPassword(user, otp);
+            var state = new PasswordResetOtpState(
+                expiresAt,
+                0,
+                issuance.WindowStartAt,
+                issuance.IssuanceCount,
+                now,
+                otpHash);
+            var storedOtp = state.Serialize();
+            var storeResult = await SetAsync(user, storedOtp);
+
+            if (!storeResult.Succeeded)
+            {
+                _logger?.LogWarning(
+                    "Unable to store a password reset OTP for user {UserCode}: {Errors}",
+                    user.UserCode,
+                    string.Join(", ", storeResult.Errors.Select(error => error.Code)));
+                return;
+            }
+
+            try
+            {
+                await _emailSender.SendPasswordResetOtpAsync(
+                    user.Email ?? fallbackEmail,
+                    $"{user.FirstName} {user.LastName}".Trim(),
+                    otp);
+                _logger?.LogInformation(
+                    "Password reset OTP sent for user {UserCode}.",
+                    user.UserCode);
+            }
+            catch (Exception exception)
+            {
+                if (!await TryConsumeAsync(user.Id, storedOtp, cancellationToken))
+                {
+                    _logger?.LogWarning(
+                        "The failed password reset email cleanup did not consume the current OTP for user {UserCode}.",
+                        user.UserCode);
+                }
+
+                _logger?.LogError(
+                    exception,
+                    "Unable to send a password reset OTP for user {UserCode}.",
+                    user.UserCode);
+            }
         }
 
         public Task<string> GetAsync(

@@ -1,7 +1,9 @@
-using ASI.Basecode.Data;
+﻿using ASI.Basecode.Data;
+using ASI.Basecode.Data.Interfaces;
 using ASI.Basecode.Data.Models;
+using ASI.Basecode.Resources.Constants;
 using ASI.Basecode.Tests.Dashboard;
-using ASI.Basecode.WebApp.Data;
+using ASI.Basecode.Data.Seeding;
 using ASI.Basecode.Services.Interfaces;
 using ASI.Basecode.Services.ServiceModels.UserAdministration;
 using ASI.Basecode.Services.Services;
@@ -98,6 +100,51 @@ namespace ASI.Basecode.Tests.UserAdministration
                 await db.AdministrationAuditEvents.Select(item => item.DetailsJson).SingleAsync());
             Assert.Equal(actor.Id,
                 await db.AdministrationAuditEvents.Select(item => item.ActorUserId).SingleAsync());
+        }
+
+        [Fact]
+        public async Task CreateAsync_BorrowerWithoutPostedSchoolId_SucceedsAndDerivesIdentifier()
+        {
+            using var database = new SqliteDb();
+            using var provider = CreateProvider(database);
+            await using var scope = provider.CreateAsyncScope();
+            var db = scope.ServiceProvider.GetRequiredService<AsiBasecodeDBContext>();
+            var roles = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+            var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+            var adminRole = await AddRoleAsync(roles, DomainValues.Roles.Administrator);
+            var borrowerRole = await AddRoleAsync(roles, DomainValues.Roles.Borrower);
+            var actor = await AddUserAsync(users, "ADMIN-05", "creator-two@test.local");
+            Assert.True((await users.AddToRoleAsync(actor, adminRole.Name)).Succeeded);
+            var permission = AddPermission(db, DomainValues.Permissions.UserRoleManage);
+            db.RolePermissions.Add(new RolePermission
+            {
+                RoleId = adminRole.Id,
+                PermissionId = permission.PermissionId
+            });
+            await db.SaveChangesAsync();
+
+            const string password = "S3cret!OnlyForTheUser";
+            var result = await scope.ServiceProvider
+                .GetRequiredService<IUserAdministrationService>()
+                .CreateAsync(actor.Id, new CreateUserViewModel
+                {
+                    UserCode = "STU-3001",
+                    FirstName = "Nina",
+                    LastName = "Reyes",
+                    Email = "nina@test.local",
+                    RoleName = borrowerRole.Name,
+                    // SchoolId intentionally omitted: the Create Account form no longer sends it.
+                    Department = "Information Technology",
+                    Password = password,
+                    ConfirmPassword = password
+                });
+
+            Assert.True(result.Succeeded, result.Message);
+            var created = await users.FindByEmailAsync("nina@test.local");
+            Assert.NotNull(created);
+            Assert.Equal("STU-3001", created.UserCode);
+            Assert.True(await users.IsInRoleAsync(created, DomainValues.Roles.Borrower));
+            await db.BorrowerProfiles.SingleAsync(item => item.UserId == created.Id);
         }
 
         [Fact]
@@ -292,10 +339,12 @@ namespace ASI.Basecode.Tests.UserAdministration
                 options.UseSqlite(database.Connection));
             services.AddScoped<AsiBasecodeDBContext>(provider =>
                 provider.GetRequiredService<SqliteDashboardDbContext>());
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddIdentityCore<ApplicationUser>()
                 .AddRoles<IdentityRole>()
                 .AddEntityFrameworkStores<SqliteDashboardDbContext>()
                 .AddDefaultTokenProviders();
+            services.AddScoped<IAuditService, AuditService>();
             services.AddScoped<IUserAdministrationService, UserAdministrationService>();
             return services.BuildServiceProvider();
         }

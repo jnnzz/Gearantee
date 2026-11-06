@@ -1,5 +1,6 @@
 using ASI.Basecode.Data.Interfaces;
 using ASI.Basecode.Data.Models;
+using ASI.Basecode.Resources.Constants;
 using ASI.Basecode.Services.Interfaces;
 using ASI.Basecode.Services.ServiceModels.Catalog;
 using ASI.Basecode.Services.Utilities;
@@ -11,7 +12,7 @@ namespace ASI.Basecode.Services.Services
 {
     public class CatalogService : ICatalogService
     {
-        public const int PageSize = 12;
+        public const int PageSize = PaginationDefaults.PageSize;
         private const int MaxBookedWindows = 20;
 
         private readonly IEquipmentItemRepository _equipmentItemRepository;
@@ -153,6 +154,7 @@ namespace ASI.Basecode.Services.Services
                 {
                     reservation.ReservationStart,
                     reservation.ReservationEnd,
+                    reservation.IsFullDay,
                     IsOnLoan = reservation.ReleaseRecord != null
                 })
                 .ToList();
@@ -162,6 +164,7 @@ namespace ASI.Basecode.Services.Services
                 {
                     StartLocal = ManilaClock.ToLocal(window.ReservationStart),
                     EndLocal = ManilaClock.ToLocal(window.ReservationEnd),
+                    IsFullDay = window.IsFullDay,
                     Label = window.IsOnLoan ? "On loan" : "Reserved"
                 })
                 .ToList();

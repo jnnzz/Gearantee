@@ -1,4 +1,5 @@
 using ASI.Basecode.Data.Models;
+using ASI.Basecode.Resources.Constants;
 using ASI.Basecode.Services.Interfaces;
 using ASI.Basecode.Services.ServiceModels.BorrowingHistory;
 using ASI.Basecode.Services.Services;
@@ -38,6 +39,9 @@ namespace ASI.Basecode.WebApp.Controllers
             [FromQuery] BorrowingHistoryFilterViewModel filter,
             CancellationToken cancellationToken)
         {
+            filter ??= new BorrowingHistoryFilterViewModel();
+            filter.Item = null;
+            ModelState.Remove(nameof(filter.Item));
             if (!TryGetHistoryScope(out var onlyOwnHistory))
             {
                 return Forbid();
@@ -66,6 +70,9 @@ namespace ASI.Basecode.WebApp.Controllers
             [FromQuery] BorrowingHistoryFilterViewModel filter,
             CancellationToken cancellationToken)
         {
+            filter ??= new BorrowingHistoryFilterViewModel();
+            filter.Item = null;
+            ModelState.Remove(nameof(filter.Item));
             if (!TryGetHistoryScope(out var onlyOwnHistory))
             {
                 return Forbid();
@@ -88,7 +95,7 @@ namespace ASI.Basecode.WebApp.Controllers
             Response.Headers["Content-Disposition"] =
                 $"attachment; filename=\"borrowing-history-{ManilaClock.NowLocal:yyyyMMdd}.csv\"";
 
-            using var writer = new StreamWriter(
+            await using var writer = new StreamWriter(
                 Response.Body,
                 new UTF8Encoding(encoderShouldEmitUTF8Identifier: false),
                 1024,
@@ -109,6 +116,53 @@ namespace ASI.Basecode.WebApp.Controllers
             return new EmptyResult();
         }
 
+        [HttpGet]
+        public async Task<IActionResult> ExportExcel(
+            [FromQuery] BorrowingHistoryFilterViewModel filter,
+            CancellationToken cancellationToken)
+        {
+            filter ??= new BorrowingHistoryFilterViewModel();
+            filter.Item = null;
+            ModelState.Remove(nameof(filter.Item));
+            if (!TryGetHistoryScope(out var onlyOwnHistory))
+            {
+                return Forbid();
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest("One or more filter values are invalid.");
+            }
+
+            filter ??= new BorrowingHistoryFilterViewModel();
+            var validationMessage = BorrowingHistoryService.NormalizeAndValidateFilter(filter);
+            if (validationMessage != null)
+            {
+                return BadRequest(validationMessage);
+            }
+
+            var rows = _borrowingHistoryService.StreamReportRowsAsync(
+                filter,
+                UserId,
+                onlyOwnHistory,
+                cancellationToken);
+
+            FileStream workbook;
+            try
+            {
+                workbook = await BorrowingHistoryXlsxExporter.CreateAsync(rows, cancellationToken);
+            }
+            catch (BorrowingHistoryWorkbookLimitException error)
+            {
+                return StatusCode(StatusCodes.Status413PayloadTooLarge, error.Message);
+            }
+
+            return File(
+                workbook,
+                BorrowingHistoryXlsxExporter.ContentType,
+                $"borrowing-history-{ManilaClock.NowLocal:yyyyMMdd}.xlsx");
+        }
+
         private bool TryGetHistoryScope(out bool onlyOwnHistory)
         {
             var isCustodian = User.IsInRole(DomainValues.Roles.Custodian);
@@ -123,7 +177,6 @@ namespace ASI.Basecode.WebApp.Controllers
         {
             ViewData["Title"] = title;
             ViewData["Eyebrow"] = "Reports";
-            ViewData["PageDate"] = ManilaClock.NowLocal.ToString("ddd d MMM yyyy");
         }
     }
 }

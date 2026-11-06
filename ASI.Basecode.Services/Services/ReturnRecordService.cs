@@ -1,12 +1,15 @@
 using ASI.Basecode.Data;
 using ASI.Basecode.Data.Interfaces;
+using ASI.Basecode.Data.Locks;
 using ASI.Basecode.Data.Models;
+using ASI.Basecode.Resources.Constants;
 using ASI.Basecode.Services.Interfaces;
 using ASI.Basecode.Services.ServiceModels.Returns;
 using ASI.Basecode.Services.Utilities;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Data;
+using System.Globalization;
 using System.Linq;
 using System.Runtime.ExceptionServices;
 
@@ -15,11 +18,12 @@ namespace ASI.Basecode.Services.Services
     /// <summary>Custodian return desk: record returns (WBS 44.00), condition and item status (45.00-46.00), and late returns (47.00).</summary>
     public class ReturnRecordService : IReturnRecordService
     {
-        public const int PageSize = 20;
+        public const int PageSize = PaginationDefaults.PageSize;
         public const string OnLoanTab = "OnLoan";
         public const string OverdueTab = "Overdue";
         public const string ReturnedTab = "Returned";
         public const string LateTab = "Late";
+        public const int MaxSearchLength = 100;
         private const int NotesMaxLength = 1000;
         private const string NoPermissionMessage = "You no longer have permission to record returns.";
         private const string AlreadyReturnedMessage = "This item has already been returned. Reload the page to see the latest loans.";
@@ -27,28 +31,60 @@ namespace ASI.Basecode.Services.Services
         private readonly AsiBasecodeDBContext _db;
         private readonly IReturnRecordRepository _returnRecordRepository;
         private readonly IReservationRepository _reservationRepository;
+        private readonly IEquipmentItemRepository _equipmentItemRepository;
         private readonly TimeProvider _timeProvider;
+        private readonly INotificationDispatcher _notifications;
+        private readonly IApplicationLockManager _applicationLocks;
 
         public ReturnRecordService(
             IUnitOfWork unitOfWork,
             IReturnRecordRepository returnRecordRepository,
             IReservationRepository reservationRepository,
-            TimeProvider timeProvider)
+            IEquipmentItemRepository equipmentItemRepository,
+            TimeProvider timeProvider, INotificationDispatcher notifications = null)
         {
-            _db = (AsiBasecodeDBContext)unitOfWork.Database;
+            _db = unitOfWork.Context;
             _returnRecordRepository = returnRecordRepository;
             _reservationRepository = reservationRepository;
+            _equipmentItemRepository = equipmentItemRepository;
             _timeProvider = timeProvider;
+            _notifications = notifications;
+            _applicationLocks = new ApplicationLockManager(_db);
         }
 
         public ReturnRecordIndexViewModel GetReturnRecords(string tab, int page)
         {
+            return GetReturnRecords(tab, page, null);
+        }
+
+        public ReturnRecordIndexViewModel GetReturnRecords(string tab, int page, string search)
+        {
             var nowUtc = _timeProvider.GetUtcNow().UtcDateTime;
-            var model = new ReturnRecordIndexViewModel { Tab = NormalizeTab(tab) };
+            var normalizedSearch = search?.Trim() ?? string.Empty;
+            var searchIsTooLong = normalizedSearch.Length > MaxSearchLength;
+            var model = new ReturnRecordIndexViewModel
+            {
+                Tab = NormalizeTab(tab),
+                Search = normalizedSearch,
+                ValidationMessage = searchIsTooLong
+                    ? $"Search must be {MaxSearchLength} characters or fewer."
+                    : null
+            };
 
             var loans = ActiveLoans();
-            var overdue = loans.Where(reservation => reservation.ReservationEnd < nowUtc);
             var returns = _returnRecordRepository.GetReturnRecords().AsNoTracking();
+            if (searchIsTooLong)
+            {
+                loans = loans.Where(_ => false);
+                returns = returns.Where(_ => false);
+            }
+            else
+            {
+                loans = ApplyLoanSearch(loans, normalizedSearch);
+                returns = ApplyReturnSearch(returns, normalizedSearch);
+            }
+
+            var overdue = loans.Where(reservation => reservation.ReservationEnd < nowUtc);
             var late = returns.Where(record => record.LateReturn != null);
 
             model.Tabs.Add(new ReturnRecordTab { Value = OnLoanTab, Label = "On loan", Count = loans.Count() });
@@ -74,6 +110,64 @@ namespace ASI.Basecode.Services.Services
                 .Select(row => ToListItem(new ReturnRecordListItemViewModel(), row, nowUtc))
                 .ToList();
             return model;
+        }
+
+        private static IQueryable<Reservation> ApplyLoanSearch(
+            IQueryable<Reservation> reservations,
+            string search)
+        {
+            if (string.IsNullOrEmpty(search))
+            {
+                return reservations;
+            }
+
+            var hasReservationCode = TryParseReservationCode(search, out var reservationId);
+            return reservations.Where(reservation =>
+                (hasReservationCode && reservation.ReservationId == reservationId) ||
+                reservation.EquipmentItem.ItemName.Contains(search) ||
+                reservation.EquipmentItem.ItemCode.Contains(search) ||
+                ((reservation.BorrowerProfile.User.FirstName ?? string.Empty) + " " +
+                    (reservation.BorrowerProfile.User.LastName ?? string.Empty)).Contains(search) ||
+                (reservation.BorrowerProfile.User.UserCode != null &&
+                    reservation.BorrowerProfile.User.UserCode.Contains(search)));
+        }
+
+        private static IQueryable<ReturnRecord> ApplyReturnSearch(
+            IQueryable<ReturnRecord> records,
+            string search)
+        {
+            if (string.IsNullOrEmpty(search))
+            {
+                return records;
+            }
+
+            var hasReservationCode = TryParseReservationCode(search, out var reservationId);
+            return records.Where(record =>
+                (hasReservationCode && record.ReleaseRecord.ReservationId == reservationId) ||
+                record.ReleaseRecord.Reservation.EquipmentItem.ItemName.Contains(search) ||
+                record.ReleaseRecord.Reservation.EquipmentItem.ItemCode.Contains(search) ||
+                ((record.ReleaseRecord.Reservation.BorrowerProfile.User.FirstName ?? string.Empty) + " " +
+                    (record.ReleaseRecord.Reservation.BorrowerProfile.User.LastName ?? string.Empty)).Contains(search) ||
+                (record.ReleaseRecord.Reservation.BorrowerProfile.User.UserCode != null &&
+                    record.ReleaseRecord.Reservation.BorrowerProfile.User.UserCode.Contains(search)));
+        }
+
+        private static bool TryParseReservationCode(string search, out long reservationId)
+        {
+            reservationId = 0;
+            if (search.Length <= 4 ||
+                !search.StartsWith("RSV-", StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            var numericPart = search.Substring(4);
+            return numericPart.All(char.IsAsciiDigit) &&
+                long.TryParse(
+                    numericPart,
+                    NumberStyles.None,
+                    CultureInfo.InvariantCulture,
+                    out reservationId);
         }
 
         public ReturnRecordListItemViewModel RetrieveActiveLoan(long releaseRecordId)
@@ -136,6 +230,7 @@ namespace ASI.Basecode.Services.Services
                 .Where(reservation => reservation.ReleaseRecord.ReleaseRecordId == model.ReleaseRecordId)
                 .Select(reservation => new
                 {
+                    reservation.ReservationId,
                     reservation.EquipmentId,
                     DueAt = reservation.ReservationEnd,
                     ReleasedAt = reservation.ReleaseRecord.ActualReleaseAt,
@@ -156,7 +251,7 @@ namespace ASI.Basecode.Services.Services
             var releasedMinute = loan.ReleasedAt.AddTicks(-(loan.ReleasedAt.Ticks % TimeSpan.TicksPerMinute));
             if (returnedUtc < releasedMinute)
             {
-                return ReturnRecordResult.Fail($"The return time can't be before the item was released ({ManilaClock.ToLocal(loan.ReleasedAt):d MMM yyyy · HH:mm}).");
+                return ReturnRecordResult.Fail($"The return time can't be before the item was released ({ManilaClock.ToLocal(loan.ReleasedAt):d MMM yyyy Â· HH:mm}).");
             }
 
             // Back-dating stays possible but must be explained
@@ -165,6 +260,17 @@ namespace ASI.Basecode.Services.Services
                 return ReturnRecordResult.Fail($"This return is dated more than {ReturnInspection.BackdateGraceMinutes} minutes ago. Add an inspection note explaining why it's being recorded late.");
             }
 
+            // Lock order: equipment item row lock; no ReturnRecord range read here (avoids deadlocks)
+            var strategy = _db.Database.CreateExecutionStrategy();
+            return strategy.Execute(() =>
+            {
+            // Rebuild state per attempt: a rolled-back attempt can leave the tracked item or
+            // the new return record behind, which would corrupt the retry.
+            _db.ChangeTracker.Clear();
+
+            // Build a fresh return record (and its late-return child) on every attempt. A
+            // rolled-back insert keeps its database-generated ID, so reusing the object would
+            // replay it as an explicit identity insert on retry.
             var newReturnRecord = new ReturnRecord
             {
                 ReleaseRecordId = model.ReleaseRecordId,
@@ -189,17 +295,24 @@ namespace ASI.Basecode.Services.Services
                 };
             }
 
-            // Lock order: admin lock, then item row lock; no ReturnRecord range read here (deadlocks)
             DbUpdateException saveFailure = null;
             using (var transaction = _db.Database.BeginTransaction(IsolationLevel.Serializable))
             {
-                AcquireAdministrationReadLock();
+                // Take the administration lock in shared mode before the permission check.
+                // Permission/role changes take it exclusively, so a revocation either lands
+                // before this return is authorized or waits until it commits; it can never
+                // slip in between the check and the write.
+                if (_db.Database.IsSqlServer())
+                {
+                    _applicationLocks.AcquireShared(AdministrationLock.ResourceName);
+                }
+
                 if (!CanRecordReturns(userId))
                 {
                     return ReturnRecordResult.Fail(NoPermissionMessage);
                 }
 
-                var lockedItem = EquipmentItemConcurrencyLock.LoadForUpdate(_db, loan.EquipmentId, includeArchived: true);
+                var lockedItem = _equipmentItemRepository.LoadForUpdate(loan.EquipmentId, includeArchived: true);
                 if (lockedItem == null)
                 {
                     return ReturnRecordResult.Missing();
@@ -213,6 +326,10 @@ namespace ASI.Basecode.Services.Services
                 {
                     // One save writes the return, late return, and item changes
                     _returnRecordRepository.AddReturnRecord(newReturnRecord);
+                    _notifications?.StageReservation(loan.ReservationId, daysLate > 0
+                        ? DomainValues.NotificationTypes.LateReturn : DomainValues.NotificationTypes.Returned,
+                        $"Condition: {condition}." + (daysLate > 0 ? $" Late return: {daysLate} day(s)." : ""));
+                    _db.SaveChanges();
                     transaction.Commit();
                 }
                 catch (DbUpdateException exception)
@@ -233,14 +350,12 @@ namespace ASI.Basecode.Services.Services
                 ExceptionDispatchInfo.Capture(saveFailure).Throw();
             }
 
-            return new ReturnRecordResult
-            {
-                Succeeded = true,
-                ReturnRecordId = newReturnRecord.ReturnRecordId,
-                Message = daysLate > 0
+            return ReturnRecordResult.Success(
+                daysLate > 0
                     ? $"Return recorded. The item came back {daysLate} day{(daysLate == 1 ? "" : "s")} late, so a late return was logged."
-                    : "Return recorded."
-            };
+                    : "Return recorded.",
+                newReturnRecord.ReturnRecordId);
+            });
         }
 
         public ReturnRecordDetailsViewModel RetrieveReturnRecord(long returnRecordId)
@@ -273,23 +388,6 @@ namespace ASI.Basecode.Services.Services
                 .Where(reservation => reservation.ReleaseRecord != null && reservation.ReleaseRecord.ReturnRecord == null);
         }
 
-        // Shared mode: permission changes (Exclusive) wait for in-flight returns and vice versa
-        private void AcquireAdministrationReadLock()
-        {
-            if (!_db.Database.IsSqlServer())
-            {
-                return;
-            }
-
-            _db.Database.ExecuteSqlInterpolated(
-                $@"DECLARE @lockResult int;
-EXEC @lockResult = sys.sp_getapplock
-    @Resource = {AdministrationLock.ResourceName},
-    @LockMode = 'Shared',
-    @LockOwner = 'Transaction',
-    @LockTimeout = 15000;
-IF @lockResult < 0 THROW 51000, 'Could not acquire the user administration lock.', 1;");
-        }
 
         // DB-backed check; cookie claims aren't refreshed when grants change
         private bool CanRecordReturns(string userId)
@@ -331,10 +429,11 @@ IF @lockResult < 0 THROW 51000, 'Could not acquire the user administration lock.
                 Location = reservation.EquipmentItem.Location,
                 BorrowerFirstName = reservation.BorrowerProfile.User.FirstName,
                 BorrowerLastName = reservation.BorrowerProfile.User.LastName,
-                SchoolId = reservation.BorrowerProfile.SchoolId,
+                SchoolId = reservation.BorrowerProfile.User.UserCode,
                 Status = reservation.Status,
                 ReleasedAt = reservation.ReleaseRecord.ActualReleaseAt,
-                DueAt = reservation.ReservationEnd
+                DueAt = reservation.ReservationEnd,
+                IsFullDay = reservation.IsFullDay
             });
         }
 
@@ -351,10 +450,11 @@ IF @lockResult < 0 THROW 51000, 'Could not acquire the user administration lock.
                 Location = record.ReleaseRecord.Reservation.EquipmentItem.Location,
                 BorrowerFirstName = record.ReleaseRecord.Reservation.BorrowerProfile.User.FirstName,
                 BorrowerLastName = record.ReleaseRecord.Reservation.BorrowerProfile.User.LastName,
-                SchoolId = record.ReleaseRecord.Reservation.BorrowerProfile.SchoolId,
+                SchoolId = record.ReleaseRecord.Reservation.BorrowerProfile.User.UserCode,
                 Status = record.ReleaseRecord.Reservation.Status,
                 ReleasedAt = record.ReleaseRecord.ActualReleaseAt,
                 DueAt = record.ReleaseRecord.Reservation.ReservationEnd,
+                IsFullDay = record.ReleaseRecord.Reservation.IsFullDay,
                 ReturnedAt = record.ActualReturnAt,
                 RecordedAt = record.CreatedAt,
                 ReturnedCondition = record.ReturnedCondition,
@@ -379,11 +479,12 @@ IF @lockResult < 0 THROW 51000, 'Could not acquire the user administration lock.
             item.BorrowerName = FullName(row.BorrowerFirstName, row.BorrowerLastName) ?? string.Empty;
             item.SchoolId = row.SchoolId ?? string.Empty;
             item.ReleasedAtLocal = ManilaClock.ToLocal(row.ReleasedAt);
+            item.IsFullDay = row.IsFullDay;
             item.DueAtLocal = ManilaClock.ToLocal(row.DueAt);
             item.ReturnedAtLocal = row.ReturnedAt.HasValue ? ManilaClock.ToLocal(row.ReturnedAt.Value) : (DateTime?)null;
             item.ReturnedCondition = row.ReturnedCondition;
             item.DaysLate = row.DaysLate;
-            item.DisplayStatus = ReservationDisplayStatus.For(row.Status, row.DueAt, row.ReleasedAt, row.ReturnedAt, nowUtc);
+            item.DisplayStatus = ReservationDisplayStatus.For(row.Status, row.DueAt, row.ReleasedAt, row.ReturnedAt, nowUtc, row.IsFullDay);
             return item;
         }
 
@@ -408,6 +509,7 @@ IF @lockResult < 0 THROW 51000, 'Could not acquire the user administration lock.
             public string Status { get; set; }
             public DateTime ReleasedAt { get; set; }
             public DateTime DueAt { get; set; }
+            public bool IsFullDay { get; set; }
             public DateTime? ReturnedAt { get; set; }
             public DateTime RecordedAt { get; set; }
             public string ReturnedCondition { get; set; }

@@ -1,4 +1,5 @@
 using ASI.Basecode.Data.Models;
+using ASI.Basecode.Resources.Constants;
 using ASI.Basecode.Services.ServiceModels.Reservations;
 using ASI.Basecode.Services.Utilities;
 using ASI.Basecode.Tests.Dashboard;
@@ -23,7 +24,7 @@ namespace ASI.Basecode.Tests.Reservations
             };
 
         [Fact]
-        public void Valid_request_is_saved_as_pending_with_utc_times()
+        public void Valid_single_day_request_is_saved_with_exclusive_next_day_boundary()
         {
             using var fixture = new SqliteDb();
             using var db = fixture.Create();
@@ -39,8 +40,9 @@ namespace ASI.Basecode.Tests.Reservations
             Assert.Equal(result.ReservationId, saved.ReservationId);
             Assert.Equal(profile.BorrowerProfileId, saved.BorrowerProfileId);
             Assert.Equal(DomainValues.ReservationStatuses.Pending, saved.Status);
-            Assert.Equal(Now.AddDays(1), saved.ReservationStart);
-            Assert.Equal(Now.AddDays(1).AddHours(3), saved.ReservationEnd);
+            Assert.Equal(ManilaClock.ToUtc(ManilaClock.ToLocal(Now.AddDays(1)).Date), saved.ReservationStart);
+            Assert.True(saved.IsFullDay);
+            Assert.Equal(saved.ReservationStart.AddDays(1), saved.ReservationEnd);
             Assert.Equal("Thesis defense", saved.Purpose);
             Assert.Equal(Now, saved.RequestedAt);
             Assert.Equal(Now, saved.CreatedAt);
@@ -57,7 +59,7 @@ namespace ASI.Basecode.Tests.Reservations
             var user = DashboardSeed.User(db, "BRW-1");
             DashboardSeed.Profile(db, user);
             var item = DashboardSeed.Item(db, "ITEM-1", DomainValues.EquipmentStatuses.Borrowed);
-            var loan = DashboardSeed.Reservation(db, other, item, Now.AddDays(-1), Now.AddDays(1), DomainValues.ReservationStatuses.Approved);
+            var loan = DashboardSeed.Reservation(db, other, item, Now.AddDays(-1), ManilaClock.ToUtc(ManilaClock.ToLocal(Now.AddDays(1)).Date), DomainValues.ReservationStatuses.Approved);
             DashboardSeed.Release(db, loan, Now.AddDays(-1));
 
             var result = ReservationsFor(db, Now).SubmitReservation(Request(item, Now.AddDays(1), Now.AddDays(2)), user.Id);
@@ -143,10 +145,9 @@ namespace ASI.Basecode.Tests.Reservations
         }
 
         [Theory]
-        [InlineData(24, 24, "after the start")]   // start == end
-        [InlineData(26, 24, "after the start")]   // end before start
-        [InlineData(-1, 2, "in the future")]      // start in the past
-        [InlineData(0, 2, "in the future")]       // start exactly now
+        [InlineData(48, 24, "on or after the start")]   // end before start
+        [InlineData(-1, 2, "tomorrow or later")]      // start in the past
+        [InlineData(0, 2, "tomorrow or later")]       // start exactly now
         public void Invalid_window_is_refused(int startOffsetHours, int endOffsetHours, string expected)
         {
             using var fixture = new SqliteDb();
@@ -189,7 +190,7 @@ namespace ASI.Basecode.Tests.Reservations
             var user = DashboardSeed.User(db, "BRW-1");
             DashboardSeed.Profile(db, user);
             var item = DashboardSeed.Item(db, "ITEM-1");
-            DashboardSeed.Reservation(db, other, item, Now.AddDays(1), Now.AddDays(2), DomainValues.ReservationStatuses.Approved);
+            DashboardSeed.Reservation(db, other, item, ManilaClock.ToUtc(ManilaClock.ToLocal(Now.AddDays(1)).Date), ManilaClock.ToUtc(ManilaClock.ToLocal(Now.AddDays(2)).Date), DomainValues.ReservationStatuses.Approved);
             var service = ReservationsFor(db, Now);
 
             var overlapping = service.SubmitReservation(Request(item, Now.AddDays(1).AddHours(12), Now.AddDays(3)), user.Id);
@@ -247,7 +248,7 @@ namespace ASI.Basecode.Tests.Reservations
             var first = service.SubmitReservation(Request(item, Now.AddDays(1), Now.AddDays(2)), user.Id);
             var duplicate = service.SubmitReservation(Request(item, Now.AddDays(1).AddHours(6), Now.AddDays(3)), user.Id);
             var differentItem = service.SubmitReservation(Request(otherItem, Now.AddDays(1), Now.AddDays(2)), user.Id);
-            var laterWindow = service.SubmitReservation(Request(item, Now.AddDays(2), Now.AddDays(3)), user.Id);
+            var laterWindow = service.SubmitReservation(Request(item, Now.AddDays(3), Now.AddDays(4)), user.Id);
 
             Assert.True(first.Succeeded, first.Message);
             Assert.False(duplicate.Succeeded);

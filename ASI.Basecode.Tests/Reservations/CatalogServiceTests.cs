@@ -1,4 +1,5 @@
-using ASI.Basecode.Data.Models;
+﻿using ASI.Basecode.Data.Models;
+using ASI.Basecode.Resources.Constants;
 using ASI.Basecode.Services.ServiceModels.Catalog;
 using ASI.Basecode.Services.Utilities;
 using ASI.Basecode.Tests.Dashboard;
@@ -129,15 +130,20 @@ namespace ASI.Basecode.Tests.Reservations
         {
             using var fixture = new SqliteDb();
             using var db = fixture.Create();
-            for (var i = 0; i < 13; i++)
+            for (var i = 0; i < 21; i++)
             {
                 DashboardSeed.Item(db, $"ITEM-{i:00}");
             }
 
             var model = Catalog(db, Now).GetCatalog(new CatalogFilterViewModel { Page = 99 });
 
-            Assert.Equal(2, model.TotalPages);
-            Assert.Equal(2, model.Page);
+            var first = Catalog(db, Now).GetCatalog(new CatalogFilterViewModel());
+            var second = Catalog(db, Now).GetCatalog(new CatalogFilterViewModel { Page = 2 });
+            Assert.Equal(10, first.Items.Count);
+            Assert.Equal(10, second.Items.Count);
+            Assert.Empty(first.Items.Select(item => item.EquipmentId).Intersect(second.Items.Select(item => item.EquipmentId)));
+            Assert.Equal(3, model.TotalPages);
+            Assert.Equal(3, model.Page);
             Assert.Single(model.Items);
         }
 

@@ -29,7 +29,7 @@ The initial release is intentionally focused on the core borrowing workflow and 
 ### 3.1 Authentication
 
 #### User Login
-- Users sign in with their registered email/student-faculty ID and password.
+- Users sign in with their School ID (the canonical account UserName) and password. Email login is not supported.
 - The system validates credentials before granting access.
 - Unauthenticated users cannot use protected system features.
 
@@ -40,7 +40,7 @@ The initial release is intentionally focused on the core borrowing workflow and 
 - Administrators see management and reporting functions.
 
 #### Password Reset Request
-- A user can request a six-digit OTP using their registered email address.
+- A user can request a six-digit OTP using their School ID. The server sends it to that account’s registered email without exposing the email in the response.
 - The OTP is hashed and stored in the existing ASP.NET Core Identity user-token table for ten minutes, with a maximum of five checked attempts.
 - OTP attempts are reserved atomically so concurrent requests cannot bypass the attempt limit.
 - Requests are rate-limited and resend requests use a per-account cooldown and hourly issuance cap.
@@ -93,6 +93,7 @@ The initial release is intentionally focused on the core borrowing workflow and 
 - Search covers borrower name, user code, school ID, item name, and item code. Filters include borrower, item text, category, borrowing-start date range, status, and late-return status.
 - The paginated page shows requested, scheduled, actual release, and actual return times in Philippine time, along with return condition and late days when recorded.
 - Authorized users can export all matching filtered records to CSV. The export uses the same server-side filters as the page and protects text values from spreadsheet formula injection.
+- Authorized users can also download all matching records as an XLSX workbook. It keeps the CSV's 17-column order, stores identifiers and user values as literal text, writes Manila timestamps as formatted date cells, and uses explicit column widths, wrapped long text, and a frozen header row. Borrower-role exports remain scoped to the signed-in borrower.
 
 #### Availability Calendar
 - Users with `equipment.browse` can view a daily or weekly calendar filtered by category, equipment item, and its free-text location.

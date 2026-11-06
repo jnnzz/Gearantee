@@ -1,164 +1,126 @@
 (() => {
     const element = document.getElementById("availability-calendar");
     const form = document.getElementById("availability-filters");
-    if (!element || !form || !window.FullCalendar) return;
-
-    const errorElement = document.getElementById("availability-error");
-    const itemList = document.getElementById("availability-items");
-    const emptyElement = document.getElementById("availability-empty");
-    const countElement = document.getElementById("availability-item-count");
-    const category = document.getElementById("availability-category");
-    const equipment = document.getElementById("availability-equipment");
-    const location = document.getElementById("availability-location");
+    if (!element || !form) return;
+    const grid = document.getElementById("availability-overview");
     const dateInput = document.getElementById("availability-date");
     const viewInput = document.getElementById("availability-view");
-    const canReserve = element.dataset.canReserve === "True";
-    let currentItems = new Map();
-    let currentEvents = [];
-
-    function setError(message) {
-        errorElement.textContent = message || "The calendar could not load. Try again.";
-        errorElement.classList.remove("hidden");
+    const loading = document.getElementById("availability-loading");
+    const error = document.getElementById("availability-error");
+    const retry = document.getElementById("availability-retry");
+    const dayString = date => date.toISOString().slice(0, 10);
+    const addDays = (date, days) => new Date(date.getTime() + days * 86400000);
+    const localDate = text => new Date(text + "T00:00:00Z");
+    const midnight = date => Date.parse(dayString(date) + "T00:00:00+08:00");
+    const dayView = viewInput.value === "timeGridDay";
+    const selected = localDate(dateInput.value);
+    const first = dayView ? selected : addDays(selected, -((selected.getUTCDay() + 6) % 7));
+    const days = Array.from({length: dayView ? 1 : 7}, (_, index) => addDays(first, index));
+    const shortDate = new Intl.DateTimeFormat("en-PH", {day: "numeric", month: "short", year: "numeric", timeZone: "UTC"});
+    const dayLabel = new Intl.DateTimeFormat("en-PH", {weekday: "short", day: "numeric", timeZone: "UTC"});
+    const eventTime = new Intl.DateTimeFormat("en-PH", {day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Manila"});
+    document.getElementById("calendar-period-label").textContent = dayView ? shortDate.format(first) : shortDate.format(first) + " – " + shortDate.format(days[6]);
+    grid.style.setProperty("--calendar-days", days.length);
+    grid.classList.toggle("calendar-day", dayView);
+    for (const button of document.querySelectorAll("[data-calendar-view]")) {
+        button.addEventListener("click", () => { viewInput.value = button.dataset.calendarView; form.requestSubmit(); });
     }
-
-    function clearError() {
-        errorElement.textContent = "";
-        errorElement.classList.add("hidden");
+    for (const button of document.querySelectorAll("[data-period-step]")) {
+        const step = Number(button.dataset.periodStep);
+        const target = step ? addDays(first, step * days.length) : localDate(element.dataset.today);
+        const value = dayString(target);
+        button.disabled = value < dateInput.dataset.min || value > dateInput.dataset.max;
+        button.addEventListener("click", () => { dateInput.value = value; form.requestSubmit(); });
     }
-
-    function updateEquipmentOptions() {
-        for (const option of equipment.options) {
-            if (!option.value) continue;
-            option.hidden = (category.value && option.dataset.category !== category.value) ||
-                (location.value && option.dataset.location !== location.value);
+    function node(tag, className, text) {
+        const value = document.createElement(tag);
+        value.className = className;
+        if (text !== undefined) value.textContent = text;
+        return value;
+    }
+    function render(data) {
+        const header = node("div", "calendar-row calendar-heading");
+        header.append(node("div", "calendar-item", "Equipment item"));
+        const headings = node("div", "calendar-track");
+        days.forEach(day => headings.append(node("div", "calendar-date" + (dayString(day) === element.dataset.today ? " is-today" : ""), dayLabel.format(day))));
+        header.append(headings); grid.append(header);
+        if (!data.items.length) { grid.append(node("p", "calendar-empty", "No equipment matches your search.")); return; }
+        const byItem = new Map();
+        for (const event of data.events) {
+            const key = String(event.equipmentId);
+            if (!byItem.has(key)) byItem.set(key, []);
+            byItem.get(key).push(event);
         }
-
-        const selected = equipment.selectedOptions[0];
-        if (selected?.hidden) equipment.value = "";
-    }
-
-    function buildEquipmentList(items) {
-        currentItems = new Map(items.map(item => [String(item.equipmentId), item]));
-        itemList.replaceChildren();
-        emptyElement.classList.toggle("hidden", items.length !== 0);
-        countElement.textContent = `${items.length} item${items.length === 1 ? "" : "s"}`;
-
-        for (const item of items) {
-            const row = document.createElement("li");
-            row.className = "availability-item py-3";
-
-            const heading = document.createElement("div");
-            heading.className = "flex items-start justify-between gap-2";
-            const name = document.createElement("span");
-            name.className = "text-sm font-semibold text-ink";
-            name.textContent = `${item.itemCode} · ${item.itemName}`;
-            heading.append(name);
-
-            const badge = document.createElement("span");
-            badge.className = `availability-status ${item.canBeReserved ? "availability-status-open" : "availability-status-unavailable"}`;
-            badge.textContent = item.canBeReserved ? "Reservable" : item.operationalStatus.replace(/([a-z])([A-Z])/g, "$1 $2");
-            heading.append(badge);
-
-            const details = document.createElement("p");
-            details.className = "mt-1 text-xs text-gray-500";
-            details.textContent = `${item.categoryName} · ${item.location || "No location recorded"}`;
-
-            const summary = document.createElement("p");
-            summary.className = "mt-1 text-xs text-gray-700";
-            summary.textContent = item.availabilitySummary;
-
-            row.append(heading, details, summary);
-
-            const link = document.createElement("a");
-            const query = new URLSearchParams(new FormData(form));
-            query.set("EquipmentId", item.equipmentId);
-            link.href = `${form.action}?${query.toString()}`;
-            link.className = "mt-2 inline-flex min-h-9 items-center font-display text-xs font-semibold uppercase tracking-wide text-primary-strong underline underline-offset-4";
-            link.textContent = "View this item’s schedule";
-            row.append(link);
-            itemList.append(row);
-        }
-    }
-
-    function eventColor(status) {
-        if (status === "Overdue") return { backgroundColor: "#B42318", borderColor: "#B42318" };
-        if (status === "Borrowed") return { backgroundColor: "#8A5A00", borderColor: "#8A5A00" };
-        return { backgroundColor: "#4A6F94", borderColor: "#4A6F94" };
-    }
-
-    const calendar = new FullCalendar.Calendar(element, {
-        timeZone: "Asia/Manila",
-        initialView: element.dataset.initialView,
-        initialDate: element.dataset.initialDate,
-        validRange: { start: element.dataset.today },
-        headerToolbar: {
-            left: "prev,next today",
-            center: "title",
-            right: "timeGridWeek,timeGridDay"
-        },
-        buttonText: { today: "Today", timeGridWeek: "Week", timeGridDay: "Day" },
-        height: "auto",
-        nowIndicator: true,
-        allDaySlot: false,
-        selectable: canReserve,
-        selectMirror: true,
-        selectMinDistance: 4,
-        events: async (info, success, failure) => {
-            clearError();
-            const url = new URL(element.dataset.eventsUrl, window.location.origin);
-            url.searchParams.set("start", info.startStr);
-            url.searchParams.set("end", info.endStr);
-            if (category.value) url.searchParams.set("categoryId", category.value);
-            if (equipment.value) url.searchParams.set("equipmentId", equipment.value);
-            if (location.value) url.searchParams.set("location", location.value);
-
-            try {
-                const response = await fetch(url, { credentials: "same-origin", headers: { Accept: "application/json" } });
-                const data = await response.json();
-                if (!response.ok) throw new Error(data.message || "The calendar could not load. Try again.");
-                currentEvents = data.events || [];
-                buildEquipmentList(data.items || []);
-                success(currentEvents.map(event => ({ ...event, ...eventColor(event.status) })));
-            } catch (error) {
-                buildEquipmentList([]);
-                setError(error.message);
-                failure(error);
+        for (const item of data.items) {
+            const row = node("div", "calendar-row");
+            const label = node("div", "calendar-item");
+            label.append(node("strong", "", item.itemName), node("span", "item-code", item.itemCode));
+            row.append(label);
+            const track = node("div", "calendar-track");
+            const events = byItem.get(String(item.equipmentId)) || [];
+            const lanes = [];
+            for (let index = 0; index < days.length; index++) {
+                const day = days[index];
+                const blocked = events.some(event => Date.parse(event.start) < midnight(addDays(day, 1)) && Date.parse(event.end) > midnight(day));
+                const allowed = element.dataset.canReserve === "True" && item.canBeReserved && !blocked && dayString(day) > element.dataset.today;
+                const cell = node(allowed ? "a" : "div", "calendar-slot" + (dayString(day) === element.dataset.today ? " is-today" : ""));
+                cell.style.gridColumn = index + 1;
+                cell.style.gridRow = "1 / " + (Math.max(events.length, 1) + 1);
+                cell.setAttribute("aria-label", item.itemName + ": " + shortDate.format(day) + (blocked ? ", booked" : item.canBeReserved ? ", available" : ", unavailable"));
+                if (allowed) {
+                    const url = new URL(element.dataset.reservationUrl, location.origin);
+                    url.searchParams.set("equipmentId", item.equipmentId);
+                    url.searchParams.set("from", dayString(day)); url.searchParams.set("to", dayString(day));
+                    cell.href = url;
+                    cell.title = "Request " + item.itemName + " for " + shortDate.format(day);
+                }
+                track.append(cell);
             }
-        },
-        selectAllow: info => {
-            if (!canReserve || info.start < new Date()) return false;
-            const item = currentItems.get(equipment.value);
-            if (!item?.canBeReserved) return false;
-            return !currentEvents.some(event =>
-                String(event.equipmentId) === equipment.value &&
-                info.start.getTime() < new Date(event.end).getTime() &&
-                info.end.getTime() > new Date(event.start).getTime());
-        },
-        select: info => {
-            if (!canReserve || !equipment.value) return;
-            const destination = new URL(element.dataset.reservationUrl, window.location.origin);
-            destination.searchParams.set("equipmentId", equipment.value);
-            destination.searchParams.set("from", info.startStr.replace(/(?:Z|[+-]\d\d:\d\d)$/, "").slice(0, 16));
-            destination.searchParams.set("to", info.endStr.replace(/(?:Z|[+-]\d\d:\d\d)$/, "").slice(0, 16));
-            window.location.assign(destination);
-        },
-        datesSet: info => {
-            dateInput.value = info.startStr.slice(0, 10);
-            viewInput.value = info.view.type;
-            const url = new URL(window.location.href);
-            url.searchParams.set("date", dateInput.value);
-            url.searchParams.set("view", viewInput.value);
-            history.replaceState(null, "", url);
+            for (const event of events) {
+                if (Date.parse(event.end) <= midnight(first)) continue;
+                const left = days.findIndex(day => Date.parse(event.start) < midnight(addDays(day, 1)));
+                if (left < 0) continue;
+                // Events can overlap within a day; each gets its own visible lane.
+                let right = left;
+                while (right + 1 < days.length && Date.parse(event.end) > midnight(days[right + 1])) right++;
+                const status = ["Reserved", "Borrowed", "Overdue"].includes(event.status) ? event.status : "Reserved";
+                const bar = node("div", "calendar-bar calendar-" + status.toLowerCase(), status);
+                bar.style.gridColumn = (left + 1) + " / " + (right + 2);
+                bar.style.gridRow = lanes.length + 1;
+                bar.title = status + ": " + eventTime.format(new Date(event.start)) + " – " + eventTime.format(new Date(event.end));
+                bar.tabIndex = 0; bar.setAttribute("aria-label", bar.title);
+                track.append(bar); lanes.push(event);
+            }
+            if (!item.canBeReserved) {
+                const maintenance = node("div", "calendar-bar calendar-maintenance", item.operationalStatus === "UnderMaintenance" ? "Maintenance · completion date unknown" : "Unavailable");
+                maintenance.style.gridColumn = "1 / -1";
+                maintenance.style.gridRow = events.length + 1;
+                track.append(maintenance);
+            }
+            row.append(track); grid.append(row);
         }
-    });
-
-    category.addEventListener("change", updateEquipmentOptions);
-    location.addEventListener("change", updateEquipmentOptions);
-    form.addEventListener("submit", () => {
-        dateInput.value = dateInput.value || element.dataset.today;
-        viewInput.value = viewInput.value || element.dataset.initialView;
-    });
-
-    updateEquipmentOptions();
-    calendar.render();
+    }
+    let request;
+    async function load() {
+        request?.abort();
+        const controller = new AbortController(); request = controller;
+        grid.replaceChildren(); loading.classList.remove("hidden"); error.classList.add("hidden"); retry.classList.add("hidden");
+        const url = new URL(element.dataset.eventsUrl, location.origin);
+        url.search = new URLSearchParams(new FormData(form)).toString();
+        url.searchParams.set("start", dayString(first) + "T00:00:00+08:00");
+        url.searchParams.set("end", dayString(addDays(first, days.length)) + "T00:00:00+08:00");
+        try {
+            const response = await fetch(url, {credentials: "same-origin", signal: controller.signal, headers: {Accept: "application/json"}});
+            const data = await response.json();
+            if (controller.signal.aborted) return;
+            if (!response.ok) throw Error(data.message || "The calendar could not load.");
+            render(data);
+        } catch (failure) {
+            if (controller.signal.aborted) return;
+            grid.replaceChildren(); error.textContent = "Unable to load availability. " + failure.message;
+            error.classList.remove("hidden"); retry.classList.remove("hidden");
+        } finally { if (!controller.signal.aborted) loading.classList.add("hidden"); }
+    }
+    retry.addEventListener("click", load);
+    load();
 })();

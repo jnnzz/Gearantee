@@ -1,5 +1,6 @@
 using ASI.Basecode.Data.Interfaces;
 using ASI.Basecode.Data.Models;
+using ASI.Basecode.Resources.Constants;
 using ASI.Basecode.Services.Interfaces;
 using ASI.Basecode.Services.ServiceModels.AvailabilityCalendar;
 using ASI.Basecode.Services.Utilities;
@@ -161,7 +162,7 @@ namespace ASI.Basecode.Services.Services
                 result.Events.Add(new AvailabilityCalendarEventViewModel
                 {
                     Id = reservation.ReservationId.ToString(),
-                    Title = $"{reservation.ItemCode} · {status}",
+                    Title = $"{reservation.ItemCode} Â· {status}",
                     Start = AsUtcOffset(eventStart),
                     End = AsUtcOffset(eventEnd),
                     EquipmentId = reservation.EquipmentId,
@@ -179,10 +180,10 @@ namespace ASI.Basecode.Services.Services
                 item.BlockingCount = count;
                 item.AvailabilitySummary = !item.CanBeReserved
                     ? item.OperationalStatus == DomainValues.EquipmentStatuses.UnderMaintenance
-                        ? "Under maintenance · no return date recorded"
+                        ? "Under maintenance Â· no return date recorded"
                         : "Unavailable for reservations"
                     : count == 0
-                        ? "Available throughout this period"
+                        ? "No current scheduling blocks in this period"
                         : $"{count} scheduled block{(count == 1 ? string.Empty : "s")} in this period";
             }
 
@@ -202,6 +203,13 @@ namespace ASI.Basecode.Services.Services
             AvailabilityCalendarFilterViewModel filter)
         {
             var query = ActiveEquipment();
+            if (!string.IsNullOrEmpty(filter.Search))
+            {
+                var search = filter.Search.ToUpperInvariant();
+                query = query.Where(item => item.ItemCode.ToUpper().Contains(search) ||
+                    item.ItemName.ToUpper().Contains(search));
+            }
+
             if (filter.CategoryId.HasValue)
             {
                 query = query.Where(item => item.CategoryId == filter.CategoryId.Value);
@@ -223,6 +231,7 @@ namespace ASI.Basecode.Services.Services
         private static void NormalizeFilter(AvailabilityCalendarFilterViewModel filter)
         {
             filter.Location = filter.Location?.Trim();
+            filter.Search = filter.Search?.Trim();
         }
 
         private static DateTime Max(DateTime left, DateTime right) => left > right ? left : right;

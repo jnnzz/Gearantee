@@ -11,6 +11,7 @@ namespace ASI.Basecode.Data.Models
         public DateTime RequestedAt { get; set; } = DateTime.UtcNow;
         public DateTime ReservationStart { get; set; }
         public DateTime ReservationEnd { get; set; }
+        public bool IsFullDay { get; set; }
         public string Purpose { get; set; }
         public string Status { get; set; }
         public string RejectionReason { get; set; }

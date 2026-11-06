@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
 using ASI.Basecode.Data.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,6 +18,11 @@ namespace ASI.Basecode.Data
         public DbContext Database { get; private set; }
 
         /// <summary>
+        /// The typed application context.
+        /// </summary>
+        public AsiBasecodeDBContext Context => (AsiBasecodeDBContext)Database;
+
+        /// <summary>
         /// Initializes a new instance of the UnitOfWork class.
         /// </summary>
         /// <param name="serviceContext">The service context.</param>
@@ -30,6 +37,14 @@ namespace ASI.Basecode.Data
         public void SaveChanges()
         {
             Database.SaveChanges();
+        }
+
+        /// <summary>
+        /// Persists all staged changes as one atomic unit.
+        /// </summary>
+        public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            return Database.SaveChangesAsync(cancellationToken);
         }
 
         /// <summary>

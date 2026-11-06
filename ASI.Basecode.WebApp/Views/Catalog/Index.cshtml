@@ -1,11 +1,9 @@
 @model ASI.Basecode.Services.ServiceModels.Catalog.CatalogIndexViewModel
 @using ASI.Basecode.Services.ServiceModels.Catalog
 @using ASI.Basecode.WebApp.Models.Dashboard
+@inject ASI.Basecode.Services.Interfaces.IImageStorageService ImageStorage
 @{
     var filter = Model.Filter;
-    var fromValue = filter.From?.ToString("yyyy-MM-ddTHH:mm");
-    var toValue = filter.To?.ToString("yyyy-MM-ddTHH:mm");
-    var windowApplied = filter.HasWindow && Model.WindowError == null;
     string BrandModel(string brand, string model)
     {
         var text = string.Join(" ", new[] { brand, model }.Where(part => !string.IsNullOrWhiteSpace(part)));
@@ -14,22 +12,10 @@
     string StatusLabel(string status) => status == DomainValues.EquipmentStatuses.Borrowed ? "Borrowed" : "Available";
 }
 
-<section aria-labelledby="catalog-heading">
-    <div class="mb-4 flex flex-wrap items-end justify-between gap-3">
-        <div>
-            <h2 id="catalog-heading" class="font-display text-2xl font-semibold">Reservable equipment</h2>
-            <p class="mt-1 text-xs text-gray-500">
-                @Model.TotalCount item@(Model.TotalCount == 1 ? "" : "s")
-                @if (windowApplied)
-                {
-                    <span>free from @filter.From.Value.ToString("d MMM · HH:mm") to @filter.To.Value.ToString("d MMM · HH:mm")</span>
-                }
-                · times are Philippine time
-            </p>
-        </div>
-    </div>
+<section aria-label="Catalog results">
+    <p class="mb-4 text-sm text-gray-500">@Model.TotalCount matching equipment</p>
 
-    <form method="get" asp-action="Index" class="mb-6 grid gap-2 border border-gray-200 bg-white p-4 md:grid-cols-2 xl:grid-cols-[minmax(200px,1.4fr)_minmax(160px,1fr)_minmax(180px,1fr)_minmax(180px,1fr)_auto]">
+    <form method="get" asp-action="Index" class="filter-panel filter-panel--compact">
         <div>
             <label for="catalog-search" class="mb-1 block text-xs font-medium text-gray-700">Search</label>
             <input id="catalog-search" name="Search" value="@filter.Search" type="search" maxlength="100" placeholder="Name, item code, brand, model" class="input" />
@@ -44,52 +30,40 @@
                 }
             </select>
         </div>
-        <div>
-            <label for="catalog-from" class="mb-1 block text-xs font-medium text-gray-700">Free from <span class="text-gray-500">(optional)</span></label>
-            <input id="catalog-from" name="From" value="@fromValue" type="datetime-local" class="input" />
-        </div>
-        <div>
-            <label for="catalog-to" class="mb-1 block text-xs font-medium text-gray-700">Free until <span class="text-gray-500">(optional)</span></label>
-            <input id="catalog-to" name="To" value="@toValue" type="datetime-local" class="input" />
-        </div>
         <div class="flex items-end gap-2">
             <button type="submit" class="btn-primary min-h-10 flex-1 xl:flex-none">Search</button>
-            <a asp-action="Index" class="inline-flex min-h-10 items-center border border-gray-200 bg-white px-3 text-sm font-semibold text-gray-700">Clear</a>
+            <a asp-action="Index" class="btn-secondary inline-flex min-h-10 items-center border border-gray-200 bg-white px-3 text-sm font-semibold text-gray-700">Clear</a>
         </div>
     </form>
 
-    @if (Model.WindowError != null)
-    {
-        <div class="mb-5 border-l-4 border-ink bg-white px-4 py-3 text-sm" role="alert">@Model.WindowError Showing all reservable items instead.</div>
-    }
-
     @if (Model.Items.Count == 0)
     {
-        <partial name="Components/_EmptyState" model="@(new EmptyStateModel { Heading = "No equipment found", Message = windowApplied ? "Nothing matching your search is free for that whole time. Try a shorter window, a different time, or another category." : "No reservable equipment matches your search. Try a different name or category." })" />
+        <partial name="Components/_EmptyState" model="@(new EmptyStateModel { Heading = "No equipment found", Message = "No reservable equipment matches your search. Try a different name or category." })" />
     }
     else
     {
-        <div class="grid gap-6 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+        <div class="catalog-grid">
             @foreach (var item in Model.Items)
             {
-                <article class="flex min-w-0 flex-col border border-gray-200 bg-white">
+                <article class="catalog-card">
                     @if (!string.IsNullOrWhiteSpace(item.ImageUrl))
                     {
-                        <img src="@item.ImageUrl" alt="@item.ItemName" class="aspect-[16/9] w-full bg-white object-contain" />
+                        var imageSrc = await ImageStorage.CreateSignedUrlAsync(item.ImageUrl, System.TimeSpan.FromMinutes(60));
+                        <img src="@imageSrc" alt="@item.ItemName" class="aspect-[4/3] w-full bg-white object-cover" />
                     }
                     else
                     {
-                        <div class="flex aspect-[16/9] w-full items-center justify-center bg-primary text-white" aria-label="No equipment image available">
-                            @await Html.PartialAsync("../Shared/Icons/_Icon", "equipment")
+                        <div class="equipment-placeholder" aria-label="No equipment image available">
+                            <partial name="_EquipmentPlaceholder" model="item.CategoryName" />
                         </div>
                     }
-                    <div class="flex flex-1 flex-col p-4">
+                    <div class="catalog-card-body">
                         <div class="flex items-start justify-between gap-3">
                             <div class="min-w-0">
                                 <p class="item-code">@item.ItemCode</p>
                                 <h3 class="mt-1 truncate font-display text-lg font-semibold text-ink" title="@item.ItemName">@item.ItemName</h3>
                             </div>
-                            <partial name="Components/_StatusBadge" model="@(windowApplied ? "Available" : StatusLabel(item.AvailabilityStatus))" />
+                            <partial name="Components/_StatusBadge" model="@(StatusLabel(item.AvailabilityStatus))" />
                         </div>
                         <dl class="mt-4 grid grid-cols-2 gap-3 text-xs">
                             <div><dt class="text-gray-500">Category</dt><dd class="mt-1 font-medium text-gray-700">@item.CategoryName</dd></div>
@@ -98,25 +72,18 @@
                             <div class="col-span-2"><dt class="text-gray-500">Location</dt><dd class="mt-1 truncate font-medium text-gray-700">@item.Location</dd></div>
                         </dl>
                         <div class="mt-auto pt-4">
-                            <a asp-action="Details" asp-route-id="@item.EquipmentId" asp-route-from="@(windowApplied ? fromValue : null)" asp-route-to="@(windowApplied ? toValue : null)" class="text-sm font-semibold text-primary-strong underline underline-offset-4">View details &amp; schedule</a>
+                            <a asp-action="Details" asp-route-id="@item.EquipmentId" class="text-sm font-semibold text-primary-strong underline underline-offset-4">View details &amp; schedule</a>
                         </div>
                     </div>
                 </article>
             }
         </div>
 
-        <nav class="mt-6 flex items-center justify-between text-xs text-gray-500" aria-label="Catalog pages">
-            <span>Page @Model.Page of @Model.TotalPages</span>
-            <div class="flex gap-2">
-                @if (Model.Page > 1)
-                {
-                    <a asp-action="Index" asp-route-search="@filter.Search" asp-route-categoryId="@filter.CategoryId" asp-route-from="@fromValue" asp-route-to="@toValue" asp-route-page="@(Model.Page - 1)" class="border border-gray-200 bg-white px-3 py-2 text-gray-700">Previous</a>
-                }
-                @if (Model.Page < Model.TotalPages)
-                {
-                    <a asp-action="Index" asp-route-search="@filter.Search" asp-route-categoryId="@filter.CategoryId" asp-route-from="@fromValue" asp-route-to="@toValue" asp-route-page="@(Model.Page + 1)" class="border border-gray-200 bg-white px-3 py-2 text-gray-700">Next</a>
-                }
-            </div>
-        </nav>
+        <partial name="Components/_Pagination" model="@(new PaginationViewModel
+        {
+            Page = Model.Page, TotalPages = Model.TotalPages, TotalCount = Model.TotalCount,
+            Label = "Catalog pages",
+            Routes = { ["search"] = filter.Search, ["categoryId"] = filter.CategoryId?.ToString() }
+        })" />
     }
 </section>

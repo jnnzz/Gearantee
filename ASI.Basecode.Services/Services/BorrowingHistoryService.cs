@@ -1,5 +1,7 @@
 using ASI.Basecode.Data;
+using ASI.Basecode.Data.Interfaces;
 using ASI.Basecode.Data.Models;
+using ASI.Basecode.Resources.Constants;
 using ASI.Basecode.Services.Interfaces;
 using ASI.Basecode.Services.ServiceModels.BorrowingHistory;
 using ASI.Basecode.Services.Utilities;
@@ -15,7 +17,7 @@ namespace ASI.Basecode.Services.Services
 {
     public class BorrowingHistoryService : IBorrowingHistoryService
     {
-        public const int PageSize = 25;
+        public const int PageSize = PaginationDefaults.PageSize;
         public const int MaxFilterLength = 100;
 
         private static readonly string[] Statuses =
@@ -34,10 +36,10 @@ namespace ASI.Basecode.Services.Services
         private readonly TimeProvider _timeProvider;
 
         public BorrowingHistoryService(
-            AsiBasecodeDBContext db,
+            IUnitOfWork unitOfWork,
             TimeProvider timeProvider)
         {
-            _db = db;
+            _db = unitOfWork.Context;
             _timeProvider = timeProvider;
         }
 
@@ -237,7 +239,6 @@ namespace ASI.Basecode.Services.Services
                         (reservation.BorrowerProfile.User.LastName ?? "")).Contains(search) ||
                     (reservation.BorrowerProfile.User.UserCode != null &&
                         reservation.BorrowerProfile.User.UserCode.Contains(search)) ||
-                    reservation.BorrowerProfile.SchoolId.Contains(search) ||
                     reservation.EquipmentItem.ItemName.Contains(search) ||
                     reservation.EquipmentItem.ItemCode.Contains(search));
             }
@@ -249,8 +250,7 @@ namespace ASI.Basecode.Services.Services
                     ((reservation.BorrowerProfile.User.FirstName ?? "") + " " +
                         (reservation.BorrowerProfile.User.LastName ?? "")).Contains(borrower) ||
                     (reservation.BorrowerProfile.User.UserCode != null &&
-                        reservation.BorrowerProfile.User.UserCode.Contains(borrower)) ||
-                    reservation.BorrowerProfile.SchoolId.Contains(borrower));
+                        reservation.BorrowerProfile.User.UserCode.Contains(borrower)));
             }
 
             if (!string.IsNullOrWhiteSpace(filter.Item))
@@ -357,6 +357,7 @@ namespace ASI.Basecode.Services.Services
                 Status = status,
                 RequestedAtLocal = ManilaClock.ToLocal(row.RequestedAtUtc),
                 StartLocal = ManilaClock.ToLocal(row.StartUtc),
+                IsFullDay = row.IsFullDay,
                 DueLocal = ManilaClock.ToLocal(row.DueUtc),
                 ReleasedAtLocal = row.ReleasedAtUtc.HasValue
                     ? ManilaClock.ToLocal(row.ReleasedAtUtc.Value)
@@ -395,7 +396,7 @@ namespace ASI.Basecode.Services.Services
                     BorrowerName = ((reservation.BorrowerProfile.User.FirstName ?? "") + " " +
                         (reservation.BorrowerProfile.User.LastName ?? "")).Trim(),
                     UserCode = reservation.BorrowerProfile.User.UserCode,
-                    SchoolId = reservation.BorrowerProfile.SchoolId,
+                    SchoolId = reservation.BorrowerProfile.User.UserCode,
                     ItemCode = reservation.EquipmentItem.ItemCode,
                     ItemName = reservation.EquipmentItem.ItemName,
                     CategoryName = reservation.EquipmentItem.Category.CategoryName,
@@ -403,6 +404,7 @@ namespace ASI.Basecode.Services.Services
                     RequestedAtUtc = reservation.RequestedAt,
                     StartUtc = reservation.ReservationStart,
                     DueUtc = reservation.ReservationEnd,
+                    IsFullDay = reservation.IsFullDay,
                     ReleaseRecordId = reservation.ReleaseRecord == null
                         ? (long?)null
                         : reservation.ReleaseRecord.ReleaseRecordId,
@@ -440,6 +442,7 @@ namespace ASI.Basecode.Services.Services
             public DateTime RequestedAtUtc { get; set; }
             public DateTime StartUtc { get; set; }
             public DateTime DueUtc { get; set; }
+            public bool IsFullDay { get; set; }
             public long? ReleaseRecordId { get; set; }
             public DateTime? ReleasedAtUtc { get; set; }
             public DateTime? ReturnedAtUtc { get; set; }

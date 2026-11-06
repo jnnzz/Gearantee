@@ -1,11 +1,13 @@
-using ASI.Basecode.Data;
+﻿using ASI.Basecode.Data;
 using ASI.Basecode.Data.Models;
+using ASI.Basecode.Resources.Constants;
 using ASI.Basecode.Data.Repositories;
 using ASI.Basecode.Services.ServiceModels.EquipmentItem;
 using ASI.Basecode.Services.ServiceModels.Reservations;
 using ASI.Basecode.Services.Services;
 using ASI.Basecode.Services.Utilities;
 using ASI.Basecode.Tests.Reservations;
+using ASI.Basecode.Tests.UserAdministration;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -65,8 +67,9 @@ namespace ASI.Basecode.Tests.Category
                 var inventoryTask = Task.Run(async () =>
                 {
                     await using var db = new AsiBasecodeDBContext(inventoryOptions);
-                    var categories = new CategoryService(db, loggerFactory);
-                    var service = new EquipmentItemService(db, categories, loggerFactory);
+                    var categories = new CategoryService(new UnitOfWork(db), loggerFactory);
+                    var service = new EquipmentItemService(
+                        new UnitOfWork(db), categories, new EquipmentItemRepository(new UnitOfWork(db)), loggerFactory);
                     if (archiveInventoryItem)
                     {
                         return await service.SetArchivedAsync(adminId, equipmentId, true);
@@ -101,12 +104,13 @@ namespace ASI.Basecode.Tests.Category
                             new ReservationRepository(unitOfWork),
                             new EquipmentItemRepository(unitOfWork),
                             new BorrowerProfileRepository(unitOfWork),
+                            new AuditService(unitOfWork),
                             new ReservationTestHelpers.FixedTimeProvider(nowUtc));
                         return service.SubmitReservation(new ReservationCreateViewModel
                         {
                             EquipmentId = equipmentId,
-                            ReservationStart = ManilaClock.ToLocal(nowUtc.AddHours(1)),
-                            ReservationEnd = ManilaClock.ToLocal(nowUtc.AddHours(2)),
+                            ReservationStart = ManilaClock.ToLocal(nowUtc).Date.AddDays(1),
+                            ReservationEnd = ManilaClock.ToLocal(nowUtc).Date.AddDays(1),
                             Purpose = "SQL Server concurrency regression test"
                         }, borrowerUserId);
                     });
@@ -155,6 +159,145 @@ namespace ASI.Basecode.Tests.Category
             }
         }
 
+        [SqlServerFact]
+        public async Task Concurrent_registration_allocates_unique_category_numbers()
+        {
+            var name = "Gearantee_ItemNumbers_" + Guid.NewGuid().ToString("N");
+            var options = new DbContextOptionsBuilder<AsiBasecodeDBContext>()
+                .UseSqlServer($"Server=(localdb)\\MSSQLLocalDB;Database={name};Trusted_Connection=True;TrustServerCertificate=True;Connect Timeout=30")
+                .Options;
+            try
+            {
+                await using var setup = new AsiBasecodeDBContext(options);
+                await setup.Database.MigrateAsync();
+                var seed = await SeedAsync(setup);
+                using var loggerFactory = LoggerFactory.Create(builder => { });
+                var gate = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+                async Task<long> Register()
+                {
+                    await gate.Task;
+                    await using var db = new AsiBasecodeDBContext(options);
+                    var unit = new UnitOfWork(db);
+                    var service = new EquipmentItemService(unit, new CategoryService(unit, loggerFactory), new EquipmentItemRepository(unit), loggerFactory);
+                    var result = await service.CreateAsync(seed.AdminId, new EquipmentItemFormViewModel {
+                        CategoryId = seed.CategoryId, ItemName = "Asus laptop", Location = "Test store",
+                        ConditionStatus = DomainValues.ReturnConditions.Good, ItemStatus = DomainValues.EquipmentStatuses.Available
+                    });
+                    Assert.True(result.Succeeded, result.Message);
+                    return result.EquipmentId;
+                }
+                var first = Task.Run(Register);
+                var second = Task.Run(Register);
+                gate.SetResult(true);
+                var ids = await Task.WhenAll(first, second).WaitAsync(TimeSpan.FromSeconds(60));
+                var codes = await setup.EquipmentItems.AsNoTracking().Where(item => ids.Contains(item.EquipmentId))
+                    .Select(item => item.ItemCode).ToListAsync();
+                Assert.Equal(2, codes.Distinct().Count());
+                Assert.Contains(codes, code => code.EndsWith("-001-ASU"));
+                Assert.Contains(codes, code => code.EndsWith("-002-ASU"));
+            }
+            finally
+            {
+                await using var cleanup = new AsiBasecodeDBContext(options);
+                await cleanup.Database.EnsureDeletedAsync();
+            }
+        }
+
+        [SqlServerFact]
+        public async Task Concurrent_registration_in_different_categories_retries_deadlock()
+        {
+            var name = "Gearantee_CrossCategory_" + Guid.NewGuid().ToString("N");
+            var connection = $"Server=(localdb)\\MSSQLLocalDB;Database={name};Trusted_Connection=True;TrustServerCertificate=True;Connect Timeout=30";
+            var options = new DbContextOptionsBuilder<AsiBasecodeDBContext>().UseSqlServer(connection).Options;
+            try
+            {
+                await using var setup = new AsiBasecodeDBContext(options);
+                await setup.Database.MigrateAsync();
+                var seed = await SeedAsync(setup);
+                var other = new EquipmentCategory { CategoryCode = "OTHER", CategoryName = "Other equipment", IsActive = true, NextItemNumber = 2 };
+                setup.EquipmentCategories.Add(other);
+                (await setup.EquipmentCategories.FindAsync(seed.CategoryId)).NextItemNumber = 2;
+                await setup.SaveChangesAsync();
+                var barrier = new RegistrationSaveBarrier();
+                using var logger = LoggerFactory.Create(builder => { });
+                async Task<long> Register(long categoryId)
+                {
+                    var concurrentOptions = new DbContextOptionsBuilder<AsiBasecodeDBContext>()
+                        .UseSqlServer(connection, sql => sql.EnableRetryOnFailure(3, TimeSpan.FromMilliseconds(10), null))
+                        .AddInterceptors(barrier).Options;
+                    await using var db = new AsiBasecodeDBContext(concurrentOptions);
+                    var unit = new UnitOfWork(db);
+                    var service = new EquipmentItemService(unit, new CategoryService(unit, logger), new EquipmentItemRepository(unit), logger);
+                    var result = await service.CreateAsync(seed.AdminId, Registration(categoryId));
+                    Assert.True(result.Succeeded, result.Message);
+                    return result.EquipmentId;
+                }
+
+                var ids = await Task.WhenAll(Task.Run(() => Register(seed.CategoryId)), Task.Run(() => Register(other.CategoryId)))
+                    .WaitAsync(TimeSpan.FromSeconds(60));
+                Assert.True(barrier.SaveAttempts >= 3, "The overlapping writes must exercise a real SQL Server deadlock retry.");
+                var items = await setup.EquipmentItems.AsNoTracking().Where(item => ids.Contains(item.EquipmentId)).ToListAsync();
+                Assert.Equal(2, items.Count);
+                Assert.Equal(2, items.Select(item => item.ItemCode).Distinct().Count());
+                Assert.All(items, item => Assert.EndsWith("-002-ASU", item.ItemCode));
+                Assert.All(await setup.EquipmentCategories.AsNoTracking().ToListAsync(), category => Assert.Equal(3, category.NextItemNumber));
+            }
+            finally
+            {
+                await using var cleanup = new AsiBasecodeDBContext(options);
+                await cleanup.Database.EnsureDeletedAsync();
+            }
+        }
+
+        [SqlServerTheory]
+        [InlineData(false, null)]
+        [InlineData(true, null)]
+        [InlineData(false, "SERIAL-RETRY")]
+        [InlineData(true, "SERIAL-RETRY")]
+        public async Task Registration_commit_failure_saves_exactly_once(bool afterCommit, string serialNumber)
+        {
+            var name = "Gearantee_RegistrationRetry_" + Guid.NewGuid().ToString("N");
+            var connection = $"Server=(localdb)\\MSSQLLocalDB;Database={name};Trusted_Connection=True;TrustServerCertificate=True;Connect Timeout=30";
+            var options = new DbContextOptionsBuilder<AsiBasecodeDBContext>().UseSqlServer(connection).Options;
+            try
+            {
+                await using var setup = new AsiBasecodeDBContext(options);
+                await setup.Database.MigrateAsync();
+                var seed = await SeedAsync(setup);
+                var failure = new RegistrationCommitFailure(afterCommit);
+                var retryOptions = new DbContextOptionsBuilder<AsiBasecodeDBContext>()
+                    .UseSqlServer(connection, sql => sql.EnableRetryOnFailure(3, TimeSpan.FromMilliseconds(10), null))
+                    .AddInterceptors(failure).Options;
+                await using var db = new AsiBasecodeDBContext(retryOptions);
+                using var logger = LoggerFactory.Create(builder => { });
+                var unit = new UnitOfWork(db);
+                var service = new EquipmentItemService(unit, new CategoryService(unit, logger), new EquipmentItemRepository(unit), logger);
+                var model = Registration(seed.CategoryId);
+                model.SerialNumber = serialNumber;
+
+                var result = await service.CreateAsync(seed.AdminId, model);
+
+                Assert.True(failure.Fired);
+                Assert.True(result.Succeeded, result.Message);
+                var saved = Assert.Single(await setup.EquipmentItems.AsNoTracking().Where(item => item.ItemName == model.ItemName).ToListAsync());
+                Assert.Equal(saved.EquipmentId, result.EquipmentId);
+                Assert.EndsWith("-001-ASU", saved.ItemCode);
+                Assert.Equal(serialNumber, saved.SerialNumber);
+                Assert.Equal(2, await setup.EquipmentCategories.AsNoTracking().Where(category => category.CategoryId == seed.CategoryId).Select(category => category.NextItemNumber).SingleAsync());
+            }
+            finally
+            {
+                await using var cleanup = new AsiBasecodeDBContext(options);
+                await cleanup.Database.EnsureDeletedAsync();
+            }
+        }
+
+        private static EquipmentItemFormViewModel Registration(long categoryId) => new()
+        {
+            CategoryId = categoryId, ItemName = "Asus laptop", Location = "Test store",
+            ConditionStatus = DomainValues.ReturnConditions.Good, ItemStatus = DomainValues.EquipmentStatuses.Available
+        };
+
         private static async Task<(string AdminId, long CategoryId,
             long EquipmentId, string BorrowerUserId, string ItemCode)> SeedAsync(
             AsiBasecodeDBContext db)
@@ -194,7 +337,6 @@ namespace ASI.Basecode.Tests.Category
             var profile = new BorrowerProfile
             {
                 User = borrower,
-                SchoolId = "RACE-SCHOOL-" + Guid.NewGuid().ToString("N")[..8],
                 Department = "Concurrency Tests",
                 IsEligible = true
             };
@@ -231,6 +373,46 @@ namespace ASI.Basecode.Tests.Category
             SecurityStamp = Guid.NewGuid().ToString("N"),
             ConcurrencyStamp = Guid.NewGuid().ToString("N")
         };
+    }
+
+    internal sealed class RegistrationSaveBarrier : SaveChangesInterceptor
+    {
+        private int _attempts;
+        private readonly TaskCompletionSource<bool> _gate = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public int SaveAttempts => _attempts;
+
+        public override async ValueTask<InterceptionResult<int>> SavingChangesAsync(
+            DbContextEventData eventData, InterceptionResult<int> result, CancellationToken cancellationToken = default)
+        {
+            if (Interlocked.Increment(ref _attempts) >= 2) _gate.TrySetResult(true);
+            await _gate.Task.WaitAsync(TimeSpan.FromSeconds(30), cancellationToken);
+            return result;
+        }
+    }
+
+    internal sealed class RegistrationCommitFailure(bool afterCommit) : DbTransactionInterceptor
+    {
+        public bool Fired { get; private set; }
+        private void FailOnce()
+        {
+            if (Fired) return;
+            Fired = true;
+            throw new TimeoutException("Simulated lost database connection at commit.");
+        }
+
+        public override ValueTask<InterceptionResult> TransactionCommittingAsync(
+            DbTransaction transaction, TransactionEventData eventData, InterceptionResult result, CancellationToken cancellationToken = default)
+        {
+            if (!afterCommit) FailOnce();
+            return ValueTask.FromResult(result);
+        }
+
+        public override Task TransactionCommittedAsync(
+            DbTransaction transaction, TransactionEndEventData eventData, CancellationToken cancellationToken = default)
+        {
+            if (afterCommit) FailOnce();
+            return Task.CompletedTask;
+        }
     }
 
     internal sealed class EquipmentSavePauseInterceptor : SaveChangesInterceptor

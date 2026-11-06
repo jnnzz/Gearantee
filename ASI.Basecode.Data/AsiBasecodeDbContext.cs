@@ -29,10 +29,14 @@ namespace ASI.Basecode.Data
         public DbSet<ReleaseRecord> ReleaseRecords { get; set; }
         public DbSet<ReturnRecord> ReturnRecords { get; set; }
         public DbSet<LateReturn> LateReturns { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+            // External login providers are not used, but user/role claims are read by the
+            // Identity claims factory on every sign-in and must stay mapped.
+            modelBuilder.Ignore<IdentityUserLogin<string>>();
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(AsiBasecodeDBContext).Assembly);
         }
     }

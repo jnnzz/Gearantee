@@ -9,15 +9,15 @@ namespace ASI.Basecode.Services.ServiceModels.Reservations
         [Required]
         public long EquipmentId { get; set; }
 
-        /// <summary>Manila local time, as entered in a datetime-local input.</summary>
-        [Required(ErrorMessage = "Enter the start date and time.")]
-        [DataType(DataType.DateTime)]
+        /// <summary>Philippine calendar date; the selected end date is inclusive.</summary>
+        [Required(ErrorMessage = "Enter the start date.")]
+        [DataType(DataType.Date)]
         [Display(Name = "Start")]
         public DateTime? ReservationStart { get; set; }
 
-        /// <summary>Manila local time, as entered in a datetime-local input.</summary>
-        [Required(ErrorMessage = "Enter the end date and time.")]
-        [DataType(DataType.DateTime)]
+        /// <summary>Philippine calendar date; the selected end date is inclusive.</summary>
+        [Required(ErrorMessage = "Enter the end date.")]
+        [DataType(DataType.Date)]
         [Display(Name = "End")]
         public DateTime? ReservationEnd { get; set; }
 

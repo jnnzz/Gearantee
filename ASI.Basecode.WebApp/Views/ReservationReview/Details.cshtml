@@ -1,27 +1,19 @@
 @model ASI.Basecode.Services.ServiceModels.Reservations.ReservationReviewDetailsViewModel
 @using ASI.Basecode.WebApp.Models
 @{
-    var successMessage = TempData["SuccessMessage"] as string;
-    var errorMessage = TempData["ErrorMessage"] as string;
+    ViewData["Title"] = "Reservation review";
+    ViewData["Eyebrow"] = "Custodian workspace";
     string OrDash(string value) => string.IsNullOrWhiteSpace(value) ? "—" : value;
     string When(DateTime? value) => value.HasValue ? value.Value.ToString("ddd d MMM yyyy · HH:mm") : "—";
     var brandModel = string.Join(" ", new[] { Model.Brand, Model.Model }.Where(part => !string.IsNullOrWhiteSpace(part)));
     var hasAction = Model.CanApprove || Model.CanReject || Model.CanRelease;
 }
 
-<a asp-action="Index" class="mb-6 inline-flex text-sm font-semibold text-primary-strong underline underline-offset-4">← Back to approval &amp; release</a>
+<a asp-action="Index" class="btn-secondary mb-6 min-h-10">Back to approval &amp; release</a>
 
-@if (!string.IsNullOrWhiteSpace(successMessage))
-{
-    <div class="mb-5 border-l-4 border-primary bg-white px-4 py-3 text-sm" role="status">@successMessage</div>
-}
-@if (!string.IsNullOrWhiteSpace(errorMessage))
-{
-    <div class="mb-5 border-l-4 border-ink bg-white px-4 py-3 text-sm" role="alert">@errorMessage</div>
-}
 
-<div class="grid items-start gap-8 xl:grid-cols-[minmax(0,1.1fr)_minmax(360px,0.9fr)]">
-    <section aria-labelledby="review-heading" class="min-w-0 border border-gray-200 bg-white p-5 sm:p-8">
+<div class="role-page detail-grid">
+    <section aria-labelledby="review-heading" class="surface">
         <div class="flex flex-wrap items-start justify-between gap-3">
             <div class="min-w-0">
                 <p class="item-code">@Model.ReservationCode</p>
@@ -39,16 +31,16 @@
             </div>
         }
 
-        <dl class="mt-6 grid gap-4 text-sm sm:grid-cols-2">
-            <div><dt class="text-xs text-gray-500">Start</dt><dd class="mt-1 font-medium text-gray-700">@When(Model.StartLocal)</dd></div>
-            <div><dt class="text-xs text-gray-500">End</dt><dd class="mt-1 font-medium text-gray-700">@When(Model.EndLocal)</dd></div>
+        <dl class="record-details mt-6 grid gap-4 text-sm sm:grid-cols-2">
+            <div><dt class="text-xs text-gray-500">Start</dt><dd class="mt-1 font-medium text-gray-700">@Model.StartLabel</dd></div>
+            <div><dt class="text-xs text-gray-500">End</dt><dd class="mt-1 font-medium text-gray-700">@Model.EndLabel</dd></div>
             <div class="sm:col-span-2"><dt class="text-xs text-gray-500">Purpose</dt><dd class="mt-1 whitespace-pre-line font-medium text-gray-700">@Model.Purpose</dd></div>
         </dl>
 
         @if (Model.CanApprove)
         {
             <form asp-action="Approve" asp-route-id="@Model.ReservationId" method="post" data-confirm-dialog="approve-reservation-dialog"
-                  class="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-gray-200 pt-5">
+                  class="workflow-action flex flex-wrap items-center justify-between gap-3">
                 <p class="text-xs text-gray-500">Approving books the item for this window and tells the borrower to collect it.</p>
                 <button type="submit" class="btn-primary min-h-10">Approve request</button>
             </form>
@@ -58,7 +50,7 @@
                 Id = "approve-reservation-dialog",
                 Title = $"Approve {Model.ReservationCode}?",
                 Message = "The item is booked for this borrower during this window. Approval can't be undone from here.",
-                Detail = $"{Model.ItemName} · {When(Model.StartLocal)} → {When(Model.EndLocal)}",
+                Detail = $"{Model.ItemName} · {Model.StartLabel} → {Model.EndLabel}",
                 ConfirmText = "Yes, approve it",
                 CancelText = "Not yet"
             })" />
@@ -67,18 +59,20 @@
         @if (Model.CanReject)
         {
             <form asp-action="Reject" asp-route-id="@Model.ReservationId" method="post" data-confirm-dialog="reject-reservation-dialog"
-                  class="mt-6 border-t border-gray-200 pt-5">
-                <label asp-for="RejectionReason" for="reject-reason" class="mb-1 block text-sm font-medium">Reason for rejection</label>
+                  class="workflow-action">
+                <p class="required-legend"><span class="required-marker" aria-hidden="true">*</span> Required fields</p>
+                <label asp-for="RejectionReason" for="reject-reason" class="mb-1 block text-sm font-medium">Reason for rejection <span class="required-marker" data-required-marker aria-hidden="true">*</span></label>
                 <textarea id="reject-reason" name="Reason" rows="3" required maxlength="1000" class="input w-full" placeholder="Tell the borrower why this request can't be approved."></textarea>
                 <div class="mt-3 flex flex-wrap items-center justify-between gap-3">
                     <p class="text-xs text-gray-500">The borrower sees this reason on their reservation.</p>
-                    <button type="submit" class="border border-ink bg-white px-4 py-2 text-sm font-semibold text-ink hover:bg-ink hover:text-white">Reject request</button>
+                    <button type="submit" class="btn-danger">Reject request</button>
                 </div>
             </form>
 
             <partial name="Components/_ConfirmDialog" model="@(new ConfirmDialogModel
             {
                 Id = "reject-reservation-dialog",
+                IsDestructive = true,
                 Title = $"Reject {Model.ReservationCode}?",
                 Message = "The request is declined and the reason you entered is shown to the borrower. This can't be undone.",
                 Detail = $"{Model.ItemName} · {Model.BorrowerName}",
@@ -90,7 +84,7 @@
         @if (Model.CanRelease)
         {
             <form asp-action="Release" asp-route-id="@Model.ReservationId" method="post" data-confirm-dialog="release-reservation-dialog"
-                  class="mt-6 border-t border-gray-200 pt-5">
+                  class="workflow-action">
                 <label asp-for="ReleaseNotes" for="release-notes" class="mb-1 block text-sm font-medium">Release notes (optional)</label>
                 <input id="release-notes" name="Notes" maxlength="1000" class="input w-full" placeholder="Condition on handover, accessories, or anything worth recording." />
                 <div class="mt-3 flex flex-wrap items-center justify-between gap-3">
@@ -119,9 +113,9 @@
     </section>
 
     <aside class="min-w-0 space-y-6">
-        <section aria-labelledby="item-heading" class="border border-gray-200 bg-white p-5">
+        <section aria-labelledby="item-heading" class="surface">
             <h3 id="item-heading" class="font-display text-lg font-semibold text-ink">Equipment</h3>
-            <dl class="mt-4 grid gap-4 text-sm sm:grid-cols-2">
+            <dl class="record-details mt-4 grid gap-4 text-sm sm:grid-cols-2">
                 <div><dt class="text-xs text-gray-500">Item code</dt><dd class="mt-1 font-medium text-gray-700">@Model.ItemCode</dd></div>
                 <div><dt class="text-xs text-gray-500">Category</dt><dd class="mt-1 font-medium text-gray-700">@Model.CategoryName</dd></div>
                 <div><dt class="text-xs text-gray-500">Brand / model</dt><dd class="mt-1 font-medium text-gray-700">@OrDash(brandModel)</dd></div>
@@ -129,9 +123,9 @@
             </dl>
         </section>
 
-        <section aria-labelledby="timeline-heading" class="border border-gray-200 bg-white p-5">
+        <section aria-labelledby="timeline-heading" class="surface">
             <h3 id="timeline-heading" class="font-display text-lg font-semibold text-ink">Timeline</h3>
-            <ol class="mt-4 space-y-3 text-sm">
+            <ol class="timeline mt-4 space-y-3 text-sm">
                 <li><p class="text-xs text-gray-500">Requested</p><p class="mt-1 font-medium text-gray-700">@When(Model.RequestedAtLocal)</p></li>
                 @if (Model.ReviewedAtLocal.HasValue)
                 {

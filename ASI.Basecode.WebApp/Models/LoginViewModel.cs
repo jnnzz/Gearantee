@@ -6,8 +6,9 @@ namespace ASI.Basecode.WebApp.Models
     public class LoginViewModel
     {
         [JsonPropertyName("userId")]
-        [Required(ErrorMessage = "Enter your user code, school ID, or email.")]
-        [Display(Name = "User code or email")]
+        [Required(ErrorMessage = "Enter your School ID.")]
+        [Display(Name = "School ID")]
+        [StringLength(256)]
         public string UserId { get; set; }
 
         [JsonPropertyName("password")]

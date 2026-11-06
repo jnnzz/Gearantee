@@ -1,4 +1,5 @@
-using ASI.Basecode.Data.Models;
+﻿using ASI.Basecode.Data.Models;
+using ASI.Basecode.Resources.Constants;
 using ASI.Basecode.Services.Interfaces;
 using ASI.Basecode.Services.ServiceModels.AvailabilityCalendar;
 using ASI.Basecode.WebApp.Authorization;
@@ -43,8 +44,12 @@ namespace ASI.Basecode.Tests.AvailabilityCalendar
             Assert.Equal(ResponseCacheLocation.None, attribute.Location);
         }
 
-        [Fact]
-        public void Invalid_calendar_date_is_cleared_before_rendering()
+        [Theory]
+        [InlineData("2026-02-31")]
+        [InlineData("0001-01-01")]
+        [InlineData("0100-01-03")]
+        [InlineData("9999-12-31")]
+        public void Invalid_calendar_date_is_cleared_before_rendering(string date)
         {
             var context = new DefaultHttpContext();
             var controller = new AvailabilityCalendarController(
@@ -57,7 +62,7 @@ namespace ASI.Basecode.Tests.AvailabilityCalendar
             };
 
             var result = Assert.IsType<ViewResult>(controller.Index(
-                new AvailabilityCalendarFilterViewModel { Date = "2026-02-31" }));
+                new AvailabilityCalendarFilterViewModel { Date = date }));
             var model = Assert.IsType<AvailabilityCalendarPageViewModel>(result.Model);
 
             Assert.Null(model.Filter.Date);

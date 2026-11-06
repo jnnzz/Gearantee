@@ -93,13 +93,39 @@ Use a development password with at least eight characters, an uppercase letter, 
 
 Do not add passwords or other secrets to Git. User Secrets remain on the developer's computer.
 
-Seed the roles, permissions, and optional administrator account:
+For a separate Custodian login, also configure these User Secrets. Replace the password placeholder with your local development password:
+
+```powershell
+dotnet user-secrets set "SeedCustodian:Email" "custodian@example.com" `
+  --project .\ASI.Basecode.WebApp\ASI.Basecode.WebApp.csproj
+dotnet user-secrets set "SeedCustodian:UserCode" "CUST-001" `
+  --project .\ASI.Basecode.WebApp\ASI.Basecode.WebApp.csproj
+dotnet user-secrets set "SeedCustodian:Password" "YOUR_DEVELOPMENT_PASSWORD" `
+  --project .\ASI.Basecode.WebApp\ASI.Basecode.WebApp.csproj
+```
+
+Seed the roles, permissions, and configured administrator and Custodian accounts:
 
 ```powershell
 dotnet run --project .\ASI.Basecode.WebApp\ASI.Basecode.WebApp.csproj -- --seed
 ```
 
 The seed command is safe to run again. It will not create duplicate roles or permissions.
+
+The Custodian account receives only the Custodian role. All three `SeedCustodian` values are required; without them, its creation is skipped. Reseeding leaves existing accounts, passwords, activation and role changes intact. `--seed-demo` also runs this account seed before adding its existing multi-role demo account and sample data. `UI-BORROWER` belongs to the separate UI preview fixture and is not created by either seed command.
+
+### Configure equipment image storage (optional)
+
+Equipment photos are uploaded to a **private** Supabase Storage bucket and displayed through short-lived signed URLs. The equipment forms always show the drag/drop upload control; it is disabled and no uploads are attempted until Supabase is configured. To enable drag-and-drop uploads, create a **private** bucket named `equipment-images`, then store the project URL and `service_role` key in User Secrets:
+
+```powershell
+dotnet user-secrets set "Supabase:Url" "https://YOUR-PROJECT.supabase.co" `
+  --project .\ASI.Basecode.WebApp\ASI.Basecode.WebApp.csproj
+dotnet user-secrets set "Supabase:ServiceRoleKey" "YOUR_SERVICE_ROLE_KEY" `
+  --project .\ASI.Basecode.WebApp\ASI.Basecode.WebApp.csproj
+```
+
+`Supabase:Bucket` defaults to `equipment-images` and `Supabase:MaxFileBytes` defaults to 2 MiB (the bucket must allow at least that size — for example `10 MB`). Keep the bucket **private**; the app signs each stored object with a short-lived URL at render time using the `service_role` key, so images are not publicly readable. Never commit the `service_role` key. Production deployments use the `Supabase__Url`, `Supabase__Bucket`, and `Supabase__ServiceRoleKey` environment variables.
 
 ## 7. Run the website
 

@@ -1,6 +1,6 @@
-using ASI.Basecode.Data;
+﻿using ASI.Basecode.Data;
 using ASI.Basecode.WebApp;
-using ASI.Basecode.WebApp.Data;
+using ASI.Basecode.Data.Seeding;
 using ASI.Basecode.WebApp.Extensions.Configuration;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -18,11 +18,6 @@ var appBuilder = WebApplication.CreateBuilder(new WebApplicationOptions
     Args = args,
     ContentRootPath = Directory.GetCurrentDirectory(),
 });
-
-appBuilder.Configuration.AddJsonFile(
-    "appsettings.json",
-    optional: true,
-    reloadOnChange: true);
 
 appBuilder.WebHost.UseIISIntegration();
 

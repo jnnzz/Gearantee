@@ -1,5 +1,7 @@
-using ASI.Basecode.Data;
+﻿using ASI.Basecode.Data;
+using ASI.Basecode.Data.Interfaces;
 using ASI.Basecode.Data.Models;
+using ASI.Basecode.Resources.Constants;
 using ASI.Basecode.Services.Interfaces;
 using ASI.Basecode.Services.ServiceModels.Category;
 using ASI.Basecode.Services.Services;
@@ -214,7 +216,7 @@ namespace ASI.Basecode.Tests.Category
         }
 
         [Fact]
-        public async Task UpdateCategoryAsync_ValidInput_UpdatesCategorySuccessfully()
+        public async Task UpdateCategoryAsync_UpdatesMetadataAndPreservesActiveStatus()
         {
             using var database = new SqliteDb();
             using var provider = CreateProvider(database);
@@ -250,7 +252,7 @@ namespace ASI.Basecode.Tests.Category
             Assert.Equal("LAP-NEW", updated.CategoryCode);
             Assert.Equal("Refreshed Laptops", updated.CategoryName);
             Assert.Equal("Updated description", updated.Description);
-            Assert.False(updated.IsActive);
+            Assert.True(updated.IsActive);
         }
 
         [Fact]
@@ -403,6 +405,7 @@ namespace ASI.Basecode.Tests.Category
                 options.UseSqlite(database.Connection));
             services.AddScoped<AsiBasecodeDBContext>(provider =>
                 provider.GetRequiredService<SqliteDashboardDbContext>());
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddIdentityCore<ApplicationUser>()
                 .AddRoles<IdentityRole>()
                 .AddEntityFrameworkStores<SqliteDashboardDbContext>()

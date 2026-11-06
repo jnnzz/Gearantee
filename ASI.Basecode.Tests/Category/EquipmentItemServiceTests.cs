@@ -1,5 +1,8 @@
 using ASI.Basecode.Data;
+using ASI.Basecode.Data.Interfaces;
 using ASI.Basecode.Data.Models;
+using ASI.Basecode.Data.Repositories;
+using ASI.Basecode.Resources.Constants;
 using ASI.Basecode.Services.Interfaces;
 using ASI.Basecode.Services.ServiceModels.EquipmentItem;
 using ASI.Basecode.Services.Services;
@@ -96,7 +99,7 @@ namespace ASI.Basecode.Tests.Category
         }
 
         [Fact]
-        public async Task CreateAsync_WithDuplicateItemCode_IsRejected()
+        public async Task CreateAsync_IgnoresClientCode_AndAllocatesNewIdentifier()
         {
             using var database = new SqliteDb();
             using var provider = CreateProvider(database);
@@ -111,8 +114,11 @@ namespace ASI.Basecode.Tests.Category
 
             var result = await service.CreateAsync(admin.Id, model);
 
-            Assert.False(result.Succeeded);
-            Assert.Contains("code", result.Message, StringComparison.OrdinalIgnoreCase);
+            Assert.True(result.Succeeded, result.Message);
+            var saved = await db.EquipmentItems.SingleAsync(item => item.EquipmentId == result.EquipmentId);
+            Assert.NotEqual(existing.ItemCode, saved.ItemCode);
+            Assert.StartsWith(category.CategoryCode.ToUpperInvariant() + "-001-", saved.ItemCode);
+            Assert.Equal(2, (await db.EquipmentCategories.FindAsync(category.CategoryId)).NextItemNumber);
         }
 
         [Theory]
@@ -288,6 +294,44 @@ namespace ASI.Basecode.Tests.Category
         }
 
         [Fact]
+        public async Task SetArchivedAsync_AfterUncommittedSaveOnSharedContext_PersistsThroughFreshContext()
+        {
+            using var database = new SqliteDb();
+            using var provider = CreateProvider(database);
+            await using var scope = provider.CreateAsyncScope();
+            var db = scope.ServiceProvider.GetRequiredService<AsiBasecodeDBContext>();
+            var admin = await SetupAuthorizedAdminAsync(scope);
+            var category = await CreateCategoryAsync(db);
+            var item = await CreateEquipmentAsync(db, category.CategoryId);
+            var service = scope.ServiceProvider.GetRequiredService<IEquipmentItemService>();
+
+            // Simulate an attempt that saved IsArchived=true but never committed. The shared
+            // DbContext keeps that uncommitted value tracked, exactly like a retried transaction.
+            await using (var failedAttempt = await db.Database.BeginTransactionAsync(
+                System.Data.IsolationLevel.Serializable))
+            {
+                var tracked = await db.EquipmentItems
+                    .SingleAsync(row => row.EquipmentId == item.EquipmentId);
+                tracked.IsArchived = true;
+                await db.SaveChangesAsync();
+                await failedAttempt.RollbackAsync();
+            }
+
+            Assert.Contains(
+                db.ChangeTracker.Entries<EquipmentItem>(),
+                entry => entry.Entity.IsArchived);
+
+            var result = await service.SetArchivedAsync(admin.Id, item.EquipmentId, true);
+
+            Assert.True(result.Succeeded, result.Message);
+            // The retry must rebuild state and write the value; it must not trust the stale
+            // tracked IsArchived=true and report success without touching the database.
+            using var verify = database.Create();
+            Assert.True((await verify.EquipmentItems.AsNoTracking()
+                .SingleAsync(row => row.EquipmentId == item.EquipmentId)).IsArchived);
+        }
+
+        [Fact]
         public async Task CreateAsync_WithoutEquipmentManagePermission_IsForbidden()
         {
             using var database = new SqliteDb();
@@ -303,6 +347,48 @@ namespace ASI.Basecode.Tests.Category
             Assert.True(result.Forbidden);
         }
 
+        [Fact]
+        public async Task Generated_codes_continue_after_legacy_and_deleted_items_and_stay_stable_on_edit()
+        {
+            using var database = new SqliteDb();
+            using var provider = CreateProvider(database);
+            await using var scope = provider.CreateAsyncScope();
+            var db = scope.ServiceProvider.GetRequiredService<AsiBasecodeDBContext>();
+            var admin = await SetupAuthorizedAdminAsync(scope);
+            var category = await CreateCategoryAsync(db);
+            var legacy = await CreateEquipmentAsync(db, category.CategoryId);
+            legacy.ItemCode = category.CategoryCode + "-999-OLD";
+            legacy.IsArchived = true;
+            await db.SaveChangesAsync();
+            var service = scope.ServiceProvider.GetRequiredService<IEquipmentItemService>();
+            var model = NewItemModel(category.CategoryId);
+            model.ItemName = "Asus laptop";
+            model.ItemCode = null;
+            var first = await service.CreateAsync(admin.Id, model);
+            Assert.True(first.Succeeded, first.Message);
+            var saved = await db.EquipmentItems.FindAsync(first.EquipmentId);
+            var code = category.CategoryCode + "-1000-ASU";
+            Assert.Equal(code, saved.ItemCode);
+            model.EquipmentId = first.EquipmentId;
+            model.ItemCode = "TAMPERED";
+            model.ItemName = "Renamed laptop";
+            Assert.True((await service.UpdateAsync(admin.Id, model)).Succeeded);
+            Assert.Equal(code, (await db.EquipmentItems.FindAsync(first.EquipmentId)).ItemCode);
+            Assert.True((await service.SetArchivedAsync(admin.Id, first.EquipmentId, true)).Succeeded);
+            var second = await service.CreateAsync(admin.Id, NewItemModel(category.CategoryId));
+            Assert.True(second.Succeeded, second.Message);
+            Assert.Equal(category.CategoryCode + "-1001-POR", (await db.EquipmentItems.FindAsync(second.EquipmentId)).ItemCode);
+        }
+
+        [Theory]
+        [InlineData("Asus laptop", 1, "LAP-001-ASU")]
+        [InlineData("HP", 2, "LAP-002-HPX")]
+        [InlineData("123 - A", 1000, "LAP-1000-AXX")]
+        public void Generated_code_format_uses_letters_and_expands_the_counter(string name, long number, string expected)
+        {
+            Assert.Equal(expected, ASI.Basecode.Services.Utilities.EquipmentItemCode.Format("lap", number, name));
+        }
+
         private static ServiceProvider CreateProvider(SqliteDb database)
         {
             var services = new ServiceCollection();
@@ -316,6 +402,8 @@ namespace ASI.Basecode.Tests.Category
                 .AddRoles<IdentityRole>()
                 .AddEntityFrameworkStores<SqliteDashboardDbContext>()
                 .AddDefaultTokenProviders();
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
+            services.AddScoped<IEquipmentItemRepository, EquipmentItemRepository>();
             services.AddScoped<ICategoryService, CategoryService>();
             services.AddScoped<IEquipmentItemService, EquipmentItemService>();
             return services.BuildServiceProvider();
@@ -430,7 +518,6 @@ namespace ASI.Basecode.Tests.Category
             var profile = new BorrowerProfile
             {
                 UserId = borrower.Id,
-                SchoolId = "SCHOOL-" + Guid.NewGuid().ToString("N")[..8],
                 Department = "Testing",
                 IsEligible = true
             };

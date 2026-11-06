@@ -1,12 +1,11 @@
 @using ASI.Basecode.Data.Models
-@using Microsoft.Extensions.Hosting
-@inject IHostEnvironment HostEnvironment
 @{
     var isAdmin = User.IsInRole(DomainValues.Roles.Administrator);
     var isCustodian = User.IsInRole(DomainValues.Roles.Custodian);
     var isBorrower = User.IsInRole(DomainValues.Roles.Borrower);
     var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
     var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+    var catalogActive = currentController == "Catalog" || (currentController == "Reservation" && currentAction == "Create");
     var workspace = currentAction switch
     {
         "Borrower" => "Borrower workspace",
@@ -20,49 +19,24 @@
     var schoolId = User.FindFirst("school_id")?.Value;
     var department = User.FindFirst("department")?.Value;
 }
-<aside id="app-sidebar" class="fixed inset-y-0 left-0 z-40 flex w-64 -translate-x-full flex-col bg-gray-100 px-5 py-6 transition-transform duration-200 lg:static lg:translate-x-0" aria-label="Main navigation">
-    <a asp-controller="Dashboard" asp-action="Index" class="mb-8 inline-flex items-center focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary" aria-label="Gearantee dashboard">
-        <img src="~/img/gearantee-logo.png" alt="Gearantee — Campus equipment borrowing and reservation system" class="h-auto w-48" />
+<aside id="app-sidebar" class="workspace-sidebar fixed inset-y-0 left-0 z-40 flex -translate-x-full flex-col transition-transform duration-200 lg:translate-x-0" aria-label="Main navigation">
+    <a asp-controller="Dashboard" asp-action="Index" class="sidebar-brand" aria-label="Gearantee dashboard">
+        @await Html.PartialAsync("_BrandLogo")
     </a>
-
-    <div class="mb-8">
-        <p class="eyebrow mb-3">Signed in as</p>
-        <div class="flex min-w-0 items-center gap-3">
-            <span class="flex size-10 shrink-0 items-center justify-center bg-tint font-display text-sm font-semibold text-primary-strong" aria-hidden="true">@initials</span>
-            <div class="min-w-0">
-                <p class="truncate text-sm font-semibold text-ink">@displayName</p>
-                <p class="truncate text-xs text-gray-500">
-                    @if (isBorrower && !string.IsNullOrWhiteSpace(schoolId))
-                    {
-                        @schoolId
-                        @if (!string.IsNullOrWhiteSpace(department)) { <text> · @department</text> }
-                    }
-                    else
-                    {
-                        @roleTitle
-                    }
-                </p>
-            </div>
-        </div>
-    </div>
-
-    <p class="eyebrow mb-3">@workspace</p>
-    <nav class="flex-1 space-y-1" aria-label="Workspace">
+    <div class="sidebar-card">
+    <p class="eyebrow sidebar-workspace-label">@workspace</p>
+    <nav class="workspace-nav" aria-label="Workspace">
         <a asp-controller="Dashboard" asp-action="Index" class="nav-item @(currentController == "Dashboard" ? "nav-item-active" : "")">
             @await Html.PartialAsync("Icons/_Icon", "dashboard")<span>Dashboard</span>
         </a>
 
         @if (User.HasClaim("permission", DomainValues.Permissions.EquipmentBrowse))
         {
-            <a asp-controller="Catalog" asp-action="Index" class="nav-item @(currentController == "Catalog" ? "nav-item-active" : "")" aria-current="@(currentController == "Catalog" ? "page" : null)">@await Html.PartialAsync("Icons/_Icon", "equipment")<span>Equipment catalog</span></a>
-        }
-        @if (isBorrower && User.HasClaim("permission", DomainValues.Permissions.ReservationCreate))
-        {
-            <a asp-controller="Catalog" asp-action="Index" class="nav-item @(currentController == "Reservation" && currentAction == "Create" ? "nav-item-active" : "")" aria-current="@(currentController == "Reservation" && currentAction == "Create" ? "page" : null)">@await Html.PartialAsync("Icons/_Icon", "calendar")<span>New reservation</span></a>
+            <a asp-controller="Catalog" asp-action="Index" class="nav-item @(catalogActive ? "nav-item-active" : "")" aria-current="@(catalogActive ? "page" : null)">@await Html.PartialAsync("Icons/_Icon", "equipment")<span>Equipment catalog</span></a>
         }
         @if (isBorrower)
         {
-            <a asp-controller="Reservation" asp-action="Index" class="nav-item @(currentController == "Reservation" && currentAction != "Create" ? "nav-item-active" : "")" aria-current="@(currentController == "Reservation" && currentAction != "Create" ? "page" : null)">@await Html.PartialAsync("Icons/_Icon", "review")<span>My reservations</span></a>
+            <a asp-controller="Reservation" asp-action="Index" class="nav-item @(currentController == "Reservation" && currentAction != "Create" ? "nav-item-active" : "")" aria-current="@(currentController == "Reservation" && currentAction != "Create" ? "page" : null)">@await Html.PartialAsync("Icons/_Icon", "review")<span>My borrowing history</span></a>
         }
         @if (User.HasClaim("permission", DomainValues.Permissions.EquipmentBrowse))
         {
@@ -90,28 +64,37 @@
         {
             <a asp-controller="Users" asp-action="Index" class="nav-item @(currentController == "Users" ? "nav-item-active" : "")" aria-current="@(currentController == "Users" ? "page" : null)">@await Html.PartialAsync("Icons/_Icon", "users")<span>Users &amp; roles</span></a>
         }
-        @if (User.HasClaim("permission", DomainValues.Permissions.HistoryView))
+        @if (User.HasClaim("permission", DomainValues.Permissions.HistoryView) && (!isBorrower || isAdmin || isCustodian))
         {
-            <a asp-controller="BorrowingHistory" asp-action="Index" class="nav-item @(currentController == "BorrowingHistory" ? "nav-item-active" : "")" aria-current="@(currentController == "BorrowingHistory" ? "page" : null)">@await Html.PartialAsync("Icons/_Icon", "report")<span>Borrowing history</span></a>
+            <a asp-controller="BorrowingHistory" asp-action="Index" class="nav-item @(currentController == "BorrowingHistory" ? "nav-item-active" : "")" aria-current="@(currentController == "BorrowingHistory" ? "page" : null)">@await Html.PartialAsync("Icons/_Icon", "report")<span>Borrowing reports</span></a>
         }
     </nav>
 
-    @if (HostEnvironment.IsDevelopment() && (isBorrower || isCustodian || isAdmin))
-    {
-        <div class="border-t border-gray-200 pt-5">
-            <p class="eyebrow mb-2">Switch role · demo</p>
-            <div class="flex flex-wrap gap-2">
-                @if (isBorrower) { <a asp-controller="Dashboard" asp-action="Borrower" class="role-switch">Brw</a> }
-                @if (isCustodian) { <a asp-controller="Dashboard" asp-action="Custodian" class="role-switch">Cus</a> }
-                @if (isAdmin) { <a asp-controller="Dashboard" asp-action="Administrator" class="role-switch">Adm</a> }
-            </div>
+    <div class="sidebar-footer">
+    <div class="sidebar-account">
+        <span class="sidebar-avatar" aria-hidden="true">@initials</span>
+        <div class="min-w-0">
+            <p class="text-sm font-semibold text-ink break-words">@displayName</p>
+            <p class="mt-1 text-xs text-gray-500 break-words">
+                @if (isBorrower && !string.IsNullOrWhiteSpace(schoolId))
+                {
+                    @schoolId
+                    @if (!string.IsNullOrWhiteSpace(department)) { <text> · @department</text> }
+                }
+                else
+                {
+                    @roleTitle
+                }
+            </p>
         </div>
-    }
+    </div>
 
-    <form asp-controller="Account" asp-action="SignOutUser" method="post" class="mt-5 border-t border-gray-200 pt-4">
+    <form asp-controller="Account" asp-action="SignOutUser" method="post" class="sidebar-signout">
         @Html.AntiForgeryToken()
         <button type="submit" class="flex w-full items-center gap-3 px-2 py-2 text-left text-sm font-semibold text-gray-700 hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
             @await Html.PartialAsync("Icons/_Icon", "signout")<span>Sign out</span>
         </button>
     </form>
+    </div>
+    </div>
 </aside>

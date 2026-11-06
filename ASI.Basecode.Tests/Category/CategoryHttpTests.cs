@@ -1,8 +1,13 @@
 using ASI.Basecode.Data;
+using ASI.Basecode.Data.Interfaces;
 using ASI.Basecode.Data.Models;
+using ASI.Basecode.Data.Repositories;
+using ASI.Basecode.Resources.Constants;
 using ASI.Basecode.Services.Interfaces;
 using ASI.Basecode.Services.ServiceModels.Category;
 using ASI.Basecode.Services.Services;
+using ASI.Basecode.Services.Configuration;
+using ASI.Basecode.Tests.Common;
 using ASI.Basecode.Tests.Dashboard;
 using ASI.Basecode.WebApp.Controllers;
 using Microsoft.AspNetCore.Authentication;
@@ -16,6 +21,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -30,7 +36,7 @@ namespace ASI.Basecode.Tests.Category
     public class CategoryHttpTests
     {
         [Fact]
-        public async Task HttpCreate_WithActiveChecked_HiddenFirst_PersistsActiveTrue()
+        public async Task HttpCreate_WithForgedInactiveValue_CreatesActiveByDefault()
         {
             await using var site = await CategoryHttpSite.CreateAsync();
             var token = await site.Token("/Categories");
@@ -57,7 +63,7 @@ namespace ASI.Basecode.Tests.Category
         }
 
         [Fact]
-        public async Task HttpCreate_WithActiveUnchecked_PersistsActiveFalse()
+        public async Task HttpCreate_WithInactiveValue_StillCreatesActive()
         {
             await using var site = await CategoryHttpSite.CreateAsync();
             var token = await site.Token("/Categories");
@@ -79,11 +85,11 @@ namespace ASI.Basecode.Tests.Category
             var db = scope.ServiceProvider.GetRequiredService<AsiBasecodeDBContext>();
             var category = await db.EquipmentCategories.SingleOrDefaultAsync(c => c.CategoryCode == "HTTP-INACT");
             Assert.NotNull(category);
-            Assert.False(category.IsActive);
+            Assert.True(category.IsActive);
         }
 
         [Fact]
-        public async Task HttpEdit_WithActiveChecked_HiddenFirst_PersistsActiveTrue()
+        public async Task HttpEdit_WithForgedActiveValue_PreservesInactiveStatus()
         {
             await using var site = await CategoryHttpSite.CreateAsync();
             long categoryId;
@@ -120,13 +126,13 @@ namespace ASI.Basecode.Tests.Category
                 var db = scope.ServiceProvider.GetRequiredService<AsiBasecodeDBContext>();
                 var updated = await db.EquipmentCategories.FindAsync(categoryId);
                 Assert.NotNull(updated);
-                Assert.True(updated.IsActive);
+                Assert.False(updated.IsActive);
                 Assert.Equal("Edit Active Updated", updated.CategoryName);
             }
         }
 
         [Fact]
-        public async Task HttpEdit_WithActiveUnchecked_PersistsActiveFalse()
+        public async Task HttpEdit_WithForgedInactiveValue_PreservesActiveStatus()
         {
             await using var site = await CategoryHttpSite.CreateAsync();
             long categoryId;
@@ -162,7 +168,7 @@ namespace ASI.Basecode.Tests.Category
                 var db = verifyScope.ServiceProvider.GetRequiredService<AsiBasecodeDBContext>();
                 var updated = await db.EquipmentCategories.FindAsync(categoryId);
                 Assert.NotNull(updated);
-                Assert.False(updated.IsActive);
+                Assert.True(updated.IsActive);
             }
         }
 
@@ -252,17 +258,15 @@ namespace ASI.Basecode.Tests.Category
         }
 
         [Fact]
-        public async Task RenderedModals_HaveHiddenFirstCheckboxOrder()
+        public async Task CategoryMetadataModals_DoNotExposeActiveCheckboxes()
         {
             await using var site = await CategoryHttpSite.CreateAsync();
             var html = await site.Client.GetStringAsync("/Categories?tab=categories");
 
-            // Both create and edit modal checkbox labels must render hidden input before checkbox
-            var createMatch = Regex.Match(html, @"<input[^>]+name=""IsActive""[^>]+value=""false""[^>]*>\s*<input[^>]+id=""create-category-active""[^>]+value=""true""");
-            Assert.True(createMatch.Success, "Create modal must place hidden IsActive=false before checkbox");
-
-            var editMatch = Regex.Match(html, @"<input[^>]+name=""IsActive""[^>]+value=""false""[^>]*>\s*<input[^>]+id=""edit-category-active""[^>]+value=""true""");
-            Assert.True(editMatch.Success, "Edit modal must place hidden IsActive=false before checkbox");
+            Assert.DoesNotContain("create-category-active", html);
+            Assert.DoesNotContain("edit-category-active", html);
+            Assert.Contains("New categories are active by default", html);
+            Assert.Contains("SetActive", html);
         }
 
         [Fact]
@@ -313,9 +317,8 @@ namespace ASI.Basecode.Tests.Category
             // 4. Script inspection: textContent is used in BOTH status branches and innerHTML is absent
             Assert.DoesNotContain("message.innerHTML", html);
             Assert.DoesNotContain("innerHTML =", html);
-            Assert.Contains("actionText.textContent = 'Are you sure you want to deactivate';", html);
-            Assert.Contains("actionText.textContent = 'Are you sure you want to activate';", html);
-            Assert.Contains("nameNode.textContent = catName;", html);
+            Assert.Contains(".textContent = active ? 'Are you sure you want to deactivate' : 'Are you sure you want to activate';", html);
+            Assert.Contains("document.getElementById('status-category-name').textContent = button.dataset.name || 'this category';", html);
 
             // 5. Repeat-open DOM simulation:
             // Simulating open Deactivate -> cancel -> open Deactivate again -> cancel -> open Activate
@@ -359,7 +362,7 @@ namespace ASI.Basecode.Tests.Category
         }
 
         [Fact]
-        public async Task HttpCreateEquipment_PersistsCatalogImageUrl()
+        public async Task EquipmentItemPagination_RendersThreePagesAndPreservesFilters()
         {
             await using var site = await CategoryHttpSite.CreateAsync();
             long categoryId;
@@ -368,78 +371,43 @@ namespace ASI.Basecode.Tests.Category
                 var db = scope.ServiceProvider.GetRequiredService<AsiBasecodeDBContext>();
                 var category = new EquipmentCategory
                 {
-                    CategoryCode = "HTTP-EQ-IMG",
-                    CategoryName = "HTTP Equipment Images",
+                    CategoryCode = "HTTP-EQ-PAGING",
+                    CategoryName = "HTTP Equipment Paging",
                     IsActive = true
                 };
                 db.EquipmentCategories.Add(category);
                 await db.SaveChangesAsync();
                 categoryId = category.CategoryId;
-            }
 
-            var token = await site.Token("/Categories/CreateEquipment");
-            var imageUrl = "https://assets.example.test/http-projector.jpg";
-            var form = new FormUrlEncodedContent(new[]
-            {
-                new KeyValuePair<string, string>("__RequestVerificationToken", token),
-                new KeyValuePair<string, string>("CategoryId", categoryId.ToString()),
-                new KeyValuePair<string, string>("ItemCode", "HTTP-EQ-IMAGE"),
-                new KeyValuePair<string, string>("ItemName", "HTTP projector"),
-                new KeyValuePair<string, string>("Location", "Test store"),
-                new KeyValuePair<string, string>("ConditionStatus", DomainValues.ReturnConditions.Good),
-                new KeyValuePair<string, string>("ItemStatus", DomainValues.EquipmentStatuses.Available),
-                new KeyValuePair<string, string>("ImageUrl", imageUrl)
-            });
-
-            var response = await site.Client.PostAsync("/Categories/CreateEquipment", form);
-
-            Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
-            using var verifyScope = site.Environment.Provider.CreateScope();
-            var verifyDb = verifyScope.ServiceProvider.GetRequiredService<AsiBasecodeDBContext>();
-            var saved = await verifyDb.EquipmentItems.SingleAsync(item => item.ItemCode == "HTTP-EQ-IMAGE");
-            Assert.Equal(imageUrl, saved.ImageUrl);
-        }
-
-        [Fact]
-        public async Task HttpCreateEquipment_InvalidImageUrl_RedisplaysFormWithoutSaving()
-        {
-            await using var site = await CategoryHttpSite.CreateAsync();
-            long categoryId;
-            using (var scope = site.Environment.Provider.CreateScope())
-            {
-                var db = scope.ServiceProvider.GetRequiredService<AsiBasecodeDBContext>();
-                var category = new EquipmentCategory
+                for (var i = 1; i <= 21; i++)
                 {
-                    CategoryCode = "HTTP-EQ-BADIMG",
-                    CategoryName = "HTTP Invalid Equipment Image",
-                    IsActive = true
-                };
-                db.EquipmentCategories.Add(category);
+                    db.EquipmentItems.Add(new EquipmentItem
+                    {
+                        CategoryId = categoryId,
+                        ItemCode = $"HTTP-PAGE-EQ-{i:D2}",
+                        ItemName = $"Page target {i:D2}",
+                        Location = "Paging test store",
+                        ConditionStatus = DomainValues.ReturnConditions.Good,
+                        ItemStatus = DomainValues.EquipmentStatuses.Available
+                    });
+                }
+
                 await db.SaveChangesAsync();
-                categoryId = category.CategoryId;
             }
 
-            var token = await site.Token("/Categories/CreateEquipment");
-            var form = new FormUrlEncodedContent(new[]
-            {
-                new KeyValuePair<string, string>("__RequestVerificationToken", token),
-                new KeyValuePair<string, string>("CategoryId", categoryId.ToString()),
-                new KeyValuePair<string, string>("ItemCode", "HTTP-EQ-BADIMAGE"),
-                new KeyValuePair<string, string>("ItemName", "Invalid image item"),
-                new KeyValuePair<string, string>("Location", "Test store"),
-                new KeyValuePair<string, string>("ConditionStatus", DomainValues.ReturnConditions.Good),
-                new KeyValuePair<string, string>("ItemStatus", DomainValues.EquipmentStatuses.Available),
-                new KeyValuePair<string, string>("ImageUrl", "javascript:alert(1)")
-            });
+            var path = $"/Categories/Index?tab=equipment&equipmentSearch=Page%20target&equipmentStatus=Available&equipmentCategoryId={categoryId}&equipmentPage=2";
+            var html = await site.Client.GetStringAsync(path);
 
-            var response = await site.Client.PostAsync("/Categories/CreateEquipment", form);
-            var html = await response.Content.ReadAsStringAsync();
-
-            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-            Assert.Contains("HTTPS URL", html, StringComparison.OrdinalIgnoreCase);
-            using var verifyScope = site.Environment.Provider.CreateScope();
-            var verifyDb = verifyScope.ServiceProvider.GetRequiredService<AsiBasecodeDBContext>();
-            Assert.False(await verifyDb.EquipmentItems.AnyAsync(item => item.ItemCode == "HTTP-EQ-BADIMAGE"));
+            Assert.Contains("Page 2 of 3", html);
+            Assert.Contains("HTTP-PAGE-EQ-11", html);
+            Assert.Contains("HTTP-PAGE-EQ-20", html);
+            Assert.DoesNotContain("HTTP-PAGE-EQ-01", html);
+            Assert.Contains("equipmentPage=1", html);
+            Assert.Contains("equipmentPage=3", html);
+            Assert.Contains("equipmentSearch=Page", html);
+            Assert.Contains("equipmentStatus=Available", html);
+            Assert.Contains($"equipmentCategoryId={categoryId}", html);
+            Assert.Contains("10 per page", html);
         }
 
         [Fact]
@@ -526,6 +494,8 @@ namespace ASI.Basecode.Tests.Category
             services.AddIdentityCore<ApplicationUser>().AddRoles<IdentityRole>()
                 .AddEntityFrameworkStores<SqliteDashboardDbContext>().AddDefaultTokenProviders();
             services.AddScoped<ICategoryService, CategoryService>();
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
+            services.AddScoped<IEquipmentItemRepository, EquipmentItemRepository>();
             services.AddScoped<IEquipmentItemService, EquipmentItemService>();
         }
 
@@ -599,6 +569,7 @@ namespace ASI.Basecode.Tests.Category
         public CategoryTestEnvironment Environment { get; private set; }
         public WebApplication App { get; private set; }
         public HttpClient Client { get; private set; }
+        public FakeImageStorageService ImageStorage { get; private set; }
 
         public static async Task<CategoryHttpSite> CreateAsync()
         {
@@ -613,6 +584,15 @@ namespace ASI.Basecode.Tests.Category
                 builder.Logging.ClearProviders();
                 builder.WebHost.UseUrls("http://127.0.0.1:0");
                 site.Environment.ConfigureServices(builder.Services);
+                builder.Services.Configure<SupabaseOptions>(options =>
+                {
+                    options.Url = "https://test-project.supabase.co";
+                    options.Bucket = "equipment-images";
+                    options.ServiceRoleKey = "test-service-role-key";
+                });
+                builder.Services.AddSingleton<FakeImageStorageService>();
+                builder.Services.AddScoped<IImageStorageService>(
+                    provider => provider.GetRequiredService<FakeImageStorageService>());
                 builder.Services.AddHttpContextAccessor();
                 builder.Services.AddControllersWithViews().AddApplicationPart(typeof(CategoriesController).Assembly);
                 builder.Services.AddAuthentication("Test")
@@ -621,6 +601,7 @@ namespace ASI.Basecode.Tests.Category
                     policy => policy.RequireClaim("permission", DomainValues.Permissions.EquipmentManage)));
 
                 site.App = builder.Build();
+                site.ImageStorage = site.App.Services.GetRequiredService<FakeImageStorageService>();
                 site.App.UseDeveloperExceptionPage();
                 site.App.UseRouting();
                 site.App.UseAuthentication();

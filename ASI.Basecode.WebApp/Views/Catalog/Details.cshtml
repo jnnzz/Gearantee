@@ -1,5 +1,6 @@
 @model ASI.Basecode.Services.ServiceModels.Catalog.CatalogItemDetailsViewModel
 @using ASI.Basecode.WebApp.Models.Dashboard
+@inject ASI.Basecode.Services.Interfaces.IImageStorageService ImageStorage
 @{
     string OrDash(string value) => string.IsNullOrWhiteSpace(value) ? "—" : value;
     var statusLabel = Model.AvailabilityStatus == DomainValues.EquipmentStatuses.Borrowed ? "Borrowed" : "Available";
@@ -11,23 +12,23 @@
 
 <a asp-action="Index" class="mb-6 inline-flex text-sm font-semibold text-primary-strong underline underline-offset-4">← Back to catalog</a>
 
-<div class="grid items-start gap-8 xl:grid-cols-[minmax(0,1.1fr)_minmax(360px,0.9fr)]">
-    <section aria-labelledby="item-heading" class="min-w-0 border border-gray-200 bg-white">
+<div class="detail-grid">
+    <section aria-label="Equipment details" class="surface">
         @if (!string.IsNullOrWhiteSpace(Model.ImageUrl))
         {
-            <img src="@Model.ImageUrl" alt="@Model.ItemName" class="aspect-[16/7] w-full bg-white object-contain" />
+            var imageSrc = await ImageStorage.CreateSignedUrlAsync(Model.ImageUrl, System.TimeSpan.FromMinutes(60));
+            <img src="@imageSrc" alt="@Model.ItemName" class="detail-image" />
         }
         else
         {
-            <div class="flex aspect-[16/7] w-full items-center justify-center bg-primary text-white" aria-label="No equipment image available">
-                @await Html.PartialAsync("../Shared/Icons/_Icon", "equipment")
+            <div class="equipment-placeholder" aria-label="No equipment image available">
+                <partial name="_EquipmentPlaceholder" model="Model.CategoryName" />
             </div>
         }
         <div class="p-5">
             <div class="flex flex-wrap items-start justify-between gap-3">
                 <div class="min-w-0">
                     <p class="item-code">@Model.ItemCode</p>
-                    <h2 id="item-heading" class="mt-1 font-display text-2xl font-semibold text-ink">@Model.ItemName</h2>
                 </div>
                 <partial name="Components/_StatusBadge" model="statusLabel" />
             </div>
@@ -48,12 +49,12 @@
                 {
                     <a asp-controller="Reservation" asp-action="Create" asp-route-equipmentId="@Model.EquipmentId" asp-route-from="@fromValue" asp-route-to="@toValue" class="btn-primary">Reserve this item</a>
                 }
-                <a asp-controller="AvailabilityCalendar" asp-action="Index" asp-route-equipmentId="@Model.EquipmentId" class="inline-flex min-h-10 items-center border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-700">View schedule</a>
+                <a asp-controller="AvailabilityCalendar" asp-action="Index" asp-route-equipmentId="@Model.EquipmentId" class="btn-secondary inline-flex min-h-10 items-center border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-700">View schedule</a>
             </div>
         </div>
     </section>
 
-    <section aria-labelledby="schedule-heading" class="min-w-0">
+    <section aria-labelledby="schedule-heading" class="surface">
         <div class="mb-4 flex flex-wrap items-end justify-between gap-3 border-b border-gray-200 pb-3">
             <h2 id="schedule-heading" class="font-display text-xl font-semibold text-ink">Booked times</h2>
             <p class="text-xs text-gray-500">Philippine time · pick a time outside these</p>
@@ -68,7 +69,7 @@
                 @foreach (var window in Model.BookedWindows)
                 {
                     <li class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 text-sm">
-                        <span class="text-gray-700">@window.StartLocal.ToString("ddd d MMM · HH:mm") → @window.EndLocal.ToString("ddd d MMM · HH:mm")</span>
+                        <span class="text-gray-700">@window.StartLabel → @window.EndLabel</span>
                         <partial name="Components/_StatusBadge" model="window.Label" />
                     </li>
                 }

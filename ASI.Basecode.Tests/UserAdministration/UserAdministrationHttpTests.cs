@@ -1,5 +1,6 @@
-using ASI.Basecode.Data;
+﻿using ASI.Basecode.Data;
 using ASI.Basecode.Data.Models;
+using ASI.Basecode.Resources.Constants;
 using ASI.Basecode.WebApp.Controllers;
 using ASI.Basecode.Services.Interfaces;
 using ASI.Basecode.Services.ServiceModels.UserAdministration;
@@ -163,9 +164,49 @@ namespace ASI.Basecode.Tests.UserAdministration
                 .Select(match => new Uri(site.Client.BaseAddress, WebUtility.HtmlDecode(match.Groups[1].Value)))
                 .Select(uri => QueryHelpers.ParseQuery(uri.Query))
                 .Where(query => query.ContainsKey("page") && query.ContainsKey("search")).ToList();
-            Assert.Equal(2, links.Count);
+            Assert.NotEmpty(links);
             Assert.All(links, query => Assert.Equal(search, query["search"].ToString()));
-            Assert.Equal(new[] { "1", "3" }, links.Select(query => query["page"].ToString()).OrderBy(value => value));
+            Assert.Equal(new[] { "1", "3" }, links.Select(query => query["page"].ToString()).Distinct().OrderBy(value => value));
+        }
+
+        [Fact]
+        public async Task Pagination_limits_rendered_rows_and_navigates_filtered_results_to_the_last_page()
+        {
+            await using var site = await AdministrationHttpSite.CreateAsync();
+            using (var scope = site.Environment.Provider.CreateScope())
+            {
+                var rows = Enumerable.Range(1, 23).Select(index =>
+                {
+                    var account = UserImportServiceTests.Account($"PAGING-{index:00}");
+                    account.FirstName = "Pagination";
+                    return new UserImportRow(index + 1, account);
+                }).ToArray();
+                Assert.Equal(23, (await scope.ServiceProvider.GetRequiredService<IUserAdministrationService>()
+                    .ImportAsync(site.Environment.ActorId, rows)).CreatedCount);
+            }
+            var url = "/Users/Index?search=Pagination";
+            for (var page = 1; page <= 3; page++)
+            {
+                var html = await site.Client.GetStringAsync(url);
+                var body = Regex.Match(html, "<tbody[^>]*>(.*?)</tbody>", RegexOptions.Singleline).Groups[1].Value;
+                Assert.Equal(page == 3 ? 3 : 10, Regex.Matches(body, "<tr\\b").Count);
+                Assert.Contains($"Page {page} of 3", html);
+                Assert.Contains("10 per page", html);
+                SavePreview($"pagination-page-{page}.html", html);
+                var next = Regex.Matches(html, "<a\\b[^>]*>")
+                    .Cast<Match>().SingleOrDefault(match => match.Value.Contains("rel=\"next\""));
+                if (page == 3)
+                {
+                    Assert.Null(next);
+                    Assert.Contains("aria-disabled=\"true\">Next", html);
+                    continue;
+                }
+                Assert.NotNull(next);
+                url = WebUtility.HtmlDecode(Regex.Match(next.Value, "href=\"([^\"]+)\"").Groups[1].Value);
+                var query = QueryHelpers.ParseQuery(new Uri(site.Client.BaseAddress, url).Query);
+                Assert.Equal("Pagination", query["search"].ToString());
+                Assert.Equal((page + 1).ToString(), query["page"].ToString());
+            }
         }
 
         private static MultipartFormDataContent Upload(string csv, string token)

@@ -7,7 +7,6 @@ namespace ASI.Basecode.Data.Models
     {
         public long BorrowerProfileId { get; set; }
         public string UserId { get; set; }
-        public string SchoolId { get; set; }
         public string Department { get; set; }
         public string ContactNumber { get; set; }
         public bool IsEligible { get; set; }

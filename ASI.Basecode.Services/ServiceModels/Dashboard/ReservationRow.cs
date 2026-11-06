@@ -13,6 +13,9 @@ namespace ASI.Basecode.Services.ServiceModels.Dashboard
         public string ContactNumber { get; set; }
         public DateTime StartUtc { get; set; }
         public DateTime EndUtc { get; set; }
+        public bool IsFullDay { get; set; }
+        public string StartLabel => Utilities.ReservationDates.StartLabel(Utilities.ManilaClock.ToLocal(StartUtc), IsFullDay);
+        public string EndLabel => Utilities.ReservationDates.EndLabel(Utilities.ManilaClock.ToLocal(EndUtc), IsFullDay);
         public DateTime RequestedAtUtc { get; set; }
         public string Status { get; set; }
         public string DisplayStatus { get; set; }

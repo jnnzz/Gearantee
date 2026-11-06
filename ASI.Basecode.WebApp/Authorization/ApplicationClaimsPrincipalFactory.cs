@@ -60,16 +60,15 @@ namespace ASI.Basecode.WebApp.Authorization
                 .Where(profile => profile.UserId == user.Id)
                 .Select(profile => new
                 {
-                    profile.SchoolId,
                     profile.Department
                 })
                 .FirstOrDefaultAsync();
 
             if (borrowerProfile != null)
             {
-                if (!string.IsNullOrWhiteSpace(borrowerProfile.SchoolId))
+                if (!string.IsNullOrWhiteSpace(user.UserCode))
                 {
-                    identity.AddClaim(new Claim("school_id", borrowerProfile.SchoolId));
+                    identity.AddClaim(new Claim("school_id", user.UserCode));
                 }
 
                 if (!string.IsNullOrWhiteSpace(borrowerProfile.Department))

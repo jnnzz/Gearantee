@@ -1,50 +1,51 @@
 @model ASI.Basecode.Services.ServiceModels.Reservations.ReservationIndexViewModel
 @using ASI.Basecode.WebApp.Models.Dashboard
 @{
-    var successMessage = ViewData["SuccessMessage"] as string;
-    var errorMessage = ViewData["ErrorMessage"] as string;
     var activeTab = Model.Tabs.FirstOrDefault(tab => tab.Value == Model.StatusFilter);
 }
 
-@if (!string.IsNullOrWhiteSpace(successMessage))
-{
-    <div class="mb-5 border-l-4 border-primary bg-white px-4 py-3 text-sm" role="status">@successMessage</div>
-}
-@if (!string.IsNullOrWhiteSpace(errorMessage))
-{
-    <div class="mb-5 border-l-4 border-ink bg-white px-4 py-3 text-sm" role="alert">@errorMessage</div>
-}
 
-<section aria-labelledby="reservations-heading" class="min-w-0">
+<section aria-label="Borrowing history results" class="role-page min-w-0">
     <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
-            <h2 id="reservations-heading" class="font-display text-2xl font-semibold">My reservations</h2>
             <p class="mt-1 text-xs text-gray-500">Newest requests first · times are Philippine time</p>
         </div>
-        @if (User.HasClaim("permission", DomainValues.Permissions.ReservationCreate))
+        @if (User.HasClaim("permission", DomainValues.Permissions.HistoryView) &&
+            !User.IsInRole(DomainValues.Roles.Administrator) && !User.IsInRole(DomainValues.Roles.Custodian))
         {
-            <a asp-controller="Catalog" asp-action="Index" class="btn-primary min-h-10">+ New reservation</a>
+            <a asp-controller="BorrowingHistory" asp-action="Index" class="btn-secondary">Borrowing report</a>
+        }
+        @if (User.HasClaim("permission", DomainValues.Permissions.ReservationCreate) &&
+            User.HasClaim("permission", DomainValues.Permissions.EquipmentBrowse))
+        {
+            <a asp-controller="Catalog" asp-action="Index" class="btn-primary min-h-10">Browse equipment</a>
         }
     </div>
 
-    <nav class="mb-4 flex flex-wrap gap-2" aria-label="Filter by status">
+    <nav class="filter-tabs" aria-label="Filter by status">
         @foreach (var tab in Model.Tabs)
         {
             var isActive = tab.Value == Model.StatusFilter;
-            <a asp-action="Index" asp-route-status="@(string.IsNullOrEmpty(tab.Value) ? null : tab.Value)"
+            <a asp-action="Index" asp-route-status="@(string.IsNullOrEmpty(tab.Value) ? null : tab.Value)" asp-route-search="@Model.Search"
                class="border px-3 py-2 text-sm @(isActive ? "border-primary bg-tint font-semibold text-primary-strong" : "border-gray-200 bg-white text-gray-700")"
                aria-current="@(isActive ? "page" : null)">@tab.Label <span class="ml-1 text-xs text-gray-500">@tab.Count</span></a>
         }
     </nav>
+    <form method="get" asp-action="Index" class="filter-panel filter-panel--compact" role="search">
+        <input type="hidden" name="status" value="@Model.StatusFilter" />
+        <div class="flex-1"><label class="sr-only" for="borrowing-search">Search my borrowing history</label><input id="borrowing-search" type="search" name="search" value="@Model.Search" maxlength="100" class="input w-full" placeholder="Reservation code, equipment name or item code" /></div>
+        <button type="submit" class="btn-primary">Search</button>
+        <a asp-action="Index" asp-route-status="@Model.StatusFilter" class="btn-secondary">Clear</a>
+    </form>
 
     @if (Model.Items.Count == 0)
     {
-        var heading = string.IsNullOrEmpty(Model.StatusFilter) ? "No reservations yet" : $"No {activeTab?.Label.ToLowerInvariant()} reservations";
-        <partial name="Components/_EmptyState" model="@(new EmptyStateModel { Heading = heading, Message = "Browse the equipment catalog and pick an item to request it." })" />
+        var heading = !string.IsNullOrEmpty(Model.Search) ? "No matching reservations" : string.IsNullOrEmpty(Model.StatusFilter) ? "No reservations yet" : $"No {activeTab?.Label.ToLowerInvariant()} reservations";
+        <partial name="Components/_EmptyState" model="@(new EmptyStateModel { Heading = heading, Message = string.IsNullOrEmpty(Model.Search) ? "Browse the equipment catalog and pick an item to request it." : "Try another reservation code, item name or item code." })" />
     }
     else
     {
-        <div class="overflow-x-auto border border-gray-200 bg-white">
+        <div class="table-surface">
             <table class="w-full min-w-[680px] text-left text-sm">
                 <thead class="border-b border-gray-200 bg-gray-50 font-display text-[11px] uppercase tracking-[0.12em] text-gray-700">
                     <tr>
@@ -68,8 +69,8 @@
                                 <p class="mt-1 text-xs text-gray-500">@reservation.ItemCode · @reservation.CategoryName</p>
                             </td>
                             <td class="px-3 py-3 text-gray-700">
-                                @reservation.StartLocal.ToString("ddd d MMM · HH:mm")<br />
-                                <span class="text-xs text-gray-500">to @reservation.EndLocal.ToString("ddd d MMM · HH:mm")</span>
+                                @reservation.StartLabel<br />
+                                <span class="text-xs text-gray-500">to @reservation.EndLabel</span>
                             </td>
                             <td class="px-3 py-3"><partial name="Components/_StatusBadge" model="reservation.DisplayStatus" /></td>
                             <td class="px-3 py-3 text-right">
@@ -81,18 +82,11 @@
             </table>
         </div>
 
-        <nav class="mt-6 flex items-center justify-between text-xs text-gray-500" aria-label="Reservation pages">
-            <span>Page @Model.Page of @Model.TotalPages · @Model.TotalCount reservation@(Model.TotalCount == 1 ? "" : "s")</span>
-            <div class="flex gap-2">
-                @if (Model.Page > 1)
-                {
-                    <a asp-action="Index" asp-route-status="@(string.IsNullOrEmpty(Model.StatusFilter) ? null : Model.StatusFilter)" asp-route-page="@(Model.Page - 1)" class="border border-gray-200 bg-white px-3 py-2 text-gray-700">Previous</a>
-                }
-                @if (Model.Page < Model.TotalPages)
-                {
-                    <a asp-action="Index" asp-route-status="@(string.IsNullOrEmpty(Model.StatusFilter) ? null : Model.StatusFilter)" asp-route-page="@(Model.Page + 1)" class="border border-gray-200 bg-white px-3 py-2 text-gray-700">Next</a>
-                }
-            </div>
-        </nav>
+        <partial name="Components/_Pagination" model="@(new PaginationViewModel
+        {
+            Page = Model.Page, TotalPages = Model.TotalPages, TotalCount = Model.TotalCount,
+            Label = "Reservation pages",
+            Routes = { ["search"] = Model.Search, ["status"] = Model.StatusFilter }
+        })" />
     }
 </section>
