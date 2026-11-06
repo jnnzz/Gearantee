@@ -545,3 +545,11 @@ html[data-theme="dark"] .brand-logo-dark { display: block; }
 [data-theme="dark"] .notification-row, [data-theme="dark"] .notification-preview { border-color: #3a4c5d; }
 [data-theme="dark"] .notification-unread { background: #233b51; }
 [data-theme="dark"] .notification-unread-label { color: #b9d9fc; }
+
+/* Stable action slots keep rows aligned across labels and locked/archive states. */
+.table-actions-heading { width: 1%; white-space: nowrap; }
+.table-row-actions { display: grid; grid-template-columns: 4rem 5.5rem; gap: .5rem; align-items: center; width: max-content; margin-left: auto; }
+.table-row-actions--eligibility { grid-template-columns: 4rem 10rem; }
+.table-row-actions > form { grid-column: 2; margin: 0; }
+.table-row-actions :is(.action-edit, .action-delete) { width: 100%; min-height: 40px; white-space: nowrap; box-sizing: border-box; }
+.table-action-locked { display: flex; align-items: center; justify-content: center; min-height: 40px; color: var(--color-gray-500); }

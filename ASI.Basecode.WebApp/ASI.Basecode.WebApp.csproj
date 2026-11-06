@@ -9,6 +9,8 @@
 
   <ItemGroup>
     <None Remove="appsettings.json.rej" />
+    <!-- NuGet's TypeScript glob ignores tsconfig excludes when populating IDE items. -->
+    <TypeScriptCompile Remove="node_modules\**\*;wwwroot\lib\**\*" />
   </ItemGroup>
 
   <ItemGroup>

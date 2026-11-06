@@ -148,7 +148,7 @@
                         <th scope="col">Condition</th>
                         <th scope="col">Status</th>
                         <th scope="col">Location</th>
-                        <th scope="col"><span class="sr-only">Actions</span></th>
+                        <th scope="col" class="table-actions-heading">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -197,13 +197,14 @@
                             </td>
                             <td>@item.Location</td>
                             <td class="inventory-table-actions">
+                                <div class="table-row-actions">
                                 @if (!item.IsArchived && !item.IsLocked)
                                 {
                                     <a asp-action="EditEquipment" asp-route-id="@item.EquipmentId" class="action-edit">Edit</a>
                                 }
                                 else if (item.IsLocked && !item.IsArchived)
                                 {
-                                    <span title="Close the active reservation or loan before editing">Locked</span>
+                                    <span class="table-action-locked" title="Close the active reservation or loan before editing">Locked</span>
                                 }
                                 <form asp-action="SetEquipmentArchived" method="post">
                                     @Html.AntiForgeryToken()
@@ -215,6 +216,7 @@
                                     <input type="hidden" name="equipmentPage" value="@Model.Equipment.Page" />
                                     <button type="submit" class="action-delete" onclick="return confirm('@(item.IsArchived ? "Restore this item to active inventory?" : "Delete this item from active inventory? Its reservation and return history will be preserved.")')">@(item.IsArchived ? "Restore" : "Delete")</button>
                                 </form>
+                                </div>
                             </td>
                         </tr>
                     }
