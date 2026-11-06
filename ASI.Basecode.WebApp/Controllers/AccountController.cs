@@ -24,7 +24,7 @@ namespace ASI.Basecode.WebApp.Controllers
     public class AccountController : ControllerBase<AccountController>
     {
         private const string InvalidLoginMessage =
-            "Invalid user code/email or password.";
+            "Invalid School ID or password.";
 
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
@@ -88,17 +88,17 @@ namespace ASI.Basecode.WebApp.Controllers
                 return View(model);
             }
 
-            var email = model.Email.Trim();
-            var user = await _userManager.FindByEmailAsync(email);
-            if (user != null && user.IsActive)
+            var schoolId = model.SchoolId.Trim();
+            var user = await _userManager.FindByNameAsync(schoolId);
+            if (user != null && user.IsActive && !string.IsNullOrWhiteSpace(user.Email))
             {
                 // Anti-enumeration: the response is identical whether or not the
                 // account exists; the service handles reservation, storage, email,
                 // and failure rollback internally.
-                await _passwordResetOtpService.IssueOtpAsync(user, email);
+                await _passwordResetOtpService.IssueOtpAsync(user, user.Email);
             }
 
-            TempData["PasswordResetEmail"] = email;
+            TempData["PasswordResetSchoolId"] = schoolId;
             return RedirectToAction(nameof(ForgotPasswordCheckInbox));
         }
 
@@ -106,13 +106,13 @@ namespace ASI.Basecode.WebApp.Controllers
         [AllowAnonymous]
         public IActionResult ForgotPasswordCheckInbox()
         {
-            if (TempData["PasswordResetEmail"] is not string email ||
-                string.IsNullOrWhiteSpace(email))
+            if (TempData["PasswordResetSchoolId"] is not string schoolId ||
+                string.IsNullOrWhiteSpace(schoolId))
             {
                 return RedirectToAction(nameof(ForgotPassword));
             }
 
-            return View(new VerifyPasswordResetOtpViewModel { Email = email });
+            return View(new VerifyPasswordResetOtpViewModel { SchoolId = schoolId });
         }
 
         [HttpPost]
@@ -127,8 +127,8 @@ namespace ASI.Basecode.WebApp.Controllers
                 return View(nameof(ForgotPasswordCheckInbox), model);
             }
 
-            var email = model.Email.Trim();
-            var user = await _userManager.FindByEmailAsync(email);
+            var schoolId = model.SchoolId.Trim();
+            var user = await _userManager.FindByNameAsync(schoolId);
             if (user == null || !user.IsActive)
             {
                 ModelState.AddModelError(
@@ -271,12 +271,7 @@ namespace ASI.Basecode.WebApp.Controllers
             }
 
             var login = model.UserId?.Trim();
-            var normalizedUserName = _userManager.NormalizeName(login);
-            var normalizedEmail = _userManager.NormalizeEmail(login);
-            var user = await _userManager.Users.FirstOrDefaultAsync(x =>
-                x.NormalizedUserName == normalizedUserName ||
-                x.NormalizedEmail == normalizedEmail ||
-                x.UserCode == login);
+            var user = await _userManager.FindByNameAsync(login);
 
             if (user == null || !user.IsActive)
             {

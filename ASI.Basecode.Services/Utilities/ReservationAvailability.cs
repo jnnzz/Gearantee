@@ -1,4 +1,4 @@
-﻿using ASI.Basecode.Data.Models;
+using ASI.Basecode.Data.Models;
 using ASI.Basecode.Resources.Constants;
 using System;
 using System.Linq.Expressions;
@@ -59,6 +59,15 @@ namespace ASI.Basecode.Services.Utilities
         /// Checks a requested window entered in Manila local time.
         /// Returns null when the window is valid, otherwise a message for the borrower.
         /// </summary>
+        public static string ValidateDates(DateTime? start, DateTime? end, DateTime nowUtc)
+        {
+            if (!start.HasValue || !end.HasValue) return "Enter both a start and an end date.";
+            if (end.Value.Date < start.Value.Date) return "The end date must be on or after the start date.";
+            if (end.Value.Date == DateTime.MaxValue.Date) return "Choose an end date before 31 December 9999.";
+            if (start.Value.Date <= ManilaClock.ToLocal(nowUtc).Date) return "The start date must be tomorrow or later.";
+            return null;
+        }
+
         public static string ValidateWindow(DateTime? startLocal, DateTime? endLocal, DateTime nowUtc)
         {
             if (!startLocal.HasValue || !endLocal.HasValue)

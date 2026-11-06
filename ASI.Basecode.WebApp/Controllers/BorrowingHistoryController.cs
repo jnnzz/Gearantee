@@ -1,4 +1,4 @@
-﻿using ASI.Basecode.Data.Models;
+using ASI.Basecode.Data.Models;
 using ASI.Basecode.Resources.Constants;
 using ASI.Basecode.Services.Interfaces;
 using ASI.Basecode.Services.ServiceModels.BorrowingHistory;
@@ -39,6 +39,9 @@ namespace ASI.Basecode.WebApp.Controllers
             [FromQuery] BorrowingHistoryFilterViewModel filter,
             CancellationToken cancellationToken)
         {
+            filter ??= new BorrowingHistoryFilterViewModel();
+            filter.Item = null;
+            ModelState.Remove(nameof(filter.Item));
             if (!TryGetHistoryScope(out var onlyOwnHistory))
             {
                 return Forbid();
@@ -67,6 +70,9 @@ namespace ASI.Basecode.WebApp.Controllers
             [FromQuery] BorrowingHistoryFilterViewModel filter,
             CancellationToken cancellationToken)
         {
+            filter ??= new BorrowingHistoryFilterViewModel();
+            filter.Item = null;
+            ModelState.Remove(nameof(filter.Item));
             if (!TryGetHistoryScope(out var onlyOwnHistory))
             {
                 return Forbid();
@@ -115,6 +121,9 @@ namespace ASI.Basecode.WebApp.Controllers
             [FromQuery] BorrowingHistoryFilterViewModel filter,
             CancellationToken cancellationToken)
         {
+            filter ??= new BorrowingHistoryFilterViewModel();
+            filter.Item = null;
+            ModelState.Remove(nameof(filter.Item));
             if (!TryGetHistoryScope(out var onlyOwnHistory))
             {
                 return Forbid();

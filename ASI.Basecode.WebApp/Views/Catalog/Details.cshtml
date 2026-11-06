@@ -1,5 +1,6 @@
 @model ASI.Basecode.Services.ServiceModels.Catalog.CatalogItemDetailsViewModel
 @using ASI.Basecode.WebApp.Models.Dashboard
+@inject ASI.Basecode.Services.Interfaces.IImageStorageService ImageStorage
 @{
     string OrDash(string value) => string.IsNullOrWhiteSpace(value) ? "—" : value;
     var statusLabel = Model.AvailabilityStatus == DomainValues.EquipmentStatuses.Borrowed ? "Borrowed" : "Available";
@@ -15,7 +16,8 @@
     <section aria-label="Equipment details" class="surface">
         @if (!string.IsNullOrWhiteSpace(Model.ImageUrl))
         {
-            <img src="@Model.ImageUrl" alt="@Model.ItemName" class="detail-image" />
+            var imageSrc = await ImageStorage.CreateSignedUrlAsync(Model.ImageUrl, System.TimeSpan.FromMinutes(60));
+            <img src="@imageSrc" alt="@Model.ItemName" class="detail-image" />
         }
         else
         {
@@ -67,7 +69,7 @@
                 @foreach (var window in Model.BookedWindows)
                 {
                     <li class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 text-sm">
-                        <span class="text-gray-700">@window.StartLocal.ToString("ddd d MMM · HH:mm") → @window.EndLocal.ToString("ddd d MMM · HH:mm")</span>
+                        <span class="text-gray-700">@window.StartLabel → @window.EndLabel</span>
                         <partial name="Components/_StatusBadge" model="window.Label" />
                     </li>
                 }

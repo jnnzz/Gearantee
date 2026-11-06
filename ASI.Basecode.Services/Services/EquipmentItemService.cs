@@ -1,11 +1,13 @@
-﻿using ASI.Basecode.Services.Utilities;
+using ASI.Basecode.Services.Utilities;
 using ASI.Basecode.Data;
 using ASI.Basecode.Data.Interfaces;
 using ASI.Basecode.Data.Models;
 using ASI.Basecode.Resources.Constants;
 using ASI.Basecode.Services.Interfaces;
 using ASI.Basecode.Services.ServiceModels.EquipmentItem;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -193,7 +195,6 @@ namespace ASI.Basecode.Services.Services
                 ItemName = item.ItemName,
                 Description = item.Description,
                 ImageUrl = item.ImageUrl,
-                CurrentImageUrl = item.ImageUrl,
                 Brand = item.Brand,
                 ModelName = item.Model,
                 SerialNumber = item.SerialNumber,
@@ -204,6 +205,22 @@ namespace ASI.Basecode.Services.Services
                 IsCategoryInactive = !item.Category.IsActive,
                 Categories = await LoadCategoryOptionsAsync(item.CategoryId)
             };
+        }
+
+        public async Task<string> GetImageUrlAsync(
+            string actorUserId,
+            long equipmentId)
+        {
+            if (!await _categoryService.CanManageAsync(actorUserId))
+            {
+                return null;
+            }
+
+            return await _db.EquipmentItems
+                .AsNoTracking()
+                .Where(item => item.EquipmentId == equipmentId)
+                .Select(item => item.ImageUrl)
+                .SingleOrDefaultAsync();
         }
 
         public async Task<EquipmentItemOperationResult> CreateAsync(
@@ -220,25 +237,28 @@ namespace ASI.Basecode.Services.Services
                 return EquipmentItemOperationResult.Failure("Equipment details are required.");
             }
 
+            model.ItemCode = "GENERATED";
             var normalized = Normalize(model);
             if (!normalized.IsValid)
             {
                 return EquipmentItemOperationResult.Failure(normalized.Error);
             }
 
-            var category = await _db.EquipmentCategories
-                .SingleOrDefaultAsync(candidate => candidate.CategoryId == model.CategoryId);
+            EquipmentItem attemptedItem = null;
+            return await _db.Database.CreateExecutionStrategy().ExecuteAsync<object, EquipmentItemOperationResult>(
+                state: null, operation: async (_, _, cancellationToken) =>
+            {
+            _db.ChangeTracker.Clear();
+            attemptedItem = null;
+            await using var transaction = await _db.Database.BeginTransactionAsync(IsolationLevel.Serializable);
+            // Serialize allocation on the category row; the counter survives soft deletion and renames.
+            var category = await _equipmentItemRepository.LoadCategoryForRegistrationAsync(model.CategoryId);
             if (category == null || !category.IsActive)
             {
                 return EquipmentItemOperationResult.Failure(
                     "Choose an active equipment category.");
             }
 
-            if (!await IsItemCodeAvailableAsync(normalized.ItemCode, null))
-            {
-                return EquipmentItemOperationResult.Failure(
-                    $"An equipment item with code '{normalized.ItemCode}' already exists.");
-            }
 
             if (normalized.SerialNumber != null &&
                 !await IsSerialNumberAvailableAsync(normalized.SerialNumber, null))
@@ -247,10 +267,35 @@ namespace ASI.Basecode.Services.Services
                     $"An equipment item with serial number '{normalized.SerialNumber}' already exists.");
             }
 
+            var prefix = category.CategoryCode.ToUpperInvariant();
+            var number = Math.Max(1, category.NextItemNumber);
+            if (number == 1)
+            {
+                var existingCodes = await _db.EquipmentItems.AsNoTracking()
+                    .Where(existing => existing.CategoryId == category.CategoryId)
+                    .Select(existing => existing.ItemCode).ToListAsync();
+                foreach (var code in existingCodes)
+                {
+                    if (code.StartsWith(prefix + "-", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var tail = code.Substring(prefix.Length + 1).Split('-');
+                        if (tail.Length == 2 && long.TryParse(tail[0], out var used) && used >= number && used < long.MaxValue)
+                            number = used + 1;
+                    }
+                }
+            }
+            string generatedCode;
+            do
+            {
+                if (number == long.MaxValue) return EquipmentItemOperationResult.Failure("This category's item sequence is exhausted.");
+                generatedCode = EquipmentItemCode.Format(prefix, number++, normalized.ItemName);
+            } while (!await IsItemCodeAvailableAsync(generatedCode, null));
+            category.NextItemNumber = number;
+
             var item = new EquipmentItem
             {
                 CategoryId = category.CategoryId,
-                ItemCode = normalized.ItemCode,
+                ItemCode = generatedCode,
                 ItemName = normalized.ItemName,
                 Description = normalized.Description,
                 ImageUrl = normalized.ImageUrl,
@@ -269,6 +314,8 @@ namespace ASI.Basecode.Services.Services
             {
                 _db.EquipmentItems.Add(item);
                 await _unitOfWork.SaveChangesAsync();
+                attemptedItem = item;
+                await transaction.CommitAsync();
                 _logger.LogInformation(
                     "Equipment item {EquipmentId} created by administrator {UserId}",
                     item.EquipmentId,
@@ -277,13 +324,24 @@ namespace ASI.Basecode.Services.Services
                     $"Equipment item '{item.ItemName}' was registered.",
                     item.EquipmentId);
             }
-            catch (DbUpdateException exception)
+            catch (DbUpdateException exception) when (
+                exception.GetBaseException() is SqlException { Number: 2601 or 2627 })
             {
                 _logger.LogError(exception, "Database error registering equipment item.");
                 return EquipmentItemOperationResult.Failure(
-                    "An item with this code or serial number already exists.",
-                    persistenceFailure: true);
+                    "An item with this code or serial number already exists.");
             }
+            }, verifySucceeded: async (_, _, cancellationToken) =>
+            {
+                // A lost commit acknowledgement must not allocate a second item code.
+                var saved = attemptedItem != null && await _db.EquipmentItems.AsNoTracking()
+                    .AnyAsync(item => item.EquipmentId == attemptedItem.EquipmentId &&
+                        item.ItemCode == attemptedItem.ItemCode, cancellationToken);
+                return new ExecutionResult<EquipmentItemOperationResult>(saved, saved
+                    ? EquipmentItemOperationResult.Success(
+                        $"Equipment item '{attemptedItem.ItemName}' was registered.", attemptedItem.EquipmentId)
+                    : null);
+            });
         }
 
         public async Task<EquipmentItemOperationResult> UpdateAsync(
@@ -326,6 +384,7 @@ namespace ASI.Basecode.Services.Services
                     "This item has a pending reservation or active loan and cannot be changed until that transaction is closed.");
             }
 
+            model.ItemCode = item.ItemCode;
             var normalized = Normalize(model);
             if (!normalized.IsValid)
             {
@@ -340,12 +399,6 @@ namespace ASI.Basecode.Services.Services
                     "Choose an active equipment category.");
             }
 
-            if (!await IsItemCodeAvailableAsync(normalized.ItemCode, item.EquipmentId))
-            {
-                return EquipmentItemOperationResult.Failure(
-                    $"Another equipment item with code '{normalized.ItemCode}' already exists.");
-            }
-
             if (normalized.SerialNumber != null &&
                 !await IsSerialNumberAvailableAsync(normalized.SerialNumber, item.EquipmentId))
             {
@@ -354,18 +407,9 @@ namespace ASI.Basecode.Services.Services
             }
 
             item.CategoryId = category.CategoryId;
-            item.ItemCode = normalized.ItemCode;
             item.ItemName = normalized.ItemName;
             item.Description = normalized.Description;
-            var previousImageUrl = item.ImageUrl;
-            if (model.RemoveImage)
-            {
-                item.ImageUrl = null;
-            }
-            else if (normalized.ImageUrl != null)
-            {
-                item.ImageUrl = normalized.ImageUrl;
-            }
+            item.ImageUrl = normalized.ImageUrl;
             item.Brand = normalized.Brand;
             item.Model = normalized.ModelName;
             item.SerialNumber = normalized.SerialNumber;
@@ -384,16 +428,14 @@ namespace ASI.Basecode.Services.Services
                     actorUserId);
                 return EquipmentItemOperationResult.Success(
                     $"Equipment item '{item.ItemName}' was updated.",
-                    item.EquipmentId,
-                    previousImageUrl);
+                    item.EquipmentId);
             }
             catch (DbUpdateException exception)
             {
                 _logger.LogError(exception,
                     "Database error updating equipment item {EquipmentId}", item.EquipmentId);
                 return EquipmentItemOperationResult.Failure(
-                    "An item with this code or serial number already exists.",
-                    persistenceFailure: true);
+                    "An item with this code or serial number already exists.");
             }
             });
         }
@@ -440,7 +482,7 @@ namespace ASI.Basecode.Services.Services
             if (isArchived && await IsLockedAsync(item))
             {
                 return EquipmentItemOperationResult.Failure(
-                    "This item has a pending reservation or active loan and cannot be archived until that transaction is closed.");
+                    "This item has a pending reservation or active loan and cannot be deleted until that transaction is closed.");
             }
 
             if (!isArchived && !item.Category.IsActive)
@@ -454,7 +496,7 @@ namespace ASI.Basecode.Services.Services
             await _unitOfWork.SaveChangesAsync();
             await transaction.CommitAsync();
 
-            var action = isArchived ? "archived" : "restored to active inventory";
+            var action = isArchived ? "deleted from active inventory (history preserved)" : "restored to active inventory";
             _logger.LogInformation(
                 "Equipment item {EquipmentId} {Action} by administrator {UserId}",
                 item.EquipmentId,

@@ -33,7 +33,7 @@
                 <th scope="col" class="px-3 py-3">Department</th>
                 <th scope="col" class="px-3 py-3">Contact number</th>
                 <th scope="col" class="px-3 py-3">Eligibility</th>
-                <th scope="col" class="px-3 py-3"><span class="sr-only">Actions</span></th>
+                <th scope="col" class="table-actions-heading px-3 py-3">Actions</th>
             </tr>
         </thead>
         <tbody class="divide-y divide-gray-200">
@@ -52,13 +52,13 @@
                         <partial name="Components/_StatusBadge" model="@(borrower.IsEligible ? "Eligible" : "Ineligible")" />
                     </td>
                     <td class="px-3 py-3 text-right">
-                        <div class="flex items-center justify-end gap-3">
-                            <a asp-action="Edit" asp-route-id="@borrower.BorrowerProfileId" class="text-link">Edit</a>
+                        <div class="table-row-actions table-row-actions--eligibility">
+                            <a asp-action="Edit" asp-route-id="@borrower.BorrowerProfileId" class="action-edit">Edit</a>
                             <form asp-action="UpdateEligibility" method="post" class="inline">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="id" value="@borrower.BorrowerProfileId" />
                                 <input type="hidden" name="isEligible" value="@(!borrower.IsEligible ? "true" : "false")" />
-                                <button type="submit" class="btn-text min-h-10 px-2 text-xs">@(borrower.IsEligible ? "Mark ineligible" : "Mark eligible")</button>
+                                <button type="submit" class="@(borrower.IsEligible ? "action-delete" : "action-edit")">@(borrower.IsEligible ? "Mark ineligible" : "Mark eligible")</button>
                             </form>
                         </div>
                     </td>

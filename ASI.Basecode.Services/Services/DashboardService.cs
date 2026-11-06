@@ -1,4 +1,4 @@
-﻿using ASI.Basecode.Data;
+using ASI.Basecode.Data;
 using ASI.Basecode.Data.Interfaces;
 using ASI.Basecode.Data.Models;
 using ASI.Basecode.Resources.Constants;
@@ -30,6 +30,7 @@ namespace ASI.Basecode.Services.Services
                 ContactNumber = reservation.BorrowerProfile.ContactNumber,
                 StartUtc = reservation.ReservationStart,
                 EndUtc = reservation.ReservationEnd,
+                IsFullDay = reservation.IsFullDay,
                 RequestedAtUtc = reservation.RequestedAt,
                 Status = reservation.Status,
                 RejectionReason = reservation.RejectionReason,
@@ -210,7 +211,7 @@ namespace ASI.Basecode.Services.Services
             var activeLoans = ActiveLoans();
             var dueTodayQuery = activeLoans.Where(reservation =>
                 reservation.ReservationEnd >= now &&
-                reservation.ReservationEnd < todayEnd);
+                (reservation.IsFullDay ? reservation.ReservationEnd <= todayEnd : reservation.ReservationEnd < todayEnd));
             model.ReturnsDueTodayCount = await dueTodayQuery.CountAsync();
             var dueToday = await dueTodayQuery
                 .OrderBy(reservation => reservation.ReservationEnd)
@@ -498,7 +499,7 @@ namespace ASI.Basecode.Services.Services
                     return "Overdue";
                 }
 
-                return row.EndUtc >= todayStart && row.EndUtc < todayEnd
+                return (row.IsFullDay ? row.EndUtc > todayStart && row.EndUtc <= todayEnd : row.EndUtc >= todayStart && row.EndUtc < todayEnd)
                     ? "Due today"
                     : "Borrowed";
             }

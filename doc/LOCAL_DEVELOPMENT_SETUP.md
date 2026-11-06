@@ -114,6 +114,19 @@ The seed command is safe to run again. It will not create duplicate roles or per
 
 The Custodian account receives only the Custodian role. All three `SeedCustodian` values are required; without them, its creation is skipped. Reseeding leaves existing accounts, passwords, activation and role changes intact. `--seed-demo` also runs this account seed before adding its existing multi-role demo account and sample data. `UI-BORROWER` belongs to the separate UI preview fixture and is not created by either seed command.
 
+### Configure equipment image storage (optional)
+
+Equipment photos are uploaded to a **private** Supabase Storage bucket and displayed through short-lived signed URLs. The equipment forms always show the drag/drop upload control; it is disabled and no uploads are attempted until Supabase is configured. To enable drag-and-drop uploads, create a **private** bucket named `equipment-images`, then store the project URL and `service_role` key in User Secrets:
+
+```powershell
+dotnet user-secrets set "Supabase:Url" "https://YOUR-PROJECT.supabase.co" `
+  --project .\ASI.Basecode.WebApp\ASI.Basecode.WebApp.csproj
+dotnet user-secrets set "Supabase:ServiceRoleKey" "YOUR_SERVICE_ROLE_KEY" `
+  --project .\ASI.Basecode.WebApp\ASI.Basecode.WebApp.csproj
+```
+
+`Supabase:Bucket` defaults to `equipment-images` and `Supabase:MaxFileBytes` defaults to 2 MiB (the bucket must allow at least that size — for example `10 MB`). Keep the bucket **private**; the app signs each stored object with a short-lived URL at render time using the `service_role` key, so images are not publicly readable. Never commit the `service_role` key. Production deployments use the `Supabase__Url`, `Supabase__Bucket`, and `Supabase__ServiceRoleKey` environment variables.
+
 ## 7. Run the website
 
 If you change calendar scripts or styles, rebuild the frontend assets from `ASI.Basecode.WebApp`:
@@ -154,18 +167,6 @@ A successful database health check returns:
 ```
 
 Press `Ctrl+C` in the terminal to stop the website.
-
-## Equipment image storage
-
-Equipment images are optional JPEG or PNG uploads. The application validates and decodes each image, then stores it outside `wwwroot` under the configured `EquipmentImages:StoragePath`. The default is `App_Data/EquipmentImages`, relative to the WebApp content root. Temporary uploads used while a form is being corrected are removed after 24 hours.
-
-For a deployed server, set `EquipmentImages__StoragePath` to a directory on persistent storage and grant the application identity read/write access. For example, in PowerShell:
-
-```powershell
-$env:EquipmentImages__StoragePath = "D:\GearanteeData\EquipmentImages"
-```
-
-On Linux, configure an absolute persistent directory such as `/var/lib/gearantee/equipment-images` using the deployment environment's configuration mechanism. Do not put uploaded files under `wwwroot`; the application serves generated filenames through an authorized image endpoint. Back up the configured image directory alongside the database, and restore both when recovering the system. For multi-instance hosting, all instances must use the same persistent shared storage location.
 
 ## Daily development workflow
 

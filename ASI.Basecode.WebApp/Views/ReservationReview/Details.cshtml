@@ -32,8 +32,8 @@
         }
 
         <dl class="record-details mt-6 grid gap-4 text-sm sm:grid-cols-2">
-            <div><dt class="text-xs text-gray-500">Start</dt><dd class="mt-1 font-medium text-gray-700">@When(Model.StartLocal)</dd></div>
-            <div><dt class="text-xs text-gray-500">End</dt><dd class="mt-1 font-medium text-gray-700">@When(Model.EndLocal)</dd></div>
+            <div><dt class="text-xs text-gray-500">Start</dt><dd class="mt-1 font-medium text-gray-700">@Model.StartLabel</dd></div>
+            <div><dt class="text-xs text-gray-500">End</dt><dd class="mt-1 font-medium text-gray-700">@Model.EndLabel</dd></div>
             <div class="sm:col-span-2"><dt class="text-xs text-gray-500">Purpose</dt><dd class="mt-1 whitespace-pre-line font-medium text-gray-700">@Model.Purpose</dd></div>
         </dl>
 
@@ -50,7 +50,7 @@
                 Id = "approve-reservation-dialog",
                 Title = $"Approve {Model.ReservationCode}?",
                 Message = "The item is booked for this borrower during this window. Approval can't be undone from here.",
-                Detail = $"{Model.ItemName} · {When(Model.StartLocal)} → {When(Model.EndLocal)}",
+                Detail = $"{Model.ItemName} · {Model.StartLabel} → {Model.EndLabel}",
                 ConfirmText = "Yes, approve it",
                 CancelText = "Not yet"
             })" />

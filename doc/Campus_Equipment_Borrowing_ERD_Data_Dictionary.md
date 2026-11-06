@@ -448,3 +448,12 @@ flowchart TD
 14. `ROLE_PERMISSION_SEED`
 
 Other ASP.NET Core Identity support tables are created by Identity migrations but are omitted from this business-focused ERD.
+
+
+## Workspace refinement schema — 11/6/2026
+
+Migration: FullDayReservationsAndEquipmentNumbers (apply before running this version).
+
+- EQUIPMENT_CATEGORY.NextItemNumber: BIGINT, non-null, persistent allocation counter. Existing rows receive 0 (uninitialized); the first registration starts at 1 or above existing matching numbers. Soft deletion and item edits never rewind the counter. The category row is locked with UPDLOCK/HOLDLOCK inside a serializable transaction, and counter plus item are saved atomically. The existing unique ItemCode index remains authoritative.
+- RESERVATION.IsFullDay: BIT, non-null, defaults false for existing rows. New requests set true and normalize the inclusive entered date range to UTC midnight boundaries in Philippine time. Existing timestamp columns are retained; the stored End is exclusive for full-day reservations. Actual release/return timestamps are unchanged.
+- Inventory identifiers are generated only at registration and remain stable on subsequent name/category edits. No existing equipment or reservation identifiers are rewritten by this migration.

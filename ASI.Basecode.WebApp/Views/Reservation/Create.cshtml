@@ -5,7 +5,7 @@
     var item = Model.Item;
     var eligibilityError = ViewData["EligibilityError"] as string;
     var canSubmit = eligibilityError == null;
-    var minLocal = ManilaClock.NowLocal.ToString("yyyy-MM-ddTHH:mm");
+    var minLocal = ManilaClock.NowLocal.Date.AddDays(1).ToString("yyyy-MM-dd");
     var brandModel = string.Join(" ", new[] { item.Brand, item.Model }.Where(part => !string.IsNullOrWhiteSpace(part)));
 }
 
@@ -19,7 +19,7 @@
 <div class="detail-grid">
     <section aria-labelledby="request-heading" class="surface">
         <h2 id="request-heading" class="font-display text-2xl font-semibold text-ink">Schedule and purpose</h2>
-        <p class="mt-1 text-sm text-gray-500">Times are Philippine time. Your request stays pending until a custodian approves it.</p>
+        <p class="mt-1 text-sm text-gray-500">Reservations cover full Philippine calendar days, including the End date. Your request stays pending until a custodian approves it.</p>
 
         <form asp-action="Create" method="post" class="mt-6">
             <div asp-validation-summary="ModelOnly" class="validation-summary-errors" role="alert"></div>
@@ -37,12 +37,12 @@
             <div class="grid gap-4 sm:grid-cols-2">
                 <div>
                     <label asp-for="ReservationStart" class="mb-1 block text-sm font-medium"></label>
-                    <input asp-for="ReservationStart" asp-format="{0:yyyy-MM-ddTHH:mm}" type="datetime-local" min="@minLocal" class="input" />
+                    <input asp-for="ReservationStart" asp-format="{0:yyyy-MM-dd}" type="date" min="@minLocal" class="input" />
                     <span asp-validation-for="ReservationStart" class="field-validation-error"></span>
                 </div>
                 <div>
                     <label asp-for="ReservationEnd" class="mb-1 block text-sm font-medium"></label>
-                    <input asp-for="ReservationEnd" asp-format="{0:yyyy-MM-ddTHH:mm}" type="datetime-local" min="@minLocal" class="input" />
+                    <input asp-for="ReservationEnd" asp-format="{0:yyyy-MM-dd}" type="date" min="@minLocal" class="input" />
                     <span asp-validation-for="ReservationEnd" class="field-validation-error"></span>
                 </div>
             </div>
@@ -71,12 +71,12 @@
 
         <div class="surface">
             <div class="mb-3 flex flex-wrap items-end justify-between gap-3 border-b border-gray-200 pb-3">
-                <h3 class="font-display text-lg font-semibold text-ink">Booked times</h3>
-                <p class="text-xs text-gray-500">Pick a time outside these</p>
+                <h3 class="font-display text-lg font-semibold text-ink">Existing bookings</h3>
+                <p class="text-xs text-gray-500">Choose dates outside these bookings</p>
             </div>
             @if (item.BookedWindows.Count == 0)
             {
-                <partial name="Components/_EmptyState" model="@(new EmptyStateModel { Heading = "No upcoming bookings", Message = "Any future time is open to request." })" />
+                <partial name="Components/_EmptyState" model="@(new EmptyStateModel { Heading = "No upcoming bookings", Message = "Choose tomorrow or a later date." })" />
             }
             else
             {
@@ -84,7 +84,7 @@
                     @foreach (var window in item.BookedWindows)
                     {
                         <li class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 text-sm">
-                            <span class="text-gray-700">@window.StartLocal.ToString("ddd d MMM · HH:mm") → @window.EndLocal.ToString("ddd d MMM · HH:mm")</span>
+                            <span class="text-gray-700">@window.StartLabel → @window.EndLabel</span>
                             <partial name="Components/_StatusBadge" model="window.Label" />
                         </li>
                     }

@@ -29,6 +29,7 @@ namespace ASI.Basecode.Data
         public DbSet<ReleaseRecord> ReleaseRecords { get; set; }
         public DbSet<ReturnRecord> ReturnRecords { get; set; }
         public DbSet<LateReturn> LateReturns { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

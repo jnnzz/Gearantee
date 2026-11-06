@@ -2,6 +2,15 @@
 @using ASI.Basecode.Services.Utilities
 @using ASI.Basecode.WebApp.Models.Dashboard
 
+@if (ViewData["DashboardUnavailable"] is true)
+{
+    <section class="table-surface p-8" aria-label="Dashboard unavailable">
+        <p class="mb-4">Dashboard data is temporarily unavailable.</p>
+        <a asp-action="Custodian" class="btn-secondary">Try again</a>
+    </section>
+    return;
+}
+
 <div class="role-page">
 <section class="role-summary" aria-label="Custodian summary">
     <partial name="Components/_KpiTile" model="@(new KpiTileModel { Label = "Pending approval", Value = Model.PendingCount, Status = "Pending", Caption = $"{Model.PendingStartingSoonCount} starting within 24 hours" })" />
@@ -34,7 +43,7 @@
                         <div class="min-w-0 flex-1">
                             <h3 class="font-display text-lg font-semibold text-ink">@task.Row.ItemName <span class="font-sans text-sm font-normal text-gray-500">· @task.Row.BorrowerName</span></h3>
                             <p class="mt-1 text-xs text-gray-500">@task.Row.SchoolId · @task.Row.Department · @task.Row.LocationName</p>
-                            <p class="mt-1 text-xs text-gray-500">@ManilaClock.ToLocal(task.Row.StartUtc).ToString("d MMM HH:mm") → @ManilaClock.ToLocal(task.Row.EndUtc).ToString("d MMM HH:mm")</p>
+                            <p class="mt-1 text-xs text-gray-500">@task.Row.StartLabel → @task.Row.EndLabel</p>
                         </div>
                         <div class="desk-task-actions">
                             <partial name="Components/_StatusBadge" model="task.Row.DisplayStatus" />
@@ -69,8 +78,8 @@
         <section class="surface shortcut-card">
             <p class="eyebrow">Quick access</p><h2 class="mt-1 font-display text-xl font-semibold text-ink">Shortcuts</h2>
             <div class="mt-4 flex flex-wrap gap-x-5 gap-y-3 text-sm text-gray-500">
-                @if (User.HasClaim("permission", "equipment.browse")) { <span class="inline-flex items-center gap-2">Equipment <span class="soon-tag">Soon</span></span> }
-                @if (User.HasClaim("permission", "history.view")) { <span class="inline-flex items-center gap-2">Reports <span class="soon-tag">Soon</span></span> }
+                @if (User.HasClaim("permission", "equipment.browse")) { <a asp-controller="Catalog" asp-action="Index" class="action-edit">Equipment</a> }
+                @if (User.HasClaim("permission", "history.view")) { <a asp-controller="BorrowingHistory" asp-action="Index" class="action-edit">Reports</a> }
             </div>
         </section>
     </aside>

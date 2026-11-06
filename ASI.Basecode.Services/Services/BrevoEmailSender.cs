@@ -33,18 +33,6 @@ namespace ASI.Basecode.Services.Services
             string otp,
             CancellationToken cancellationToken = default)
         {
-            if (string.IsNullOrWhiteSpace(_options.ApiKey))
-            {
-                throw new InvalidOperationException(
-                    "Brevo:ApiKey is not configured.");
-            }
-
-            if (string.IsNullOrWhiteSpace(_options.SenderEmail))
-            {
-                throw new InvalidOperationException(
-                    "Brevo:SenderEmail is not configured.");
-            }
-
             var safeRecipientName = WebUtility.HtmlEncode(recipientName);
             var htmlContent = $@"
 <!doctype html>
@@ -60,6 +48,24 @@ namespace ASI.Basecode.Services.Services
     </div>
 </body>
 </html>";
+
+            await SendAsync(recipientEmail, recipientName, "Your Gearantee password reset code", htmlContent, cancellationToken);
+        }
+
+        public async Task SendAsync(string recipientEmail, string recipientName, string subject, string htmlContent,
+            CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(_options.ApiKey))
+            {
+                throw new InvalidOperationException(
+                    "Brevo:ApiKey is not configured.");
+            }
+
+            if (string.IsNullOrWhiteSpace(_options.SenderEmail))
+            {
+                throw new InvalidOperationException(
+                    "Brevo:SenderEmail is not configured.");
+            }
 
             using var request = new HttpRequestMessage(
                 HttpMethod.Post,
@@ -80,7 +86,7 @@ namespace ASI.Basecode.Services.Services
                             name = recipientName
                         }
                     },
-                    subject = "Your Gearantee password reset code",
+                    subject,
                     htmlContent
                 })
             };
@@ -98,7 +104,7 @@ namespace ASI.Basecode.Services.Services
             }
 
             _logger.LogError(
-                "Brevo password-reset email failed with status {StatusCode}.",
+                "Brevo email failed with status {StatusCode}.",
                 (int)response.StatusCode);
 
             throw new HttpRequestException(

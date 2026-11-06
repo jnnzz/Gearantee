@@ -1,6 +1,16 @@
 @model ASI.Basecode.Services.ServiceModels.Dashboard.BorrowerDashboardModel
 @using ASI.Basecode.Services.Utilities
 @using ASI.Basecode.WebApp.Models.Dashboard
+@inject ASI.Basecode.Services.Interfaces.IImageStorageService ImageStorage
+
+@if (ViewData["DashboardUnavailable"] is true)
+{
+    <section class="table-surface p-8" aria-label="Dashboard unavailable">
+        <p class="mb-4">Dashboard data is temporarily unavailable.</p>
+        <a asp-action="Borrower" class="btn-secondary">Try again</a>
+    </section>
+    return;
+}
 
 <section class="borrower-summary" aria-label="Borrower summary">
     <partial name="Components/_KpiTile" model="@(new KpiTileModel { Label = "On loan now", Value = Model.ActiveLoanCount, Status = "Borrowed", Caption = Model.CurrentLoans.FirstOrDefault()?.ItemName ?? "No equipment currently on loan" })" />
@@ -53,7 +63,8 @@
                     <article class="loan-card">
                         @if (!string.IsNullOrWhiteSpace(loan.ImageUrl))
                         {
-                            <img src="@loan.ImageUrl" alt="@loan.ItemName" class="detail-image" />
+                            var imageSrc = await ImageStorage.CreateSignedUrlAsync(loan.ImageUrl, System.TimeSpan.FromMinutes(60));
+                            <img src="@imageSrc" alt="@loan.ItemName" class="detail-image" />
                         }
                         else
                         {
@@ -69,7 +80,7 @@
                             <partial name="Components/_StatusBadge" model="loan.DisplayStatus" />
                         </div>
                         <dl class="mt-4 grid grid-cols-2 gap-3 text-xs">
-                            <div><dt class="text-gray-500">Due</dt><dd class="mt-1 font-medium text-gray-700">@ManilaClock.ToLocal(loan.EndUtc).ToString("d MMM · HH:mm")</dd></div>
+                            <div><dt class="text-gray-500">Due</dt><dd class="mt-1 font-medium text-gray-700">@loan.EndLabel</dd></div>
                             <div><dt class="text-gray-500">Released</dt><dd class="mt-1 font-medium text-gray-700">@(loan.ReleasedAtUtc.HasValue ? ManilaClock.ToLocal(loan.ReleasedAtUtc.Value).ToString("d MMM · HH:mm") : "—")</dd></div>
                         </dl>
                     </article>
@@ -101,7 +112,7 @@
                                 </div>
                                 <partial name="Components/_StatusBadge" model="request.DisplayStatus" />
                             </div>
-                            <p class="mt-2 text-xs text-gray-500">@ManilaClock.ToLocal(request.StartUtc).ToString("d MMM HH:mm") → @ManilaClock.ToLocal(request.EndUtc).ToString("d MMM HH:mm")</p>
+                            <p class="mt-2 text-xs text-gray-500">@request.StartLabel → @request.EndLabel</p>
                             <p class="mt-2 text-xs leading-5 text-gray-700">
                                 @if (request.Status == "Rejected")
                                 {

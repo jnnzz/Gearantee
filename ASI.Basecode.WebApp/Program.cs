@@ -19,11 +19,6 @@ var appBuilder = WebApplication.CreateBuilder(new WebApplicationOptions
     ContentRootPath = Directory.GetCurrentDirectory(),
 });
 
-appBuilder.Configuration.AddJsonFile(
-    "appsettings.json",
-    optional: true,
-    reloadOnChange: true);
-
 appBuilder.WebHost.UseIISIntegration();
 
 appBuilder.Logging

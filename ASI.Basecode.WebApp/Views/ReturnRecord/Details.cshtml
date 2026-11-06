@@ -48,7 +48,7 @@
                 <div><dt class="text-xs text-gray-500">Borrower</dt><dd class="mt-1 font-medium text-gray-700">@Model.BorrowerName</dd></div>
                 <div><dt class="text-xs text-gray-500">School ID</dt><dd class="mt-1 font-medium text-gray-700">@OrDash(Model.SchoolId)</dd></div>
                 <div><dt class="text-xs text-gray-500">Released</dt><dd class="mt-1 font-medium text-gray-700">@When(Model.ReleasedAtLocal)</dd></div>
-                <div><dt class="text-xs text-gray-500">Due</dt><dd class="mt-1 font-medium text-gray-700">@When(Model.DueAtLocal)</dd></div>
+                <div><dt class="text-xs text-gray-500">Due</dt><dd class="mt-1 font-medium text-gray-700">@Model.EndLabel</dd></div>
                 <div class="sm:col-span-2"><dt class="text-xs text-gray-500">Location</dt><dd class="mt-1 font-medium text-gray-700">@Model.Location</dd></div>
             </dl>
         </section>

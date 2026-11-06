@@ -14,6 +14,7 @@ namespace ASI.Basecode.Services.Interfaces
 
         Task<EquipmentItemFormViewModel> GetCreateFormAsync(string actorUserId);
         Task<EquipmentItemFormViewModel> GetEditFormAsync(string actorUserId, long equipmentId);
+        Task<string> GetImageUrlAsync(string actorUserId, long equipmentId);
         Task<EquipmentItemOperationResult> CreateAsync(
             string actorUserId,
             EquipmentItemFormViewModel model);

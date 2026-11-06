@@ -57,7 +57,14 @@ dotnet user-secrets --project .\ASI.Basecode.WebApp\ASI.Basecode.WebApp.csproj s
 dotnet user-secrets --project .\ASI.Basecode.WebApp\ASI.Basecode.WebApp.csproj set "Brevo:SenderEmail" "your-verified-email@example.com"
 ```
 
-Production connection strings and Brevo credentials belong in protected IIS, Azure, or environment configuration. Use `Brevo__ApiKey` and `Brevo__SenderEmail` as production environment variable names.
+Equipment images are uploaded to a **private** Supabase Storage bucket when it is configured, and displayed through short-lived signed URLs. Create a private bucket (`equipment-images` by default) and store the project URL and `service_role` key locally with User Secrets. The register/edit forms always show the drag/drop upload control; it stays disabled (no uploads attempted) until Supabase is configured. Never commit the `service_role` key:
+
+```powershell
+dotnet user-secrets --project .\ASI.Basecode.WebApp\ASI.Basecode.WebApp.csproj set "Supabase:Url" "https://YOUR-PROJECT.supabase.co"
+dotnet user-secrets --project .\ASI.Basecode.WebApp\ASI.Basecode.WebApp.csproj set "Supabase:ServiceRoleKey" "YOUR_SERVICE_ROLE_KEY"
+```
+
+Production connection strings, Brevo credentials, and Supabase credentials belong in protected IIS, Azure, or environment configuration. Use `Brevo__ApiKey`, `Brevo__SenderEmail`, `Supabase__Url`, `Supabase__Bucket`, and `Supabase__ServiceRoleKey` as production environment variable names.
 
 ## Database Setup
 

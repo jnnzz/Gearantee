@@ -97,11 +97,11 @@
                                 @if (showsReturns)
                                 {
                                     @item.ReturnedAtLocal?.ToString("ddd d MMM · HH:mm")<br />
-                                    <span class="text-xs text-gray-500">due @item.DueAtLocal.ToString("ddd d MMM · HH:mm")</span>
+                                    <span class="text-xs text-gray-500">due @item.EndLabel</span>
                                 }
                                 else
                                 {
-                                    @item.DueAtLocal.ToString("ddd d MMM · HH:mm")
+                                    @item.EndLabel
                                 }
                             </td>
                             <td class="px-3 py-3">

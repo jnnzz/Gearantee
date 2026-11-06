@@ -1,4 +1,4 @@
-﻿using ASI.Basecode.Data.Models;
+using ASI.Basecode.Data.Models;
 using ASI.Basecode.Resources.Constants;
 using System;
 using System.Collections.Generic;
@@ -45,10 +45,7 @@ namespace ASI.Basecode.Services.ServiceModels.EquipmentItem
         [Display(Name = "Category")]
         public long CategoryId { get; set; }
 
-        [Required(ErrorMessage = "Item code is required.")]
-        [StringLength(100, ErrorMessage = "Item code cannot exceed 100 characters.")]
-        [RegularExpression(@"^[A-Za-z0-9][A-Za-z0-9._-]*$", ErrorMessage = "Use letters, numbers, periods, hyphens, or underscores for the item code.")]
-        [Display(Name = "Item code")]
+        // Assigned by the server; never accepted as a user-editable identifier.
         public string ItemCode { get; set; }
 
         [Required(ErrorMessage = "Item name is required.")]
@@ -62,13 +59,6 @@ namespace ASI.Basecode.Services.ServiceModels.EquipmentItem
         [StringLength(500, ErrorMessage = "Catalog image URL cannot exceed 500 characters.")]
         [Display(Name = "Catalog image URL")]
         public string ImageUrl { get; set; }
-
-        // UploadedImageUrl is a server-generated managed path retained when a form
-        // returns validation errors. CurrentImageUrl is display-only and is reloaded
-        // from the database on every edit request.
-        public string UploadedImageUrl { get; set; }
-        public string CurrentImageUrl { get; set; }
-        public bool RemoveImage { get; set; }
 
         [StringLength(150, ErrorMessage = "Brand cannot exceed 150 characters.")]
         public string Brand { get; set; }
@@ -113,28 +103,14 @@ namespace ASI.Basecode.Services.ServiceModels.EquipmentItem
         public bool Succeeded { get; private set; }
         public bool Forbidden { get; private set; }
         public bool Missing { get; private set; }
-        public bool PersistenceFailure { get; private set; }
         public string Message { get; private set; }
         public long EquipmentId { get; private set; }
 
-        public string PreviousImageUrl { get; private set; }
+        public static EquipmentItemOperationResult Success(string message, long id) =>
+            new() { Succeeded = true, Message = message, EquipmentId = id };
 
-        public static EquipmentItemOperationResult Success(
-            string message,
-            long id,
-            string previousImageUrl = null) =>
-            new()
-            {
-                Succeeded = true,
-                Message = message,
-                EquipmentId = id,
-                PreviousImageUrl = previousImageUrl
-            };
-
-        public static EquipmentItemOperationResult Failure(
-            string message,
-            bool persistenceFailure = false) =>
-            new() { Message = message, PersistenceFailure = persistenceFailure };
+        public static EquipmentItemOperationResult Failure(string message) =>
+            new() { Message = message };
 
         public static EquipmentItemOperationResult AccessDenied() =>
             new() { Forbidden = true, Message = "You do not have permission to manage equipment items." };

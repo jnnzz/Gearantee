@@ -9,6 +9,8 @@
 
   <ItemGroup>
     <None Remove="appsettings.json.rej" />
+    <!-- NuGet's TypeScript glob ignores tsconfig excludes when populating IDE items. -->
+    <TypeScriptCompile Remove="node_modules\**\*;wwwroot\lib\**\*" />
   </ItemGroup>
 
   <ItemGroup>
@@ -43,9 +45,6 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="SkiaSharp" Version="4.154.0" />
-    <PackageReference Include="SkiaSharp.NativeAssets.Win32" Version="4.154.0" />
-    <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="4.154.0" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,4 +1,4 @@
-﻿using ASI.Basecode.Data;
+using ASI.Basecode.Data;
 using ASI.Basecode.Data.Interfaces;
 using ASI.Basecode.Data.Locks;
 using ASI.Basecode.Data.Models;
@@ -33,6 +33,7 @@ namespace ASI.Basecode.Services.Services
         private readonly IReservationRepository _reservationRepository;
         private readonly IEquipmentItemRepository _equipmentItemRepository;
         private readonly TimeProvider _timeProvider;
+        private readonly INotificationDispatcher _notifications;
         private readonly IApplicationLockManager _applicationLocks;
 
         public ReturnRecordService(
@@ -40,13 +41,14 @@ namespace ASI.Basecode.Services.Services
             IReturnRecordRepository returnRecordRepository,
             IReservationRepository reservationRepository,
             IEquipmentItemRepository equipmentItemRepository,
-            TimeProvider timeProvider)
+            TimeProvider timeProvider, INotificationDispatcher notifications = null)
         {
             _db = unitOfWork.Context;
             _returnRecordRepository = returnRecordRepository;
             _reservationRepository = reservationRepository;
             _equipmentItemRepository = equipmentItemRepository;
             _timeProvider = timeProvider;
+            _notifications = notifications;
             _applicationLocks = new ApplicationLockManager(_db);
         }
 
@@ -228,6 +230,7 @@ namespace ASI.Basecode.Services.Services
                 .Where(reservation => reservation.ReleaseRecord.ReleaseRecordId == model.ReleaseRecordId)
                 .Select(reservation => new
                 {
+                    reservation.ReservationId,
                     reservation.EquipmentId,
                     DueAt = reservation.ReservationEnd,
                     ReleasedAt = reservation.ReleaseRecord.ActualReleaseAt,
@@ -323,6 +326,10 @@ namespace ASI.Basecode.Services.Services
                 {
                     // One save writes the return, late return, and item changes
                     _returnRecordRepository.AddReturnRecord(newReturnRecord);
+                    _notifications?.StageReservation(loan.ReservationId, daysLate > 0
+                        ? DomainValues.NotificationTypes.LateReturn : DomainValues.NotificationTypes.Returned,
+                        $"Condition: {condition}." + (daysLate > 0 ? $" Late return: {daysLate} day(s)." : ""));
+                    _db.SaveChanges();
                     transaction.Commit();
                 }
                 catch (DbUpdateException exception)
@@ -425,7 +432,8 @@ namespace ASI.Basecode.Services.Services
                 SchoolId = reservation.BorrowerProfile.User.UserCode,
                 Status = reservation.Status,
                 ReleasedAt = reservation.ReleaseRecord.ActualReleaseAt,
-                DueAt = reservation.ReservationEnd
+                DueAt = reservation.ReservationEnd,
+                IsFullDay = reservation.IsFullDay
             });
         }
 
@@ -446,6 +454,7 @@ namespace ASI.Basecode.Services.Services
                 Status = record.ReleaseRecord.Reservation.Status,
                 ReleasedAt = record.ReleaseRecord.ActualReleaseAt,
                 DueAt = record.ReleaseRecord.Reservation.ReservationEnd,
+                IsFullDay = record.ReleaseRecord.Reservation.IsFullDay,
                 ReturnedAt = record.ActualReturnAt,
                 RecordedAt = record.CreatedAt,
                 ReturnedCondition = record.ReturnedCondition,
@@ -470,11 +479,12 @@ namespace ASI.Basecode.Services.Services
             item.BorrowerName = FullName(row.BorrowerFirstName, row.BorrowerLastName) ?? string.Empty;
             item.SchoolId = row.SchoolId ?? string.Empty;
             item.ReleasedAtLocal = ManilaClock.ToLocal(row.ReleasedAt);
+            item.IsFullDay = row.IsFullDay;
             item.DueAtLocal = ManilaClock.ToLocal(row.DueAt);
             item.ReturnedAtLocal = row.ReturnedAt.HasValue ? ManilaClock.ToLocal(row.ReturnedAt.Value) : (DateTime?)null;
             item.ReturnedCondition = row.ReturnedCondition;
             item.DaysLate = row.DaysLate;
-            item.DisplayStatus = ReservationDisplayStatus.For(row.Status, row.DueAt, row.ReleasedAt, row.ReturnedAt, nowUtc);
+            item.DisplayStatus = ReservationDisplayStatus.For(row.Status, row.DueAt, row.ReleasedAt, row.ReturnedAt, nowUtc, row.IsFullDay);
             return item;
         }
 
@@ -499,6 +509,7 @@ namespace ASI.Basecode.Services.Services
             public string Status { get; set; }
             public DateTime ReleasedAt { get; set; }
             public DateTime DueAt { get; set; }
+            public bool IsFullDay { get; set; }
             public DateTime? ReturnedAt { get; set; }
             public DateTime RecordedAt { get; set; }
             public string ReturnedCondition { get; set; }

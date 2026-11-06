@@ -1,6 +1,6 @@
 @using static ASI.Basecode.Resources.Views.Screen
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-force-light="@(ViewBag.LoginView == true ? "true" : "false")">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -18,7 +18,6 @@
     <a class="skip-link" href="#main-content">Skip to main content</a>
     @if (ViewBag.LoginView == true)
     {
-        <div class="auth-appearance"><partial name="_ThemePicker" /></div>
         <main id="main-content" class="auth-page min-h-screen">
             <partial name="_FlashMessages" />
             @RenderBody()
@@ -33,10 +32,6 @@
                 <partial name="_Topbar" />
                 <main id="main-content" class="workspace-content" role="main">
                     <partial name="_FlashMessages" />
-                    @if (ViewData["DashboardError"] is string dashboardError)
-                    {
-                        <div class="mb-7 border-l-4 border-ink bg-white px-4 py-3 text-sm" role="alert">@dashboardError</div>
-                    }
                     @RenderBody()
                 </main>
                 <footer class="workspace-footer"><span>GEARANTEE / CAMPUS EQUIPMENT</span><span>@Copyright</span></footer>
@@ -47,6 +42,7 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/toastr/toastr.min.js" asp-append-version="true"></script>
     <script src="~/js/flash-messages.js" asp-append-version="true"></script>
+    <script src="~/js/notifications.js" asp-append-version="true"></script>
     <script src="~/js/app-shell.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
     <script src="~/js/form-presentation.js" asp-append-version="true"></script>

@@ -10,7 +10,7 @@
         <h2 class="font-display text-xl font-semibold">Item details</h2>
         <p class="mt-1 text-sm text-gray-500">Add an individually tracked item to the equipment inventory.</p>
 
-        @if (Model.Categories.Count == 0)
+        @if ((Model?.Categories?.Count ?? 0) == 0)
         {
             <div class="mt-5 border-l-4 border-ink bg-gray-50 px-4 py-3 text-sm" role="status">
                 Create and activate a category before registering equipment.
@@ -24,7 +24,7 @@
             @await Html.PartialAsync("_EquipmentItemFields", Model)
             <div class="mt-6 flex flex-wrap justify-end gap-3 border-t border-gray-100 pt-5">
                 <a asp-action="Index" asp-route-tab="equipment" class="btn-secondary">Cancel</a>
-                <button type="submit" class="btn-primary" disabled="@(Model.Categories.Count == 0)">Register equipment</button>
+                <button type="submit" class="btn-primary" disabled="@((Model?.Categories?.Count ?? 0) == 0)">Register equipment</button>
             </div>
         </form>
     </section>

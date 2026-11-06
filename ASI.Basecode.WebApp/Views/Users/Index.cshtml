@@ -86,7 +86,7 @@
                                 <partial name="Components/_StatusBadge" model="@(user.IsActive ? "Active" : "Deactivated")" />
                             </td>
                             <td class="px-3 py-3 text-right">
-                                <a asp-action="Edit" asp-route-id="@user.Id" class="text-link">Edit</a>
+                                <a asp-action="Edit" asp-route-id="@user.Id" class="action-edit">Edit</a>
                             </td>
                         </tr>
                     }

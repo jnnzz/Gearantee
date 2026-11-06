@@ -1,20 +1,22 @@
-﻿using ASI.Basecode.Data.Models;
+using ASI.Basecode.Data.Models;
 using ASI.Basecode.Resources.Constants;
+using ASI.Basecode.Services.Configuration;
 using ASI.Basecode.Services.Interfaces;
 using ASI.Basecode.Services.ServiceModels.Category;
 using ASI.Basecode.Services.ServiceModels.EquipmentItem;
-using ASI.Basecode.WebApp.Services.EquipmentImages;
+using ASI.Basecode.Services.Utilities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using System.Threading;
 
 namespace ASI.Basecode.WebApp.Controllers
 {
@@ -24,14 +26,22 @@ namespace ASI.Basecode.WebApp.Controllers
     [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
     public class CategoriesController : Mvc.ControllerBase<CategoriesController>
     {
+        // Allow the whole request to be read so an oversize photo is rejected with a
+        // friendly validation message instead of aborting the connection mid-upload.
+        // The actual file cap (Supabase:MaxFileBytes) is enforced by validation.
+        private const long MaxImageRequestBytes = 25 * 1024 * 1024;
+        private const int MaxImageBufferThreshold = 1 * 1024 * 1024;
+
         private readonly ICategoryService _categoryService;
         private readonly IEquipmentItemService _equipmentItemService;
-        private readonly IEquipmentImageStorage _equipmentImageStorage;
+        private readonly IImageStorageService _imageStorage;
+        private readonly SupabaseOptions _supabaseOptions;
 
         public CategoriesController(
             ICategoryService categoryService,
             IEquipmentItemService equipmentItemService,
-            IEquipmentImageStorage equipmentImageStorage,
+            IImageStorageService imageStorage,
+            IOptions<SupabaseOptions> supabaseOptions,
             IHttpContextAccessor httpContextAccessor,
             ILoggerFactory loggerFactory,
             IConfiguration configuration)
@@ -39,7 +49,8 @@ namespace ASI.Basecode.WebApp.Controllers
         {
             _categoryService = categoryService;
             _equipmentItemService = equipmentItemService;
-            _equipmentImageStorage = equipmentImageStorage;
+            _imageStorage = imageStorage;
+            _supabaseOptions = supabaseOptions.Value;
         }
 
         [HttpGet]
@@ -100,24 +111,25 @@ namespace ASI.Basecode.WebApp.Controllers
 
             ViewData["Title"] = "Register equipment item";
             ViewData["Eyebrow"] = "Master data";
+            PrepareImageUploadViewData();
             return View("CreateEquipment", model);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [RequestSizeLimit(5_500_000)]
-        [RequestFormLimits(MultipartBodyLengthLimit = 5_500_000)]
+        [RequestSizeLimit(MaxImageRequestBytes)]
+        [RequestFormLimits(MultipartBodyLengthLimit = MaxImageRequestBytes,
+            MemoryBufferThreshold = MaxImageBufferThreshold)]
         public async Task<IActionResult> CreateEquipment(
             EquipmentItemFormViewModel model,
-            [FromForm(Name = "imageFile")] List<IFormFile> imageFiles,
-            CancellationToken cancellationToken)
+            IFormFile imageFile)
         {
             if (!await _categoryService.CanManageAsync(UserId))
             {
                 return Forbid();
             }
 
-            await PrepareImageUploadAsync(model, imageFiles, cancellationToken);
+            PrepareImageUploadViewData();
 
             if (!ModelState.IsValid)
             {
@@ -125,40 +137,35 @@ namespace ASI.Basecode.WebApp.Controllers
                 return View("CreateEquipment", model);
             }
 
-            var promotedImageUrl = await PromoteImageForSaveAsync(model, cancellationToken);
-            if (!ModelState.IsValid)
+            string uploadedUrl = null;
+            if (HasFile(imageFile))
             {
-                await PrepareEquipmentFormAsync(model, isEdit: false);
-                return View("CreateEquipment", model);
+                uploadedUrl = await TryUploadImageAsync(imageFile, ModelState);
+                if (uploadedUrl == null)
+                {
+                    await PrepareEquipmentFormAsync(model, isEdit: false);
+                    return View("CreateEquipment", model);
+                }
+
+                model.ImageUrl = uploadedUrl;
             }
 
-            EquipmentItemOperationResult result;
-            try
-            {
-                result = await _equipmentItemService.CreateAsync(UserId, model);
-            }
-            catch
-            {
-                TryDeleteEquipmentImage(promotedImageUrl);
-                throw;
-            }
-
+            var result = await _equipmentItemService.CreateAsync(UserId, model);
             if (result.Forbidden)
             {
-                TryDeleteEquipmentImage(promotedImageUrl);
+                await DeleteImageAsync(uploadedUrl);
                 return Forbid();
             }
 
             if (!result.Succeeded)
             {
-                await HandleFailedImageSaveAsync(model, result, promotedImageUrl, cancellationToken);
-
+                // The database rejected the insert, so the just-uploaded object is orphaned.
+                await DeleteImageAsync(uploadedUrl);
                 ModelState.AddModelError(string.Empty, result.Message);
                 await PrepareEquipmentFormAsync(model, isEdit: false);
                 return View("CreateEquipment", model);
             }
 
-            model.UploadedImageUrl = null;
             TempData["SuccessMessage"] = result.Message;
             return RedirectToAction(nameof(Index), new { tab = "equipment" });
         }
@@ -179,24 +186,26 @@ namespace ASI.Basecode.WebApp.Controllers
 
             ViewData["Title"] = "Edit equipment item";
             ViewData["Eyebrow"] = "Master data";
+            PrepareImageUploadViewData();
             return View("EditEquipment", model);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [RequestSizeLimit(5_500_000)]
-        [RequestFormLimits(MultipartBodyLengthLimit = 5_500_000)]
+        [RequestSizeLimit(MaxImageRequestBytes)]
+        [RequestFormLimits(MultipartBodyLengthLimit = MaxImageRequestBytes,
+            MemoryBufferThreshold = MaxImageBufferThreshold)]
         public async Task<IActionResult> EditEquipment(
             EquipmentItemFormViewModel model,
-            [FromForm(Name = "imageFile")] List<IFormFile> imageFiles,
-            CancellationToken cancellationToken)
+            IFormFile imageFile,
+            bool removeImage)
         {
             if (!await _categoryService.CanManageAsync(UserId))
             {
                 return Forbid();
             }
 
-            await PrepareImageUploadAsync(model, imageFiles, cancellationToken);
+            PrepareImageUploadViewData();
 
             if (!ModelState.IsValid)
             {
@@ -208,44 +217,56 @@ namespace ASI.Basecode.WebApp.Controllers
                 return View("EditEquipment", model);
             }
 
-            var promotedImageUrl = await PromoteImageForSaveAsync(model, cancellationToken);
-            if (!ModelState.IsValid)
+            // The stored URL is authoritative; the posted hidden value is never trusted for
+            // deciding which old object to delete.
+            var currentImageUrl = await _equipmentItemService.GetImageUrlAsync(
+                UserId, model.EquipmentId);
+
+            string uploadedUrl = null;
+            if (HasFile(imageFile))
             {
-                if (!await PrepareEquipmentFormAsync(model, isEdit: true))
+                uploadedUrl = await TryUploadImageAsync(imageFile, ModelState);
+                if (uploadedUrl == null)
                 {
-                    return NotFound();
+                    if (!await PrepareEquipmentFormAsync(model, isEdit: true))
+                    {
+                        return NotFound();
+                    }
+
+                    return View("EditEquipment", model);
                 }
 
-                return View("EditEquipment", model);
+                model.ImageUrl = uploadedUrl;
+            }
+            else if (removeImage)
+            {
+                model.ImageUrl = null;
+            }
+            else if (_supabaseOptions.IsConfigured)
+            {
+                // Upload is the only way to change the photo once storage is enabled, so a
+                // posted URL cannot silently replace the stored one.
+                model.ImageUrl = currentImageUrl;
             }
 
-            EquipmentItemOperationResult result;
-            try
-            {
-                result = await _equipmentItemService.UpdateAsync(UserId, model);
-            }
-            catch
-            {
-                TryDeleteEquipmentImage(promotedImageUrl);
-                throw;
-            }
-
+            var result = await _equipmentItemService.UpdateAsync(UserId, model);
             if (result.Forbidden)
             {
-                TryDeleteEquipmentImage(promotedImageUrl);
+                await DeleteImageAsync(uploadedUrl);
                 return Forbid();
             }
 
             if (result.Missing)
             {
-                TryDeleteEquipmentImage(promotedImageUrl);
+                await DeleteImageAsync(uploadedUrl);
                 return NotFound();
             }
 
             if (!result.Succeeded)
             {
-                await HandleFailedImageSaveAsync(model, result, promotedImageUrl, cancellationToken);
-
+                // The update did not commit, so remove the new object instead of leaving it
+                // unreferenced in the bucket.
+                await DeleteImageAsync(uploadedUrl);
                 ModelState.AddModelError(string.Empty, result.Message);
                 if (!await PrepareEquipmentFormAsync(model, isEdit: true))
                 {
@@ -255,8 +276,7 @@ namespace ASI.Basecode.WebApp.Controllers
                 return View("EditEquipment", model);
             }
 
-            // Published image URLs can be shared by other items or reused by concurrent edits.
-            model.UploadedImageUrl = null;
+            // Published references can be shared or reused by concurrent edits; keep their objects.
             TempData["SuccessMessage"] = result.Message;
             return RedirectToAction(nameof(Index), new { tab = "equipment" });
         }
@@ -307,150 +327,101 @@ namespace ASI.Basecode.WebApp.Controllers
         {
             ViewData["Title"] = isEdit ? "Edit equipment item" : "Register equipment item";
             ViewData["Eyebrow"] = "Master data";
+            PrepareImageUploadViewData();
 
             var options = isEdit
                 ? await _equipmentItemService.GetEditFormAsync(UserId, model.EquipmentId)
                 : await _equipmentItemService.GetCreateFormAsync(UserId);
             if (options == null)
             {
+                model.Categories = new List<EquipmentCategoryOptionViewModel>();
                 return false;
             }
 
-            model.Categories = options.Categories;
+            model.Categories = options.Categories ?? new List<EquipmentCategoryOptionViewModel>();
+            model.ItemCode = options.ItemCode;
             model.IsLocked = options.IsLocked;
             model.IsCategoryInactive = options.IsCategoryInactive;
-            model.CurrentImageUrl = options.CurrentImageUrl;
             return true;
         }
 
-        private async Task PrepareImageUploadAsync(
-            EquipmentItemFormViewModel model,
-            IReadOnlyList<IFormFile> imageFiles,
-            CancellationToken cancellationToken)
+        /// <summary>
+        /// The file/drag control always renders; this flag only tells the view whether a
+        /// Supabase project is configured so uploads can actually be accepted.
+        /// </summary>
+        private void PrepareImageUploadViewData()
         {
-            if (model == null)
-            {
-                return;
-            }
-
-            var previousUploadUrl = model.UploadedImageUrl;
-            if (imageFiles?.Count > 1)
-            {
-                ModelState.AddModelError("imageFile", "Select only one equipment image.");
-            }
-            else if (imageFiles?.Count == 1 && !string.IsNullOrWhiteSpace(imageFiles[0]?.FileName))
-            {
-                if (model.RemoveImage)
-                {
-                    ModelState.AddModelError(nameof(model.RemoveImage), "Choose either a replacement image or remove the current image.");
-                }
-                else
-                {
-                    var saved = await _equipmentImageStorage.SaveAsync(imageFiles[0], cancellationToken);
-                    if (!saved.Succeeded)
-                    {
-                        ModelState.AddModelError("imageFile", saved.Error);
-                    }
-                    else
-                    {
-                        model.UploadedImageUrl = saved.ImageUrl;
-                        if (_equipmentImageStorage.IsStagedImageUrl(previousUploadUrl) &&
-                            !string.Equals(previousUploadUrl, saved.ImageUrl, StringComparison.Ordinal))
-                        {
-                            TryDeleteEquipmentImage(previousUploadUrl);
-                        }
-                    }
-                }
-            }
-
-            if (!string.IsNullOrWhiteSpace(model.UploadedImageUrl) &&
-                (!_equipmentImageStorage.IsStagedImageUrl(model.UploadedImageUrl) ||
-                 !_equipmentImageStorage.Exists(model.UploadedImageUrl)))
-            {
-                ModelState.AddModelError(nameof(model.UploadedImageUrl), "Choose the image again; the temporary upload is no longer available.");
-                model.UploadedImageUrl = null;
-            }
-
-            if (model.RemoveImage && (imageFiles == null || imageFiles.Count == 0))
-            {
-                TryDeleteEquipmentImage(model.UploadedImageUrl);
-                model.UploadedImageUrl = null;
-            }
-
+            ViewData["ImageUploadConfigured"] = _supabaseOptions.IsConfigured;
+            ViewData["ImageMaxFileBytes"] = _supabaseOptions.MaxFileBytes;
         }
 
-        private async Task<string> PromoteImageForSaveAsync(
-            EquipmentItemFormViewModel model,
-            CancellationToken cancellationToken)
+        private static bool HasFile(IFormFile imageFile)
         {
-            if (model.RemoveImage)
+            return imageFile != null && imageFile.Length > 0;
+        }
+
+        /// <summary>
+        /// Validates and uploads the posted image. Returns the public URL, or null after adding
+        /// a validation error to the form. The stream is re-validated on the server because the
+        /// browser's declared type is never trusted.
+        /// </summary>
+        private async Task<string> TryUploadImageAsync(
+            IFormFile imageFile,
+            ModelStateDictionary modelState)
+        {
+            if (!_supabaseOptions.IsConfigured)
             {
-                // Explicit removal takes precedence over a URL entered in the secondary field.
-                model.ImageUrl = null;
+                modelState.AddModelError("imageFile", "Image upload is not configured.");
                 return null;
             }
 
-            // With no staged upload, preserve the optional URL input. When a file was
-            // selected, the promoted managed URL takes precedence over that input.
-            if (string.IsNullOrWhiteSpace(model.UploadedImageUrl)) return null;
-
-            var imageUrl = await _equipmentImageStorage.PromoteAsync(
-                model.UploadedImageUrl,
-                cancellationToken);
-            if (imageUrl == null)
-            {
-                ModelState.AddModelError(
-                    nameof(model.UploadedImageUrl),
-                    "Choose the image again; the temporary upload is no longer available.");
-                model.UploadedImageUrl = null;
-                return null;
-            }
-
-            model.ImageUrl = imageUrl;
-            return imageUrl;
-        }
-
-        private async Task HandleFailedImageSaveAsync(
-            EquipmentItemFormViewModel model,
-            EquipmentItemOperationResult result,
-            string promotedImageUrl,
-            CancellationToken cancellationToken)
-        {
-            if (promotedImageUrl == null)
-            {
-                return;
-            }
-
-            if (result.PersistenceFailure)
-            {
-                TryDeleteEquipmentImage(promotedImageUrl);
-                model.UploadedImageUrl = null;
-                model.ImageUrl = null;
-                return;
-            }
-
-            model.UploadedImageUrl = await _equipmentImageStorage.RevertToStagedAsync(
-                promotedImageUrl,
-                cancellationToken);
-            model.ImageUrl = null;
-            if (model.UploadedImageUrl == null)
-            {
-                ModelState.AddModelError(
-                    nameof(model.UploadedImageUrl),
-                    "The uploaded image could not be retained. Please choose it again.");
-            }
-        }
-
-        private void TryDeleteEquipmentImage(string imageUrl)
-        {
             try
             {
-                _equipmentImageStorage.Delete(imageUrl);
+                await using var stream = imageFile.OpenReadStream();
+                var validation = ImageUploadValidation.Validate(
+                    stream,
+                    imageFile.FileName,
+                    imageFile.ContentType,
+                    _supabaseOptions.MaxFileBytes);
+                if (!validation.IsValid)
+                {
+                    modelState.AddModelError("imageFile", validation.Error);
+                    return null;
+                }
+
+                return await _imageStorage.UploadAsync(
+                    stream,
+                    imageFile.FileName,
+                    validation.ContentType);
             }
             catch (Exception exception)
             {
-                _logger.LogWarning(exception,
-                    "Could not clean up managed equipment image {ImageUrl}", imageUrl);
+                _logger.LogError(exception, "Equipment image upload failed.");
+                modelState.AddModelError(
+                    "imageFile",
+                    "The image could not be uploaded. Please try again.");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Best-effort cleanup of an object that is no longer referenced. A storage failure must
+        /// never fail the user's request, so it is only logged.
+        /// </summary>
+        private async Task DeleteImageAsync(string imageUrl)
+        {
+            if (string.IsNullOrWhiteSpace(imageUrl))
+            {
+                return;
+            }
+
+            try
+            {
+                await _imageStorage.DeleteAsync(imageUrl);
+            }
+            catch (Exception exception)
+            {
+                _logger.LogWarning(exception, "Equipment image cleanup failed.");
             }
         }
 

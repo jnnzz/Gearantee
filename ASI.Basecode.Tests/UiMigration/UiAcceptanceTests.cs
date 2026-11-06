@@ -53,7 +53,7 @@ namespace ASI.Basecode.Tests.UiMigration
             var equipmentManagementHtml = await Check(admin, "/Categories/Index?tab=categories");
             Assert.Contains("Equipment &amp; categories", equipmentManagementHtml);
             var createEquipmentHtml = await Check(admin, "/Categories/CreateEquipment");
-            Assert.Contains("data-clear-image", createEquipmentHtml);
+            Assert.Contains("data-image-drop-zone", createEquipmentHtml);
 
             var userEditHtml = await Check(admin, $"/Users/Edit?id={site.BorrowerId}");
             Assert.Contains("class=\"btn-danger\"", userEditHtml);
@@ -93,7 +93,8 @@ namespace ASI.Basecode.Tests.UiMigration
             Assert.Single(Regex.Matches(returnSearch, "<h1\\b", RegexOptions.IgnoreCase));
             var historyHtml = await Check(admin, "/BorrowingHistory/Index?Search=NO_MATCH_UI_FIXTURE");
             Assert.Contains("More filters", historyHtml);
-            Assert.Contains("Download Excel", historyHtml);
+            Assert.DoesNotContain("Download Excel", historyHtml);
+            Assert.Contains("Download CSV", historyHtml);
             Assert.Contains("Download CSV", historyHtml);
             Assert.Single(Regex.Matches(historyHtml, "<h1\\b", RegexOptions.IgnoreCase));
             foreach (var path in new[] { "/Dashboard/Borrower", "/Catalog/Index", $"/Catalog/Details?id={site.AvailableItemId}", "/Reservation/Index", $"/Reservation/Create?equipmentId={site.AvailableItemId}", "/AvailabilityCalendar/Index" })

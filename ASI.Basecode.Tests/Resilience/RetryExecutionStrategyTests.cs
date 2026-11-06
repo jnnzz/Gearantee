@@ -312,6 +312,9 @@ namespace ASI.Basecode.Tests.Resilience
             services.AddSingleton(TimeProvider);
             services.AddScoped<IUnitOfWork>(provider => new UnitOfWork(
                 provider.GetRequiredService<AsiBasecodeDBContext>()));
+            services.Configure<ASI.Basecode.Services.Configuration.NotificationOptions>(options => options.Enabled = true);
+            services.AddScoped<INotificationRepository, NotificationRepository>();
+            services.AddScoped<INotificationDispatcher, NotificationDispatcher>();
             services.AddScoped<IReservationRepository, ReservationRepository>();
             services.AddScoped<IEquipmentItemRepository, EquipmentItemRepository>();
             services.AddScoped<IBorrowerProfileRepository, BorrowerProfileRepository>();
