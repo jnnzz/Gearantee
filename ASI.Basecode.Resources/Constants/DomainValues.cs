@@ -4,6 +4,19 @@ namespace ASI.Basecode.Resources.Constants
 {
     public static class DomainValues
     {
+        public static class NotificationTypes
+        {
+            public const string Submitted = "ReservationSubmitted";
+            public const string Approved = "ReservationApproved";
+            public const string Rejected = "ReservationRejected";
+            public const string Cancelled = "ReservationCancelled";
+            public const string Expired = "ReservationExpired";
+            public const string Released = "EquipmentReleased";
+            public const string Returned = "ReturnRecorded";
+            public const string LateReturn = "LateReturnRecorded";
+            public const string Overdue = "LoanOverdue";
+            public const string DueSoon = "LoanDueSoon";
+        }
         public static class Roles
         {
             public const string Borrower = "Borrower";

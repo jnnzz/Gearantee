@@ -4,9 +4,9 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 const source = name => readFileSync(new URL('../wwwroot/js/' + name, import.meta.url), 'utf8');
 
-function theme(saved, dark = false, blocked = false) {
+function theme(saved, dark = false, blocked = false, forceLight = false) {
     const listeners = {};
-    const root = {dataset: {}, style: {}};
+    const root = {dataset: {forceLight: String(forceLight)}, style: {}};
     const media = {matches: dark, addEventListener: (_, callback) => { listeners.system = callback; }};
     const picker = {value: '', setAttribute: (key, value) => { picker[key] = value; }, addEventListener: (_, callback) => { listeners.pick = callback; }};
     const values = [];
@@ -68,4 +68,12 @@ test('flash enhancement uses plain text, persistent errors, and keeps fallback o
     delete window.toastr;
     vm.runInNewContext(source('flash-messages.js'), {document, window});
     assert.equal(message.hidden, false);
+});
+
+test('authentication forces light without overwriting a saved workspace theme', () => {
+    const ui = theme('dark', true, false, true);
+    assert.equal(ui.root.dataset.theme, 'light');
+    ui.listeners.ready();
+    assert.equal(ui.listeners.pick, undefined);
+    assert.deepEqual(ui.values, []);
 });

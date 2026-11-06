@@ -106,7 +106,8 @@ namespace ASI.Basecode.Tests.UiMigration
             Assert.DoesNotContain("Create one", login);
             Assert.DoesNotContain("Remember me", login);
             Assert.Contains("name=\"RememberMe\" value=\"false\"", login);
-            Assert.Contains("Email or school ID", login);
+            Assert.Contains("School ID", login);
+            Assert.DoesNotContain("Email or school ID", login);
             Assert.Contains("data-required-marker", login);
             Assert.Contains("theme.js", login);
 

@@ -78,7 +78,7 @@ Pages must not render a second flash banner or call Toastr themselves. The exist
 
 Razor encodes the inline fallback. The adapter reads plain text and enables Toastr HTML escaping. Success/info dismiss after six seconds, with hover/focus pause. Warning/error stay until dismissed. Close buttons have accessible names; errors use alert semantics and success uses status semantics. Reduced motion disables fades/progress. Failed JavaScript/library initialization leaves the inline message visible. Field errors, validation summaries, eligibility warnings, dashboard failures and calendar load errors remain contextual.
 
-Toastr is the same existing CDN package, now bundled under `wwwroot/lib/toastr` with its MIT license, so it no longer depends on the external CDN. Do not introduce a second toast system or simulated notification inbox.
+Toastr is the same existing CDN package, now bundled under `wwwroot/lib/toastr` with its MIT license, so it no longer depends on the external CDN. Keep this toast system for immediate feedback. The approved persistent workflow inbox is documented in `NOTIFICATIONS.md`; do not simulate unread counts.
 
 ## Login
 

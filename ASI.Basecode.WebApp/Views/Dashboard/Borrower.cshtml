@@ -3,6 +3,15 @@
 @using ASI.Basecode.WebApp.Models.Dashboard
 @inject ASI.Basecode.Services.Interfaces.IImageStorageService ImageStorage
 
+@if (ViewData["DashboardUnavailable"] is true)
+{
+    <section class="table-surface p-8" aria-label="Dashboard unavailable">
+        <p class="mb-4">Dashboard data is temporarily unavailable.</p>
+        <a asp-action="Borrower" class="btn-secondary">Try again</a>
+    </section>
+    return;
+}
+
 <section class="borrower-summary" aria-label="Borrower summary">
     <partial name="Components/_KpiTile" model="@(new KpiTileModel { Label = "On loan now", Value = Model.ActiveLoanCount, Status = "Borrowed", Caption = Model.CurrentLoans.FirstOrDefault()?.ItemName ?? "No equipment currently on loan" })" />
     <partial name="Components/_KpiTile" model="@(new KpiTileModel { Label = "Pending requests", Value = Model.PendingCount, Status = "Pending", Caption = "Awaiting custodian decision" })" />

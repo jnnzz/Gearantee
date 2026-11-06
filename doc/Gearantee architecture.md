@@ -333,3 +333,7 @@ c:\Users\PJ Pineda\Desktop\Alliance\Gearantee\
     ├── Dashboard/
     └── UserAdministration/
 ```
+
+## Notification enhancement (11/6/2026)
+
+The additive `Notifications` table stores recipient-owned inbox records and deferred approval/rejection email state. Data owns configuration/repository/migrations; Services owns dispatch, inbox queries, reminders and delivery; WebApp owns the authenticated controller, hosted-worker lifetime and bell/inbox UI. Network delivery runs after workflow commits. See [NOTIFICATIONS.md](NOTIFICATIONS.md) for event routing, lease/retry semantics and rollout.

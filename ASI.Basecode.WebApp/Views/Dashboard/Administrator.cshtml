@@ -6,6 +6,15 @@
     <link rel="stylesheet" href="~/css/admin-inventory.css" asp-append-version="true" />
 }
 
+@if (ViewData["DashboardUnavailable"] is true)
+{
+    <section class="table-surface p-8" aria-label="Dashboard unavailable">
+        <p class="mb-4">Dashboard data is temporarily unavailable.</p>
+        <a asp-action="Administrator" class="btn-secondary">Try again</a>
+    </section>
+    return;
+}
+
 <div class="role-page admin-dashboard">
 <p class="admin-dashboard-caption">A clear view of equipment, people, and campus operations.</p>
 <section class="role-summary admin-summary" aria-label="System summary">

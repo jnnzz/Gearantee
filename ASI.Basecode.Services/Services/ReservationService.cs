@@ -46,6 +46,7 @@ namespace ASI.Basecode.Services.Services
         private readonly IEquipmentItemRepository _equipmentItemRepository;
         private readonly IBorrowerProfileRepository _borrowerProfileRepository;
         private readonly TimeProvider _timeProvider;
+        private readonly INotificationDispatcher _notifications;
 
         public ReservationService(
             IUnitOfWork unitOfWork,
@@ -53,7 +54,7 @@ namespace ASI.Basecode.Services.Services
             IEquipmentItemRepository equipmentItemRepository,
             IBorrowerProfileRepository borrowerProfileRepository,
             IAuditService auditService,
-            TimeProvider timeProvider)
+            TimeProvider timeProvider, INotificationDispatcher notifications = null)
         {
             _db = unitOfWork.Context;
             _reservationRepository = reservationRepository;
@@ -61,6 +62,7 @@ namespace ASI.Basecode.Services.Services
             _borrowerProfileRepository = borrowerProfileRepository;
             _auditService = auditService;
             _timeProvider = timeProvider;
+            _notifications = notifications;
         }
 
         public string CheckBorrowerEligibility(string userId)
@@ -199,6 +201,8 @@ namespace ASI.Basecode.Services.Services
                     }
 
                     _reservationRepository.AddReservation(newReservation);
+                    _notifications?.StageReservation(newReservation.ReservationId, DomainValues.NotificationTypes.Submitted);
+                    _db.SaveChanges();
                     transaction.Commit();
                 }
 
@@ -350,6 +354,10 @@ namespace ASI.Basecode.Services.Services
 
             // D4, checked again inside the UPDATE itself so a custodian releasing the item
             // at the same moment can't leave a cancelled reservation with a release record.
+            return _db.Database.CreateExecutionStrategy().Execute(() =>
+            {
+            _db.ChangeTracker.Clear();
+            using var transaction = _db.Database.BeginTransaction(IsolationLevel.Serializable);
             var cancelled = _reservationRepository.GetReservations()
                 .Where(reservation =>
                     reservation.ReservationId == reservationId &&
@@ -367,7 +375,11 @@ namespace ASI.Basecode.Services.Services
                 return ReservationResult.Fail("This reservation changed while you were cancelling it. Reload the page to see its current status.");
             }
 
+            _notifications?.StageReservation(reservationId, DomainValues.NotificationTypes.Cancelled);
+            _db.SaveChanges();
+            transaction.Commit();
             return ReservationResult.Success("Reservation cancelled.", reservationId);
+            });
         }
 
         public ReservationReviewIndexViewModel GetReviewQueue(string status, string search, int page)
@@ -529,6 +541,8 @@ namespace ASI.Basecode.Services.Services
                         return ReservationResult.Fail(ChangedWhileReviewing);
                     }
 
+                    _notifications?.StageReservation(reservationId, DomainValues.NotificationTypes.Expired);
+                    _db.SaveChanges();
                     transaction.Commit();
                     return ReservationResult.Fail("This request expired before it was reviewed. Reload the page to see its current status.");
                 }
@@ -567,6 +581,7 @@ namespace ASI.Basecode.Services.Services
                     return ReservationResult.Fail(ChangedWhileReviewing);
                 }
 
+                _notifications?.StageReservation(reservationId, DomainValues.NotificationTypes.Approved);
                 AddAudit(actorUserId, state.BorrowerUserId, ApprovedAction, new { ReservationId = reservationId });
                 _db.SaveChanges();
                 transaction.Commit();
@@ -636,6 +651,7 @@ namespace ASI.Basecode.Services.Services
                     return ReservationResult.Fail(ChangedWhileReviewing);
                 }
 
+                _notifications?.StageReservation(reservationId, DomainValues.NotificationTypes.Rejected, trimmed);
                 AddAudit(actorUserId, state.BorrowerUserId, RejectedAction, new
                 {
                     ReservationId = reservationId,
@@ -748,6 +764,7 @@ namespace ASI.Basecode.Services.Services
                 item.ItemStatus = DomainValues.EquipmentStatuses.Borrowed;
                 item.UpdatedAt = nowUtc;
 
+                _notifications?.StageReservation(reservationId, DomainValues.NotificationTypes.Released);
                 AddAudit(actorUserId, state.BorrowerUserId, ReleasedAction, new { ReservationId = reservationId });
 
                 try
@@ -826,15 +843,29 @@ namespace ASI.Basecode.Services.Services
         /// The queue must not offer a request whose start has already passed, so the same lazy
         /// expiry the borrower screens use is applied across every borrower.
         /// </summary>
-        private void ExpireStalePendingForAll(DateTime nowUtc)
+        private void ExpireStalePendingForAll(DateTime nowUtc) => ExpirePending(null, nowUtc);
+
+        private void ExpirePending(long? borrowerProfileId, DateTime nowUtc)
         {
-            _reservationRepository.GetReservations()
-                .Where(reservation =>
-                    reservation.Status == DomainValues.ReservationStatuses.Pending &&
-                    reservation.ReservationStart <= nowUtc)
-                .ExecuteUpdate(setters => setters
-                    .SetProperty(reservation => reservation.Status, DomainValues.ReservationStatuses.Expired)
-                    .SetProperty(reservation => reservation.UpdatedAt, nowUtc));
+            var stale = _reservationRepository.GetReservations().Where(x =>
+                x.Status == DomainValues.ReservationStatuses.Pending && x.ReservationStart <= nowUtc &&
+                (!borrowerProfileId.HasValue || x.BorrowerProfileId == borrowerProfileId.Value));
+            // Candidate reads hold no range locks. The conditional UPDATE decides which transition won.
+            var ids = stale.Select(x => x.ReservationId).ToList();
+            foreach (var id in ids)
+            {
+                _db.Database.CreateExecutionStrategy().Execute(() =>
+                {
+                    _db.ChangeTracker.Clear();
+                    using var transaction = _db.Database.BeginTransaction(IsolationLevel.Serializable);
+                    var changed = stale.Where(x => x.ReservationId == id).ExecuteUpdate(update => update
+                        .SetProperty(x => x.Status, DomainValues.ReservationStatuses.Expired)
+                        .SetProperty(x => x.UpdatedAt, nowUtc));
+                    if (changed > 0) _notifications?.StageReservation(id, DomainValues.NotificationTypes.Expired);
+                    _db.SaveChanges();
+                    transaction.Commit();
+                });
+            }
         }
 
         private static ReservationReviewListItemViewModel ToReviewListItem(
@@ -919,20 +950,7 @@ namespace ASI.Basecode.Services.Services
         /// D2: a Pending request whose start has passed was never reviewed in time, so it
         /// becomes Expired. Written lazily whenever the borrower's reservations are read.
         /// </summary>
-        private void ExpireStalePending(long borrowerProfileId, DateTime nowUtc)
-        {
-            // One conditional UPDATE instead of saving loaded rows: the Pending check runs at
-            // write time, so a request a custodian approved after we loaded the page is never
-            // overwritten with Expired (RES-02), and only Status and UpdatedAt change.
-            _reservationRepository.GetReservations()
-                .Where(reservation =>
-                    reservation.BorrowerProfileId == borrowerProfileId &&
-                    reservation.Status == DomainValues.ReservationStatuses.Pending &&
-                    reservation.ReservationStart <= nowUtc)
-                .ExecuteUpdate(setters => setters
-                    .SetProperty(reservation => reservation.Status, DomainValues.ReservationStatuses.Expired)
-                    .SetProperty(reservation => reservation.UpdatedAt, nowUtc));
-        }
+        private void ExpireStalePending(long borrowerProfileId, DateTime nowUtc) => ExpirePending(borrowerProfileId, nowUtc);
 
         private static string NormalizeStatus(string status)
         {

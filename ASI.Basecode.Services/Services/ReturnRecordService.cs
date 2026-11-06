@@ -33,6 +33,7 @@ namespace ASI.Basecode.Services.Services
         private readonly IReservationRepository _reservationRepository;
         private readonly IEquipmentItemRepository _equipmentItemRepository;
         private readonly TimeProvider _timeProvider;
+        private readonly INotificationDispatcher _notifications;
         private readonly IApplicationLockManager _applicationLocks;
 
         public ReturnRecordService(
@@ -40,13 +41,14 @@ namespace ASI.Basecode.Services.Services
             IReturnRecordRepository returnRecordRepository,
             IReservationRepository reservationRepository,
             IEquipmentItemRepository equipmentItemRepository,
-            TimeProvider timeProvider)
+            TimeProvider timeProvider, INotificationDispatcher notifications = null)
         {
             _db = unitOfWork.Context;
             _returnRecordRepository = returnRecordRepository;
             _reservationRepository = reservationRepository;
             _equipmentItemRepository = equipmentItemRepository;
             _timeProvider = timeProvider;
+            _notifications = notifications;
             _applicationLocks = new ApplicationLockManager(_db);
         }
 
@@ -228,6 +230,7 @@ namespace ASI.Basecode.Services.Services
                 .Where(reservation => reservation.ReleaseRecord.ReleaseRecordId == model.ReleaseRecordId)
                 .Select(reservation => new
                 {
+                    reservation.ReservationId,
                     reservation.EquipmentId,
                     DueAt = reservation.ReservationEnd,
                     ReleasedAt = reservation.ReleaseRecord.ActualReleaseAt,
@@ -323,6 +326,10 @@ namespace ASI.Basecode.Services.Services
                 {
                     // One save writes the return, late return, and item changes
                     _returnRecordRepository.AddReturnRecord(newReturnRecord);
+                    _notifications?.StageReservation(loan.ReservationId, daysLate > 0
+                        ? DomainValues.NotificationTypes.LateReturn : DomainValues.NotificationTypes.Returned,
+                        $"Condition: {condition}." + (daysLate > 0 ? $" Late return: {daysLate} day(s)." : ""));
+                    _db.SaveChanges();
                     transaction.Commit();
                 }
                 catch (DbUpdateException exception)
