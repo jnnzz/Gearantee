@@ -30,6 +30,7 @@ namespace ASI.Basecode.Services.Services
         private const string ApprovedAction = "ReservationApproved";
         private const string RejectedAction = "ReservationRejected";
         private const string ReleasedAction = "EquipmentReleased";
+        private const string AwaitingReleaseFilter = "awaiting-release";
 
         private static readonly string[] StatusTabs =
         {
@@ -387,9 +388,16 @@ namespace ASI.Basecode.Services.Services
             var nowUtc = _timeProvider.GetUtcNow().UtcDateTime;
             ExpireStalePendingForAll(nowUtc);
 
+            var normalizedStatus = NormalizeStatus(status);
+            var isAwaitingReleaseFilter =
+                string.Equals(status, AwaitingReleaseFilter, StringComparison.OrdinalIgnoreCase) ||
+                normalizedStatus == DomainValues.ReservationStatuses.Approved;
+
             var model = new ReservationReviewIndexViewModel
             {
-                StatusFilter = NormalizeStatus(status) ?? string.Empty,
+                StatusFilter = isAwaitingReleaseFilter
+                    ? AwaitingReleaseFilter
+                    : normalizedStatus ?? string.Empty,
                 Search = search?.Trim() ?? string.Empty
             };
 
@@ -399,6 +407,10 @@ namespace ASI.Basecode.Services.Services
                 .GroupBy(reservation => reservation.Status)
                 .Select(group => new { Status = group.Key, Count = group.Count() })
                 .ToDictionary(group => group.Status, group => group.Count);
+            var awaitingReleaseCount = queue.Count(reservation =>
+                reservation.Status == DomainValues.ReservationStatuses.Approved &&
+                reservation.ReleaseRecord == null &&
+                reservation.ReservationEnd >= nowUtc);
 
             var term = model.Search.ToLowerInvariant();
             if (!string.IsNullOrEmpty(term))
@@ -411,7 +423,14 @@ namespace ASI.Basecode.Services.Services
                     reservation.BorrowerProfile.User.LastName.ToLower().Contains(term));
             }
 
-            if (!string.IsNullOrEmpty(model.StatusFilter))
+            if (isAwaitingReleaseFilter)
+            {
+                queue = queue.Where(reservation =>
+                    reservation.Status == DomainValues.ReservationStatuses.Approved &&
+                    reservation.ReleaseRecord == null &&
+                    reservation.ReservationEnd >= nowUtc);
+            }
+            else if (!string.IsNullOrEmpty(model.StatusFilter))
             {
                 queue = queue.Where(reservation => reservation.Status == model.StatusFilter);
             }
@@ -434,9 +453,15 @@ namespace ASI.Basecode.Services.Services
             {
                 model.Tabs.Add(new ReservationStatusTab
                 {
-                    Value = tabStatus,
-                    Label = tabStatus,
-                    Count = counts.TryGetValue(tabStatus, out var count) ? count : 0
+                    Value = tabStatus == DomainValues.ReservationStatuses.Approved
+                        ? AwaitingReleaseFilter
+                        : tabStatus,
+                    Label = tabStatus == DomainValues.ReservationStatuses.Approved
+                        ? "Awaiting Release"
+                        : tabStatus,
+                    Count = tabStatus == DomainValues.ReservationStatuses.Approved
+                        ? awaitingReleaseCount
+                        : counts.TryGetValue(tabStatus, out var count) ? count : 0
                 });
             }
 
