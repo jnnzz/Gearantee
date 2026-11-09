@@ -29,10 +29,10 @@
         }
     </nav>
 
-    <form method="get" asp-action="Index" role="search" class="filter-panel filter-panel--compact mt-4">
+    <form method="get" asp-action="Index" role="search" class="filter-panel filter-panel--compact filter-panel--right-search mt-4">
         <input type="hidden" name="tab" value="@Model.Tab" />
         <div class="min-w-0 flex-1">
-            <label for="return-search" class="mb-1 block text-xs font-medium text-gray-700">Search returns</label>
+            <label for="return-search" class="sr-only">Search returns</label>
             <input id="return-search" name="search" value="@Model.Search" type="search" maxlength="100"
                    class="input w-full" placeholder="Equipment name or code, borrower name or ID, reservation code (RSV-123)" />
         </div>

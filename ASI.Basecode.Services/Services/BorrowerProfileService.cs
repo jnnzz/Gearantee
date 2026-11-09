@@ -57,6 +57,14 @@ namespace ASI.Basecode.Services.Services
 
         public async Task<BorrowerProfileListViewModel> GetBorrowerProfilesAsync(string search, int page)
         {
+            return await GetBorrowerProfilesAsync(search, page, null);
+        }
+
+        public async Task<BorrowerProfileListViewModel> GetBorrowerProfilesAsync(
+            string search,
+            int page,
+            bool? isEligible)
+        {
             IQueryable<BorrowerProfile> query = _db.BorrowerProfiles.AsNoTracking();
 
             var term = search?.Trim().ToLowerInvariant();
@@ -67,6 +75,11 @@ namespace ASI.Basecode.Services.Services
                     profile.Department.ToLower().Contains(term) ||
                     profile.User.FirstName.ToLower().Contains(term) ||
                     profile.User.LastName.ToLower().Contains(term));
+            }
+
+            if (isEligible.HasValue)
+            {
+                query = query.Where(profile => profile.IsEligible == isEligible.Value);
             }
 
             var totalCount = await query.CountAsync();
@@ -83,6 +96,7 @@ namespace ASI.Basecode.Services.Services
             {
                 Borrowers = borrowers,
                 Search = search,
+                EligibilityFilter = isEligible,
                 Page = currentPage,
                 TotalPages = totalPages,
                 TotalCount = totalCount
