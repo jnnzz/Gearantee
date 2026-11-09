@@ -464,7 +464,7 @@ html[data-theme="dark"] {
 .ui-refresh .filter-panel :is(.input, button, .btn-secondary) { min-height: 42px; }
 .topbar-tools { display: flex; flex-shrink: 0; align-items: center; gap: 1rem; }
 .auth-page { min-height: calc(100dvh - 4.5rem); }
-.auth-equipment-card img { display: block; width: 100%; height: auto; border-radius: 1rem; }
+.auth-equipment-card img { display: block; width: 100%; height: auto; max-height: 180px; object-fit: contain; border-radius: 1rem; }
 .ui-refresh .auth-equipment-card { background: #fff; color: #365e85; }
 .ui-refresh .auth-brand, .ui-refresh .sidebar-brand { border-radius: .85rem; }
 .brand-logo-light, .brand-logo-dark { max-width: 100%; height: auto; border-radius: .5rem; }
@@ -553,3 +553,84 @@ html[data-theme="dark"] .brand-logo-dark { display: block; }
 .table-row-actions > form { grid-column: 2; margin: 0; }
 .table-row-actions :is(.action-edit, .action-delete) { width: 100%; min-height: 40px; white-space: nowrap; box-sizing: border-box; }
 .table-action-locked { display: flex; align-items: center; justify-content: center; min-height: 40px; color: var(--color-gray-500); }
+
+html.auth-document,
+body.auth-body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+.auth-page--login {
+  display: flex;
+  height: 100dvh;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+  padding: clamp(.375rem, 1dvh, .75rem);
+}
+.auth-page--login > .login-page {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  flex: 1 1 auto;
+  grid-template-rows: minmax(0, 1fr);
+  overflow: hidden;
+}
+.auth-page--login .login-story,
+.auth-page--login .login-form-shell { min-height: 0; }
+.auth-page--login .login-story {
+  gap: clamp(.4rem, 1.5dvh, 1.25rem);
+  padding-block: clamp(.5rem, 2.25dvh, 1.75rem);
+}
+.auth-page--login .story-tag { padding-block: clamp(.35rem, 1dvh, .6rem); }
+.auth-page--login .login-story-content {
+  min-height: 0;
+  padding-block: clamp(.25rem, 1dvh, .75rem);
+}
+.auth-page--login .login-story-copy h1 {
+  font-size: clamp(2.1rem, 3.8vw, 3.75rem);
+  line-height: 1.02;
+}
+.auth-page--login .login-story-copy p {
+  margin-top: clamp(.35rem, 1.25dvh, .9rem);
+  line-height: 1.55;
+}
+.auth-page--login .auth-equipment-card {
+  margin-top: clamp(.5rem, 2dvh, 1.25rem);
+  padding: clamp(.5rem, 1dvh, .75rem);
+}
+.auth-page--login .auth-equipment-card img {
+  max-height: clamp(7rem, 20dvh, 11.25rem);
+}
+.auth-page--login .auth-equipment-card p {
+  padding-block: clamp(.25rem, .75dvh, .75rem);
+  font-size: .85rem;
+}
+.auth-page--login .login-form-shell { padding-block: clamp(.5rem, 2.5dvh, 1.75rem); }
+.auth-page--login .auth-brand { margin-bottom: clamp(.75rem, 4dvh, 2.5rem); }
+.auth-page--login .login-intro { margin-bottom: clamp(.75rem, 2dvh, 1.5rem); }
+.auth-page--login .login-field { margin-bottom: clamp(.5rem, 1.4dvh, .9rem); }
+.auth-page--login .login-field .input { min-height: clamp(3rem, 7.25dvh, 3.25rem); }
+.auth-page--login .login-options { margin-bottom: clamp(.75rem, 2dvh, 1.5rem); }
+
+@media (max-width: 1023px) {
+  .auth-page--login { padding: .5rem; }
+  .auth-page--login > .login-page {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: .5rem;
+    padding: .5rem;
+  }
+  .auth-page--login .login-story {
+    min-height: 0;
+    gap: 0;
+    padding: .5rem 1rem;
+  }
+  .auth-page--login .login-form-shell { padding: .5rem .75rem; }
+  .auth-page--login .auth-brand { margin-bottom: clamp(.5rem, 3dvh, 1.5rem); }
+  .auth-page--login .auth-brand img { width: min(200px, 100%); }
+}
+
+@media (max-height: 600px) and (min-width: 1024px) {
+  .auth-page--login .auth-equipment-card { display: none; }
+}

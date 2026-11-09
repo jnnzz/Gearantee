@@ -334,6 +334,7 @@ Shared rows count for each assigned member.
 
 | Date | Work | Owner | PR |
 | --- | --- | --- | --- |
+| 11/9/2026 | Fixed login-page viewport overflow under Additional work: the sign-in document and layout are constrained to the viewport, with responsive spacing for short and narrow screens. Tailwind CSS build and asset check passed; isolated Debug WebApp build passed with 0 warnings/errors. Browser acceptance not verified. WBS rows and progress counts unchanged. | Codex | — |
 | 11/6/2026 | Replaced the custodian Approval & Release queue's Approved tab with an Awaiting Release filter that shows approved reservations without a release record and with a pickup window that has not passed. Existing Approved filter URLs map to the replacement; approval and release actions are unchanged. Focused ReservationReviewTests: 26 passed, 0 failed. WBS rows, owners, statuses, dates, and progress counts unchanged. | Codex | — |
 | 11/6/2026 | Adjusted administrator dashboard summary-card themes: cards 2 and 4 share the blue accent in dark mode; all four use the white theme surface with readable labels in light mode. Scoped overrides preserve other role dashboards. CSS diff/whitespace checked; browser visual acceptance unavailable. WBS rows/counts unchanged. | Codex | — |
 | 11/6/2026 | Aligned inventory and borrower-profile row actions using fixed grid slots and equal button heights; kept Locked/Edit and Delete/Restore in consistent columns and added visible Actions headings. Rebuilt Tailwind; generated asset guard, Release WebApp build (0 warnings/errors) and diff whitespace check pass. Browser visual verification unavailable. WBS rows/counts unchanged. | Codex | — |
@@ -450,6 +451,7 @@ The first version is complete when borrowers can securely reserve one available 
 
 | Date | Change | By |
 | --- | --- | --- |
+| 11/9/2026 | Recorded the login-page viewport overflow fix under Additional work; WBS rows, owners, dates, milestone checkboxes and progress summary unchanged. | Codex |
 | 11/6/2026 | Replaced the custodian Approved status tab with a true Awaiting Release filter; no approval/release workflow behavior changed. WBS owners, statuses, dates, checkboxes, and progress summary unchanged. | Codex |
 | 11/6/2026 | Updated administrator summary-card theme consistency under Additional work; WBS owners, dates, statuses, checkboxes and summary unchanged. | Codex |
 | 11/6/2026 | Completed the table Actions heading/alignment refinement under Additional work. WBS statuses, owners, dates, checkboxes and summary remain unchanged (8 Done, 33 In Review, 2 In Progress, 1 Not Started, 0 Blocked). | Codex |
