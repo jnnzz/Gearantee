@@ -26,13 +26,14 @@
             if (required) requiredCount++;
         });
         let legend = form.querySelector(".required-legend");
-        if (requiredCount && !legend) {
+        const hideLegend = form.hasAttribute("data-hide-required-legend");
+        if (requiredCount && !legend && !hideLegend) {
             legend = document.createElement("p");
             legend.className = "required-legend";
             legend.textContent = "* Required fields";
             form.prepend(legend);
         }
-        if (legend) legend.hidden = !requiredCount;
+        if (legend) legend.hidden = hideLegend || !requiredCount;
     }
     const forms = [...document.forms];
     forms.forEach(form => {
