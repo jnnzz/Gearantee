@@ -148,7 +148,7 @@ namespace ASI.Basecode.Tests.UserAdministration
         }
 
         [Fact]
-        public async Task UpdatePermissionsAsync_PersistsMatrixAndRejectsStaleRoleStamps()
+        public async Task UpdatePermissionsAsync_PersistsMatrixAndRejectsRestrictedBorrowerGrantsAndStaleRoleStamps()
         {
             using var database = new SqliteDb();
             using var provider = CreateProvider(database);
@@ -206,8 +206,21 @@ namespace ASI.Basecode.Tests.UserAdministration
                 }).ToList()
             };
 
+            foreach (var assignment in submission.Assignments.Where(item =>
+                !DomainValues.Permissions.IsAllowedForBorrower(item.PermissionName)))
+            {
+                assignment.RoleIds.Add(borrowerRole.Id);
+                var denied = await service.UpdatePermissionsAsync(actor.Id, submission);
+                Assert.False(denied.Succeeded);
+                Assert.Contains("Borrowers can only", denied.Message);
+                assignment.RoleIds.Remove(borrowerRole.Id);
+            }
+            submission.Assignments.Single(item => item.PermissionName == DomainValues.Permissions.ReservationCreate)
+                .RoleIds.Add(borrowerRole.Id);
             var result = await service.UpdatePermissionsAsync(actor.Id, submission);
             Assert.True(result.Succeeded, result.Message);
+            Assert.True(await db.RolePermissions.AnyAsync(link => link.RoleId == borrowerRole.Id &&
+                link.PermissionId == db.Permissions.Single(item => item.PermissionName == DomainValues.Permissions.ReservationCreate).PermissionId));
             Assert.False(await db.RolePermissions.AnyAsync(link =>
                 link.RoleId == borrowerRole.Id &&
                 link.PermissionId == db.Permissions.Single(item =>

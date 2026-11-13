@@ -15,6 +15,62 @@ namespace ASI.Basecode.Tests.UiMigration
     public class UiAcceptanceTests
     {
         [Fact]
+        public async Task BorrowerMatrixOnlyEnablesCatalogAndReservationPermissions()
+        {
+            await using var site = await UiAcceptanceSite.CreateAsync();
+            using var admin = site.NewClient();
+            await site.LoginAsync(admin, "UI-ADMIN");
+            var html = await admin.GetStringAsync("/Users/Index");
+            var checkboxes = Regex.Matches(html, "<input\\b[^>]*type=\"checkbox\"[^>]*>")
+                .Select(input => (Html: input.Value, Label: WebUtility.HtmlDecode(
+                    Regex.Match(input.Value, "aria-label=\"([^\"]*)\"").Groups[1].Value)))
+                .Where(input => input.Label.EndsWith(" — Borrower", StringComparison.Ordinal)).ToList();
+            Assert.Equal(8, checkboxes.Count);
+            foreach (var checkbox in checkboxes)
+            {
+                var allowed = checkbox.Label.StartsWith("Browse catalog & calendar", StringComparison.Ordinal) ||
+                    checkbox.Label.StartsWith("Submit a reservation request", StringComparison.Ordinal);
+                Assert.Equal(!allowed, Regex.IsMatch(checkbox.Html, "\\bdisabled(?:=|\\s|>)"));
+                if (!allowed) Assert.DoesNotMatch("\\bchecked(?:=|\\s|>)", checkbox.Html);
+            }
+        }
+
+        [Fact]
+        public async Task Confirmation_forms_have_unique_matching_dialogs_and_preserve_post_protection()
+        {
+            await using var site = await UiAcceptanceSite.CreateAsync();
+            using var admin = site.NewClient();
+            using var custodian = site.NewClient();
+            using var borrower = site.NewClient();
+            await site.LoginAsync(admin, "UI-ADMIN");
+            await site.LoginAsync(custodian, "UI-CUST");
+            await site.LoginAsync(borrower, "DEMO-001");
+            foreach (var (client, path) in new[]
+            {
+                (admin, "/Categories/Index"), (admin, "/BorrowerProfile/Index"),
+                (admin, "/Users/Index"), (admin, $"/Users/Edit?id={site.BorrowerId}"),
+                (borrower, $"/Reservation/Details?id={site.PendingId}"),
+                (custodian, $"/ReservationReview/Details?id={site.PendingId}"),
+                (custodian, $"/ReservationReview/Details?id={site.PickupId}"),
+                (custodian, $"/ReturnRecord/Create?releaseRecordId={site.ReleaseId}")
+            })
+            {
+                var html = await client.GetStringAsync(path);
+                var forms = Regex.Matches(html, "<form\\b[^>]*data-confirm-dialog=\"([^\"]+)\"[^>]*>.*?</form>", RegexOptions.Singleline);
+                Assert.NotEmpty(forms);
+                Assert.DoesNotContain("return confirm(", html);
+                Assert.Contains("/js/confirm-dialog.js", html);
+                Assert.Equal(forms.Count, forms.Select(form => form.Groups[1].Value).Distinct().Count());
+                foreach (Match form in forms)
+                {
+                    Assert.Contains("method=\"post\"", form.Value);
+                    Assert.Contains("__RequestVerificationToken", form.Value);
+                    Assert.Single(Regex.Matches(html, $"<dialog id=\"{Regex.Escape(form.Groups[1].Value)}\""));
+                }
+            }
+        }
+
+        [Fact]
         public async Task All_role_screens_render_through_real_MVC_with_existing_permission_boundaries()
         {
             await using var site = await UiAcceptanceSite.CreateAsync();

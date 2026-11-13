@@ -13,7 +13,7 @@
     </div>
     <div>
         <label asp-for="ReturnedCondition" class="mb-1 block text-sm font-medium">Condition <span class="required-marker" data-required-marker aria-hidden="true">*</span></label>
-        <select asp-for="ReturnedCondition" class="input" data-return-condition aria-required="true">
+        <select asp-for="ReturnedCondition" class="input" data-return-condition data-confirm-summary="Condition" aria-required="true">
             @foreach (var condition in ReturnInspection.Conditions)
             {
                 <option value="@condition" selected="@(condition == Model.ReturnedCondition)">@ReturnInspection.Label(condition)</option>
@@ -23,7 +23,7 @@
     </div>
     <div>
         <label asp-for="ResultingItemStatus" class="mb-1 block text-sm font-medium">Resulting item status <span class="required-marker" data-required-marker aria-hidden="true">*</span></label>
-        <select asp-for="ResultingItemStatus" class="input" data-return-status aria-required="true">
+        <select asp-for="ResultingItemStatus" class="input" data-return-status data-confirm-summary="Equipment status" aria-required="true">
             @foreach (var status in ReturnInspection.ResultingStatuses)
             {
                 <option value="@status" selected="@(status == Model.ResultingItemStatus)">@ReturnInspection.Label(status)</option>

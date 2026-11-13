@@ -110,7 +110,7 @@
             </div>
         </div>
 
-        <form asp-action="Permissions" method="post">
+        <form asp-action="Permissions" method="post" data-confirm-dialog="save-permissions-dialog">
             <div asp-validation-summary="ModelOnly" class="validation-summary-errors" role="alert"></div>
             @foreach (var role in matrix.Roles)
             {
@@ -138,8 +138,10 @@
                                 </td>
                                 @foreach (var role in matrix.Roles)
                                 {
-                                    var checkedValue = permission.GrantedRoleIds.Contains(role.Id);
-                                    var locked = permission.IsLocked && role.Name == "Administrator";
+                                    var borrowerRestricted = role.Name == DomainValues.Roles.Borrower &&
+                                        !DomainValues.Permissions.IsAllowedForBorrower(permission.Name);
+                                    var checkedValue = !borrowerRestricted && permission.GrantedRoleIds.Contains(role.Id);
+                                    var locked = permission.IsLocked || borrowerRestricted;
                                     <td class="px-2 py-3 text-center">
                                         @if (locked && checkedValue)
                                         {
@@ -149,7 +151,7 @@
                                                name="Assignments[@index].RoleIds"
                                                value="@role.Id"
                                                checked="@(checkedValue ? "checked" : null)"
-                                               disabled="@(permission.IsLocked)"
+                                               disabled="@locked"
                                                aria-label="@permission.Description — @role.Name"
                                                class="size-4 accent-primary-strong disabled:cursor-not-allowed" />
                                     </td>
@@ -160,9 +162,20 @@
                 </table>
             </div>
             <p class="mt-3 text-[11px] leading-4 text-gray-500">The Administrator capability is required to administer roles and cannot be reassigned or removed.</p>
+            <p class="mt-2 text-[11px] leading-4 text-gray-500">Borrower permissions are limited to browsing the catalog/calendar and submitting reservation requests.</p>
             <div class="mt-4 flex justify-end">
                 <button type="submit" class="btn-primary">Save permissions</button>
             </div>
         </form>
     </section>
 </div>
+
+<partial name="Components/_ConfirmDialog" model="@(new ConfirmDialogModel
+{
+    Id = "save-permissions-dialog", Title = "Save role permissions?",
+    Message = "These settings affect every account assigned to the changed roles. Changes take effect on the next permission refresh.",
+    Detail = "Role permissions for Borrower, Custodian and Administrator", ConfirmText = "Save permissions"
+})" />
+@section Scripts {
+    <script src="~/js/confirm-dialog.js" asp-append-version="true"></script>
+}

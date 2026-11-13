@@ -6,129 +6,139 @@ This plan covers the complete first version of the system using ASP.NET Core MVC
 
 **Tracking:** change `[ ]` to `[x]` as each task is completed.
 
+WBS completion reflects the user-confirmed workbook. Optional tasks, documentation finalization and production handover remain unchecked unless separately confirmed.
+
 ## How to update this file
 
 Update this file **in the same PR** that finishes or starts a feature.
 
 1. Find the feature's row in the WBS Feature Tracker (match the WBS number).
-2. Set **Status** to one of: `Not Started` Â· `In Progress` Â· `In Review` Â· `Done` Â· `Blocked`.
-   - `In Progress` â†’ fill **Actual Start**.
-   - `In Review` â†’ add the PR link (for example, `#12`).
-   - `Done` â†’ fill **Actual End** with the owner-confirmed completion date (use the merge date when no earlier completion date is confirmed) and keep the PR link.
-3. Tick the related `[ ]` â†’ `[x]` item(s) in the matching Milestone section only when *all* WBS rows for that item are `Done`.
+2. Set **Status** to one of: `Not Started` · `In Progress` · `In Review` · `Done` · `Blocked`.
+   - `In Progress` → fill **Actual Start**.
+   - `In Review` → add the PR link (for example, `#12`).
+   - `Done` → fill **Actual End** with the owner-confirmed completion date (use the merge date when no earlier completion date is confirmed) and keep the PR link.
+3. Tick the related `[ ]` → `[x]` item(s) in the matching Milestone section only when *all* WBS rows for that item are `Done`.
 4. Recalculate the Progress summary counts.
 5. Add one line to the Change log.
 6. Mirror Actual Start / Actual End in the WBS Google Sheet.
 
-Dates use `M/D/YYYY` (the same format as the WBS sheet). Never change Baseline dates here â€” change them in the WBS sheet first, then copy them here.
+Dates use `M/D/YYYY` (the same format as the WBS sheet). Never change Baseline dates here — change them in the WBS sheet first, then copy them here.
 
 ## Progress summary
 
 ### By status
 
-The tracker contains 44 leaf features. Group headings such as 2.00 and 4.00 are not counted.
+The tracker contains 46 leaf features, all Done (100% of the supplied WBS). Group headings are not counted. Optional work and deployment/handover are outside this completion count.
 
 | Status | Count |
 | --- | --- |
-| Done | 8 |
-| In Review | 33 |
-| In Progress | 2 |
-| Not Started | 1 |
+| Done | 46 |
+| In Review | 0 |
+| In Progress | 0 |
+| Not Started | 0 |
 | Blocked | 0 |
 
 ### By member
 
-Shared rows count for each assigned member.
+Shared rows count for each assigned member. One notification task has no owner marked in the workbook.
 
 | Member | Assigned | Done |
 | --- | --- | --- |
-| Member 1 â€” Gesim | 6 (1.00, 20â€“23, 56) | 1 |
-| Member 2 â€” Bansag | 13 (1.00, 9â€“12, 25â€“28, 52â€“55) | 1 |
-| Member 3 â€” Laroco | 12 (1.00, 3, 5â€“7, 14â€“18, 49â€“50) | 5 |
-| Member 4 â€” Canencia | 7 (30â€“32, 39â€“42) | 3 |
-| Member 5 â€” Cataraja | 9 (34â€“37, 44â€“47, 56) | 0 |
+| Member 1 — Gesim | 7 (1, 20–23, 58–59) | 7 |
+| Member 2 — Bansag | 14 (1, 9–12, 25–28, 52–55, 59) | 14 |
+| Member 3 — Laroco | 13 (1, 3, 5–7, 14–18, 49–50, 59) | 13 |
+| Member 4 — Canencia | 8 (30–32, 39–42, 59) | 8 |
+| Member 5 — Cataraja | 10 (34–37, 44–47, 58–59) | 10 |
+| Unassigned — no owner marked | 1 (57) | 1 |
 
 ## WBS Feature Tracker
 
 | WBS | Feature | Owner | Baseline Start | Baseline End | Days | Actual Start | Actual End | Status | PR | Milestone |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1.00 | Project Architecture & Setup | Gesim, Bansag, Laroco | 9/19/2026 | 9/23/2026 | 4 | 9/20/2026 | 9/24/2026 | Done | â€” | M1 |
+| 1.00 | Project Architecture & Setup | Gesim, Bansag, Laroco | 9/19/2026 | 9/23/2026 | 4 | 9/20/2026 | 9/24/2026 | Done | — | M1 |
 | **2.00** | **Authentication: User Login** | | | | | | | | | |
-| 3.00 | User Login Page | Laroco | 9/24/2026 | 9/25/2026 | 1 | 9/25/2026 | 9/25/2026 | Done | #6 | M2 |
+| 3.00 | User Login Page | Laroco | 9/24/2026 | 9/27/2026 | 3 | 9/25/2026 | 9/27/2026 | Done | #6 | M2 |
 | **4.00** | **Authentication: Role-Based Dashboard** | | | | | | | | | |
-| 5.00 | View Borrower's Dashboard Page | Laroco | 9/25/2026 | 9/28/2026 | 3 | 9/25/2026 | 9/28/2026 | Done | #21 | M2 |
-| 6.00 | View Custodian's Dashboard Page | Laroco | 9/25/2026 | 9/28/2026 | 3 | 9/25/2026 | 9/28/2026 | Done | #21 | M2 |
-| 7.00 | View Administrator's Dashboard Page | Laroco | 9/25/2026 | 9/28/2026 | 3 | 9/25/2026 | 9/28/2026 | Done | #21 | M2 |
+| 5.00 | View Borrower's Dashboard Page | Laroco | 9/27/2026 | 9/30/2026 | 3 | 9/25/2026 | 9/30/2026 | Done | #21 | M2 |
+| 6.00 | View Custodian's Dashboard Page | Laroco | 9/27/2026 | 9/30/2026 | 3 | 9/25/2026 | 10/1/2026 | Done | #21 | M2 |
+| 7.00 | View Administrator's Dashboard Page | Laroco | 9/27/2026 | 9/30/2026 | 3 | 9/25/2026 | 10/1/2026 | Done | #21 | M2 |
 | **8.00** | **Authentication: Password Reset Request** | | | | | | | | | |
-| 9.00 | Request Password Reset Page | Bansag | 9/25/2026 | 9/28/2026 | 3 | 9/25/2026 | | In Review | #19 | M2 |
-| 10.00 | Receive OTP in Email | Bansag | 9/25/2026 | 9/28/2026 | 3 | 9/25/2026 | | In Review | #19 | M2 |
-| 11.00 | OTP Verification Page | Bansag | 9/25/2026 | 9/28/2026 | 3 | 9/25/2026 | | In Review | #19 | M2 |
-| 12.00 | Set New Password | Bansag | 9/25/2026 | 9/28/2026 | 3 | 9/25/2026 | | In Review | #19 | M2 |
+| 9.00 | Request Password Reset Page | Bansag | 9/28/2026 | 10/1/2026 | 3 | 9/28/2026 | 10/1/2026 | Done | #19 | M2 |
+| 10.00 | Receive OTP in Email | Bansag | 9/28/2026 | 10/1/2026 | 3 | 9/28/2026 | 10/1/2026 | Done | #19 | M2 |
+| 11.00 | OTP Verification Page | Bansag | 9/28/2026 | 10/1/2026 | 3 | 9/28/2026 | 10/1/2026 | Done | #19 | M2 |
+| 12.00 | Set New Password | Bansag | 9/28/2026 | 10/1/2026 | 3 | 9/28/2026 | 10/1/2026 | Done | #19 | M2 |
 | **13.00** | **Administration: User and Role Management** | | | | | | | | | |
-| 14.00 | View User Accounts Page | Laroco | 9/29/2026 | 10/2/2026 | 3 | 10/1/2026 | | In Review | #22 | M3 |
-| 15.00 | Create Accounts | Laroco | 9/29/2026 | 10/2/2026 | 3 | 10/1/2026 | | In Review | #22 | M3 |
-| 16.00 | Assign & Update Roles | Laroco | 9/29/2026 | 10/2/2026 | 3 | 10/1/2026 | | In Review | #22 | M3 |
-| 17.00 | Configure Role Access Permissions | Laroco | 9/29/2026 | 10/2/2026 | 3 | 10/1/2026 | | In Review | #22 | M3 |
-| 18.00 | Deactivate Users | Laroco | 9/29/2026 | 10/2/2026 | 3 | 10/1/2026 | | In Review | #22 | M3 |
+| 14.00 | View User Accounts Page | Laroco | 9/30/2026 | 10/2/2026 | 2 | 9/30/2026 | 10/2/2026 | Done | #22 | M3 |
+| 15.00 | Create Accounts | Laroco | 9/30/2026 | 10/2/2026 | 2 | 9/30/2026 | 10/2/2026 | Done | #22 | M3 |
+| 16.00 | Assign & Update Roles | Laroco | 9/30/2026 | 10/2/2026 | 2 | 9/30/2026 | 10/2/2026 | Done | #22 | M3 |
+| 17.00 | Configure Role Access Permissions | Laroco | 9/30/2026 | 10/2/2026 | 2 | 9/30/2026 | 10/2/2026 | Done | #22 | M3 |
+| 18.00 | Deactivate Users | Laroco | 9/30/2026 | 10/2/2026 | 2 | 9/30/2026 | 10/2/2026 | Done | #22 | M3 |
 | **19.00** | **Master Data: Equipment Category Management** | | | | | | | | | |
-| 20.00 | Create Category | Gesim | 9/29/2026 | 10/2/2026 | 3 | 10/4/2026 |  | In Review | #25 | M3 |
-| 21.00 | Read Category | Gesim | 9/29/2026 | 10/2/2026 | 3 | 10/4/2026 |  | In Review | #25 | M3 |
-| 22.00 | Update Category | Gesim | 9/29/2026 | 10/2/2026 | 3 | 10/4/2026 |  | In Review | #25 | M3 |
-| 23.00 | Delete/Deactivate Category | Gesim | 9/29/2026 | 10/2/2026 | 3 | 10/4/2026 |  | In Review | #25 | M3 |
+| 20.00 | Create Category | Gesim | 9/29/2026 | 10/2/2026 | 3 | 9/29/2026 | 10/2/2026 | Done | #25 | M3 |
+| 21.00 | Read Category | Gesim | 9/29/2026 | 10/2/2026 | 3 | 9/29/2026 | 10/2/2026 | Done | #25 | M3 |
+| 22.00 | Update Category | Gesim | 9/29/2026 | 10/2/2026 | 3 | 9/29/2026 | 10/2/2026 | Done | #25 | M3 |
+| 23.00 | Delete/Deactivate Category | Gesim | 9/29/2026 | 10/2/2026 | 3 | 9/29/2026 | 10/2/2026 | Done | #25 | M3 |
 | **24.00** | **Master Data: Equipment Item Management** | | | | | | | | | |
-| 25.00 | View Equipment Items | Bansag | 10/3/2026 | 10/6/2026 | 3 | 10/9/2026 | | In Review | #27 | M3 |
-| 26.00 | Register Equipment Item | Bansag | 10/3/2026 | 10/6/2026 | 3 | 10/9/2026 | | In Review | #27 | M3 |
-| 27.00 | Update Equipment Item | Bansag | 10/3/2026 | 10/6/2026 | 3 | 10/9/2026 | | In Review | #27 | M3 |
-| 28.00 | Delete Equipment Items | Bansag | 10/3/2026 | 10/6/2026 | 3 | 10/9/2026 | | In Review | #27 | M3 |
+| 25.00 | View Equipment Items | Bansag | 10/3/2026 | 10/6/2026 | 3 | 10/3/2026 | 10/6/2026 | Done | #27 | M3 |
+| 26.00 | Register Equipment Item | Bansag | 10/3/2026 | 10/6/2026 | 3 | 10/3/2026 | 10/6/2026 | Done | #27 | M3 |
+| 27.00 | Update Equipment Item | Bansag | 10/3/2026 | 10/6/2026 | 3 | 10/3/2026 | 10/6/2026 | Done | #27 | M3 |
+| 28.00 | Delete Equipment Items | Bansag | 10/3/2026 | 10/6/2026 | 3 | 10/3/2026 | 10/6/2026 | Done | #27 | M3 |
 | **29.00** | **Master Data: Borrower Profile Management** | | | | | | | | | |
-| 30.00 | View Borrower's Records | Canencia | 9/29/2026 | 10/2/2026 | 3 | 10/3/2026 | 10/17/2026 | Done | #31 | M3 |
-| 31.00 | Update Borrower's Records | Canencia | 9/29/2026 | 10/2/2026 | 3 | 10/3/2026 | 10/17/2026 | Done | #31 | M3 |
-| 32.00 | Update Eligibility Status | Canencia | 9/29/2026 | 10/1/2026 | 2 | 10/3/2026 | 10/17/2026 | Done | #31 | M3 |
-| **33.00** | **Transactions: Equipment Reservation** | | | | | | | | | |
-| 34.00 | Search & View Available Items Page | Cataraja | 10/6/2026 | 10/7/2026 | 1 | 10/7/2026 | | In Review | #26 | M4 |
-| 35.00 | Create and Submit Reservation Request | Cataraja | 10/6/2026 | 10/8/2026 | 2 | 10/7/2026 | | In Review | #26 | M4 |
-| 36.00 | View Reservation Status | Cataraja | 10/6/2026 | 10/8/2026 | 2 | 10/7/2026 | | In Review | #26 | M4 |
-| 37.00 | Cancel Reservation | Cataraja | 10/6/2026 | 10/8/2026 | 2 | 10/7/2026 | | In Review | #26 | M4 |
+| 30.00 | View Borrower's Records | Canencia | 9/29/2026 | 10/2/2026 | 3 | 9/29/2026 | 10/2/2026 | Done | #31 | M3 |
+| 31.00 | Update Borrower's Records | Canencia | 9/29/2026 | 10/2/2026 | 3 | 9/30/2026 | 10/2/2026 | Done | #31 | M3 |
+| 32.00 | Update Eligibility Status | Canencia | 9/29/2026 | 10/1/2026 | 2 | 10/1/2026 | 10/2/2026 | Done | #31 | M3 |
+| **33.00** | **Transactions: Equipement Reservation** | | | | | | | | | |
+| 34.00 | Search & View Available Items Page | Cataraja | 10/6/2026 | 10/7/2026 | 1 | 10/7/2026 | 10/8/2026 | Done | #26 | M4 |
+| 35.00 | Create and Submit Reservation Request | Cataraja | 10/6/2026 | 10/8/2026 | 2 | 10/7/2026 | 10/8/2026 | Done | #26 | M4 |
+| 36.00 | View Reservation Status | Cataraja | 10/6/2026 | 10/8/2026 | 2 | 10/7/2026 | 10/8/2026 | Done | #26 | M4 |
+| 37.00 | Cancel Reservation | Cataraja | 10/6/2026 | 10/7/2026 | 1 | 10/7/2026 | 10/8/2026 | Done | #26 | M4 |
 | **38.00** | **Transactions: Approval and Release** | | | | | | | | | |
-| 39.00 | View Reservation Requests | Canencia | 10/9/2026 | 10/11/2026 | 2 | 10/17/2026 | | In Review | #33 | M5 |
-| 40.00 | Approve Reservation Requests | Canencia | 10/9/2026 | 10/10/2026 | 1 | 10/17/2026 | | In Review | #33 | M5 |
-| 41.00 | Reject Reservation Requests | Canencia | 10/9/2026 | 10/10/2026 | 1 | 10/17/2026 | | In Review | #33 | M5 |
-| 42.00 | Record Equipment Release | Canencia | 10/9/2026 | 10/11/2026 | 2 | 10/17/2026 | | In Review | #33 | M5 |
+| 39.00 | View Reservation Requests | Canencia | 10/9/2026 | 10/11/2026 | 2 | 10/9/2026 | 10/11/2026 | Done | #33 | M5 |
+| 40.00 | Approve Reservation Requests | Canencia | 10/9/2026 | 10/10/2026 | 1 | 10/9/2026 | 10/11/2026 | Done | #33 | M5 |
+| 41.00 | Reject Reservation Requests | Canencia | 10/9/2026 | 10/10/2026 | 1 | 10/9/2026 | 10/11/2026 | Done | #33 | M5 |
+| 42.00 | Record Equipment Release | Canencia | 10/9/2026 | 10/11/2026 | 2 | 10/9/2026 | 10/11/2026 | Done | #33 | M5 |
 | **43.00** | **Transactions: Return and Condition Check** | | | | | | | | | |
-| 44.00 | Record Returned Item | Cataraja | 10/11/2026 | 10/13/2026 | 2 | 10/17/2026 | | In Review | #32 | M5 |
-| 45.00 | Update Item Condition Status | Cataraja | 10/11/2026 | 10/13/2026 | 2 | 10/17/2026 | | In Review | #32 | M5 |
-| 46.00 | Update Item Status | Cataraja | 10/11/2026 | 10/13/2026 | 2 | 10/17/2026 | | In Review | #32 | M5 |
-| 47.00 | Identify Late Returns | Cataraja | 10/11/2026 | 10/13/2026 | 2 | 10/17/2026 | | In Review | #32 | M5 |
+| 44.00 | Record Returned Item | Cataraja | 10/11/2026 | 10/13/2026 | 2 | 10/11/2026 | 10/13/2026 | Done | #32 | M5 |
+| 45.00 | Update Item Condition Status | Cataraja | 10/11/2026 | 10/13/2026 | 2 | 10/11/2026 | 10/13/2026 | Done | #32 | M5 |
+| 46.00 | Update Item Status | Cataraja | 10/11/2026 | 10/13/2026 | 2 | 10/11/2026 | 10/13/2026 | Done | #32 | M5 |
+| 47.00 | Identify Late Returns | Cataraja | 10/11/2026 | 10/13/2026 | 2 | 10/11/2026 | 10/13/2026 | Done | #32 | M5 |
 | **48.00** | **Reports: Availability Calendar** | | | | | | | | | |
-| 49.00 | View Availability Calendar Page | Laroco | 10/9/2026 | 10/13/2026 | 4 | 10/14/2026 | | In Progress | | M6 |
-| 50.00 | Filter Calendar View | Laroco | 10/10/2026 | 10/12/2026 | 2 | 10/14/2026 | | In Progress | | M6 |
+| 49.00 | View Availability Calendar Page | Laroco | 10/9/2026 | 10/13/2026 | 4 | 10/9/2026 | 10/13/2026 | Done | — | M6 |
+| 50.00 | Filter Calendar View | Laroco | 10/10/2026 | 10/12/2026 | 2 | 10/10/2026 | 10/13/2026 | Done | — | M6 |
 | **51.00** | **Reports: Borrowing History Report** | | | | | | | | | |
-| 52.00 | View Borrowing History Page | Bansag | 10/14/2026 | 10/16/2026 | 2 | 10/14/2026 | | In Review | #29 | M6 |
-| 53.00 | Search Borrowing History | Bansag | 10/15/2026 | 10/16/2026 | 1 | 10/14/2026 | | In Review | #29 | M6 |
-| 54.00 | Filter Borrowing History | Bansag | 10/16/2026 | 10/17/2026 | 1 | 10/14/2026 | | In Review | #29 | M6 |
-| 55.00 | Generate Borrowing Report | Bansag | 10/18/2026 | 10/21/2026 | 3 | 10/14/2026 | | In Review | #29 | M6 |
-| 56.00 | Testing and Debugging | Gesim, Cataraja | 10/22/2026 | 10/26/2026 | 4 | | | Not Started | | M7 |
+| 52.00 | View Borrowing History Page | Bansag | 10/14/2026 | 10/16/2026 | 2 | 10/14/2026 | 10/16/2026 | Done | #29 | M6 |
+| 53.00 | Search Borrowing History | Bansag | 10/15/2026 | 10/16/2026 | 1 | 10/15/2026 | 10/16/2026 | Done | #29 | M6 |
+| 54.00 | Filter Borrowing History | Bansag | 10/16/2026 | 10/17/2026 | 1 | 10/15/2026 | 10/17/2026 | Done | #29 | M6 |
+| 55.00 | Generate Borrowing Report | Bansag | 10/18/2026 | 10/21/2026 | 3 | 10/15/2026 | 10/21/2026 | Done | #29 | M6 |
+| **56.00** | **Notifications** | | | | | | | | | |
+| 57.00 | View Notifications | Unassigned | 10/14/2026 | 10/16/2026 | 2 | 10/15/2026 | 10/17/2026 | Done | — | M6 |
+| 58.00 | UI Cleanup and Polishing | Gesim, Cataraja | 10/22/2026 | 11/8/2026 | 17 | 10/21/2026 | 11/10/2026 | Done | — | M7 |
+| 59.00 | Testing and Debugging | Gesim, Bansag, Laroco, Canencia, Cataraja | 10/22/2026 | 11/8/2026 | 17 | 10/21/2026 | 11/10/2026 | Done | — | M7 |
 
-> Feature names correct spelling in the WBS sheet, including â€œReceive,â€ â€œEquipment,â€ and â€œitems.â€ Correct the sheet as well, or use its spelling here if the team decides an exact match is required.
+> Source: supplied WBS_Group4Mix-n-MatchCampus-Equipment-Borrowing-Reservation-System_2026-08-29.xlsx, sheet "Jumpstart Program Schedule", A1:N60. Baseline dates, Days, and Actual Start/End are copied from H:J and M:N; colored A:E cells identify owners. All leaf-task statuses are Done at the user's request. Existing PR references are retained; blank PRs have no verified link.
+
+> WBS 56 is the Notifications group; 57 is View Notifications, 58 is UI Cleanup and Polishing, and 59 is Testing and Debugging. No owner is marked for 57, so it is Unassigned. Feature-name spelling is normalized without changing WBS scope.
 
 ## Milestone Overview
 
 | Milestone | Focus | Main deliverable | WBS items |
 | --- | --- | --- | --- |
 | 1 | Project foundation | Running ASP.NET Core MVC project connected to SQL Server | 1.00 |
-| 2 | Authentication and access | Secure sign-in, password recovery, and role-based dashboards | 3.00, 5.00â€“7.00, 9.00â€“12.00 |
-| 3 | Master data | Managed users, borrower profiles, categories, and equipment items | 14.00â€“18.00, 20.00â€“23.00, 25.00â€“28.00, 30.00â€“32.00 |
-| 4 | Reservations | Searchable catalog, availability checking, and reservation requests | 34.00â€“37.00 |
-| 5 | Custodian workflow | Approval, rejection, release, and return/condition processing | 39.00â€“42.00, 44.00â€“47.00 |
-| 6 | Calendar and reporting | Availability calendar and filterable operational reports | 49.00â€“50.00, 52.00â€“55.00 |
-| 7 | Quality assurance | Tested, secure, responsive, and documented system | 56.00 |
-| 8 | Deployment and handover | Production-ready deployment and administrator handover | No WBS rows yet â€” add when scheduled |
+| 2 | Authentication and access | Secure sign-in, password recovery, and role-based dashboards | 3.00, 5.00–7.00, 9.00–12.00 |
+| 3 | Master data | Managed users, borrower profiles, categories, and equipment items | 14.00–18.00, 20.00–23.00, 25.00–28.00, 30.00–32.00 |
+| 4 | Reservations | Searchable catalog, availability checking, and reservation requests | 34.00–37.00 |
+| 5 | Custodian workflow | Approval, rejection, release, and return/condition processing | 39.00–42.00, 44.00–47.00 |
+| 6 | Calendar, reporting and notifications | Availability calendar, operational reports and notifications | 49.00–50.00, 52.00–55.00, 57.00 |
+| 7 | UI polish and quality assurance | Polished UI and tested system | 58.00–59.00 |
+| 8 | Deployment and handover | Production-ready deployment and administrator handover | No WBS rows yet — add when scheduled |
 
 ---
 
-## Milestone 1 â€” Project Foundation
+## Milestone 1 — Project Foundation
 
 **WBS:** 1.00
+
+**WBS status:** Done
 
 **Goal:** Create the application structure and database connection.
 
@@ -141,7 +151,7 @@ Shared rows count for each assigned member.
 - [x] Add the initial entities and create/apply migrations based on the canonical ERD.
 - [x] Configure Tailwind CSS, its Razor content scanning, development watch command, and minified production build.
 - [x] Establish the shared layout, navigation, Tailwind styling, error pages, and basic logging.
-- [ ] Create development/production configuration separation.
+- [x] Create development/production configuration separation.
 - [x] Add GitHub Actions CI (build, EF migration check, vulnerable-package check, and CodeQL) and protect `main` (PR #6).
 
 ### Completion criteria
@@ -154,9 +164,11 @@ Shared rows count for each assigned member.
 
 ---
 
-## Milestone 2 â€” Authentication and Access Control
+## Milestone 2 — Authentication and Access Control
 
-**WBS:** 3.00, 5.00â€“7.00, 9.00â€“12.00
+**WBS:** 3.00, 5.00–7.00, 9.00–12.00
+
+**WBS status:** Done
 
 **Goal:** Allow secure access and ensure each person sees only their authorized functions.
 
@@ -166,8 +178,8 @@ Shared rows count for each assigned member.
 - [x] Seed the three roles and documented role-permission assignments.
 - [x] Build Identity-backed registration, login, and logout pages.
 - [x] Build role-based dashboards and navigation.
-- [ ] Add account activation/deactivation behavior.
-- [ ] Implement Forgot Password using Identity reset tokens, Brevo OTP delivery, and verified sender secrets.
+- [x] Add account activation/deactivation behavior.
+- [x] Implement Forgot Password using Identity reset tokens, Brevo OTP delivery, and verified sender secrets.
 - [x] Apply password policy, sign-in lockout, HTTPS redirect, and global authorization rules; apply per-page permission rules as each feature lands (PR #6).
 
 ### Completion criteria
@@ -179,20 +191,22 @@ Shared rows count for each assigned member.
 
 ---
 
-## Milestone 3 â€” Master Data Management
+## Milestone 3 — Master Data Management
 
-**WBS:** 14.00â€“18.00, 20.00â€“23.00, 25.00â€“28.00, 30.00â€“32.00
+**WBS:** 14.00–18.00, 20.00–23.00, 25.00–28.00, 30.00–32.00
+
+**WBS status:** Done
 
 **Goal:** Make the users and inventory ready for real borrowing transactions.
 
 ### Tasks
 
-- [ ] Build User and Role Management for administrators.
-- [ ] Build Borrower Profile Management, including school ID, department, contact information, and eligibility.
-- [ ] Build Equipment Category Management.
-- [ ] Build Equipment Item Management with item code, name/model, serial number, condition, status, and storage location.
-- [ ] Add item filters, search, validation, active/inactive controls, and item status updates.
-- [ ] Seed representative development data for each role and equipment category.
+- [x] Build User and Role Management for administrators.
+- [x] Build Borrower Profile Management, including school ID, department, contact information, and eligibility.
+- [x] Build Equipment Category Management.
+- [x] Build Equipment Item Management with item code, name/model, serial number, condition, status, and storage location.
+- [x] Add item filters, search, validation, active/inactive controls, and item status updates.
+- [x] Seed representative development data for each role and equipment category.
 
 ### Completion criteria
 
@@ -203,22 +217,24 @@ Shared rows count for each assigned member.
 
 ---
 
-## Milestone 4 â€” Equipment Discovery and Reservations
+## Milestone 4 — Equipment Discovery and Reservations
 
-**WBS:** 34.00â€“37.00
+**WBS:** 34.00–37.00
+
+**WBS status:** Done
 
 **Goal:** Let borrowers find equipment and submit valid reservation requests.
 
 ### Tasks
 
-- [ ] Build the borrower equipment catalog with search and category/status filters.
-- [ ] Show equipment details and current availability.
-- [ ] Build the reservation form: item, requested release date/time, requested return date/time, and purpose.
-- [ ] Validate date/time ranges and borrower eligibility.
-- [ ] Implement reservation status: Pending, Approved, Rejected, Cancelled, and Expired.
-- [ ] Implement overlap detection for approved reservations and active loans of the same item.
-- [ ] Build the borrowerâ€™s My Reservations and Active Loans pages.
-- [ ] Allow borrowers to cancel eligible pending reservations.
+- [x] Build the borrower equipment catalog with search and category/status filters.
+- [x] Show equipment details and current availability.
+- [x] Build the reservation form: item, requested release date/time, requested return date/time, and purpose.
+- [x] Validate date/time ranges and borrower eligibility.
+- [x] Implement reservation status: Pending, Approved, Rejected, Cancelled, and Expired.
+- [x] Implement overlap detection for approved reservations and active loans of the same item.
+- [x] Build the borrower’s My Reservations and Active Loans pages.
+- [x] Allow borrowers to cancel eligible pending reservations.
 
 ### Completion criteria
 
@@ -229,23 +245,25 @@ Shared rows count for each assigned member.
 
 ---
 
-## Milestone 5 â€” Approval, Release, and Return Workflow
+## Milestone 5 — Approval, Release, and Return Workflow
 
-**WBS:** 39.00â€“42.00, 44.00â€“47.00
+**WBS:** 39.00–42.00, 44.00–47.00
+
+**WBS status:** Done
 
 **Goal:** Complete the controlled equipment handover and return lifecycle.
 
 ### Tasks
 
-- [ ] Build a pending-reservation queue for custodians.
-- [ ] Allow custodians to approve or reject requests and record rejection reasons.
-- [ ] Record approval reviewer and timestamp.
-- [ ] Build the equipment release screen and record the actual release date/time and release notes.
-- [ ] Change item/loan status when equipment is released.
-- [ ] Build the return and condition-check screen.
-- [ ] Record actual return time, condition, notes, and receiving custodian.
-- [ ] Set the resulting equipment status to Available, Needs Inspection, or Under Maintenance.
-- [ ] Identify overdue items based on the requested return schedule.
+- [x] Build a pending-reservation queue for custodians.
+- [x] Allow custodians to approve or reject requests and record rejection reasons.
+- [x] Record approval reviewer and timestamp.
+- [x] Build the equipment release screen and record the actual release date/time and release notes.
+- [x] Change item/loan status when equipment is released.
+- [x] Build the return and condition-check screen.
+- [x] Record actual return time, condition, notes, and receiving custodian.
+- [x] Set the resulting equipment status to Available, Needs Inspection, or Under Maintenance.
+- [x] Identify overdue items based on the requested return schedule.
 
 ### Completion criteria
 
@@ -256,21 +274,24 @@ Shared rows count for each assigned member.
 
 ---
 
-## Milestone 6 â€” Availability Calendar and Reports
+## Milestone 6 — Availability Calendar, Reports and Notifications
 
-**WBS:** 49.00â€“50.00, 52.00â€“55.00
+**WBS:** 49.00–50.00, 52.00–55.00, 57.00
+
+**WBS status:** Done
 
 **Goal:** Give users visibility into schedules and give staff operational accountability.
 
 ### Tasks
 
-- [ ] Add FullCalendar daily/weekly equipment availability views.
-- [ ] Display reserved, borrowed, available, and maintenance states clearly.
-- [ ] Add calendar filters for item and category.
-- [ ] Build Borrowing History Report with filters for borrower, item/category, date range, status, and late return.
-- [ ] Build an overdue-items view.
-- [ ] Build an inventory/availability summary for administrators.
-- [ ] Add server-side report validation and pagination where necessary.
+- [x] Add FullCalendar daily/weekly equipment availability views.
+- [x] Display reserved, borrowed, available, and maintenance states clearly.
+- [x] Add calendar filters for item and category.
+- [x] Build Borrowing History Report with filters for borrower, item/category, date range, status, and late return.
+- [x] Build an overdue-items view.
+- [x] Build an inventory/availability summary for administrators.
+- [x] Add server-side report validation and pagination where necessary.
+- [x] Build the notification inbox/bell so users can view their notifications (WBS 57.00).
 
 ### Completion criteria
 
@@ -280,21 +301,24 @@ Shared rows count for each assigned member.
 
 ---
 
-## Milestone 7 â€” Quality Assurance and Documentation
+## Milestone 7 — UI Polish, Quality Assurance and Documentation
 
-**WBS:** 56.00
+**WBS:** 58.00–59.00
+
+**WBS status:** Done
 
 **Goal:** Ensure the system is reliable, secure, usable, and ready for release.
 
 ### Tasks
 
-- [ ] Test all user-role permissions and navigation restrictions.
-- [ ] Test reservation conflicts, cancellation, approval/rejection, release, return, damage, and overdue scenarios.
-- [ ] Test password reset expiration, reuse prevention, and unknown-email handling.
-- [ ] Validate all forms and server-side business rules.
-- [ ] Test desktop and mobile responsiveness.
-- [ ] Verify that the Tailwind production build includes every class used by Razor Views and JavaScript.
-- [ ] Review error handling, logging, security headers, HTTPS, and secret management.
+- [x] Complete UI cleanup and polishing across role screens (WBS 58.00).
+- [x] Test all user-role permissions and navigation restrictions.
+- [x] Test reservation conflicts, cancellation, approval/rejection, release, return, damage, and overdue scenarios.
+- [x] Test password reset expiration, reuse prevention, and unknown-email handling.
+- [x] Validate all forms and server-side business rules.
+- [x] Test desktop and mobile responsiveness.
+- [x] Verify that the Tailwind production build includes every class used by Razor Views and JavaScript.
+- [x] Review error handling, logging, security headers, HTTPS, and secret management.
 - [ ] Finalize technical documentation, ERD, setup guide, and user guide.
 
 ### Completion criteria
@@ -306,9 +330,9 @@ Shared rows count for each assigned member.
 
 ---
 
-## Milestone 8 â€” Deployment and Handover
+## Milestone 8 — Deployment and Handover
 
-**WBS:** No WBS rows yet â€” add when scheduled.
+**WBS:** No WBS rows yet — add when scheduled.
 
 **Goal:** Publish the system and prepare the responsible school staff to operate it.
 
@@ -334,6 +358,12 @@ Shared rows count for each assigned member.
 
 | Date | Work | Owner | PR |
 | --- | --- | --- | --- |
+| 11/14/2026 | Done: repaired the category activation hidden value so Razor renders true/false correctly. Added a rendered-form HTTP regression that deactivates and reactivates the same category; aligned existing metadata and encoded-name confirmation tests with the shared dialogs. Release build and all 13 category HTTP tests passed, 0 failed/skipped. Tests used disposable SQLite data; the real database was not changed. | Unassigned | — |
+| 11/13/2026 | Done: restricted Borrower matrix editing to catalog/calendar and reservation submission; other cells render disabled/unchecked and forged grants are rejected server-side before changes are saved. Disabled self-deactivation on the administrator's own account page, omitted its POST form/dialog and retained server rejection of forged self-deactivation. Release build and targeted administration/rendered UI tests passed: 58 passed, 2 opt-in SQL Server tests skipped, 0 failed. Browser visual testing not repeated. | Unassigned | — |
+| 11/13/2026 | Done: added matching status-color markers to the Administrator inventory graph legend using shared segment/marker colors, decorative aria-hidden dots and retained text/counts. Audited all role dashboards; Borrower and Custodian currently have no graphs. CSS build/asset check passed; isolated Edge mobile light/dark checks verified five matching distinct segment/marker colors and marker fit. | Unassigned | — |
+| 11/13/2026 | Done: repaired account deactivation/reactivation by rendering the hidden IsActive value as an explicit true/false string so MVC Boolean binding succeeds. Two real rendered-form HTTP regressions failed before the fix and passed afterward, verifying target-only state changes. Release account-administration tests: 56 passed, 2 opt-in SQL Server tests skipped, 0 failed. Existing authorization, concurrency and self/last-admin safeguards retained. | Unassigned | — |
+| 11/13/2026 | Done: removed the shared confirmation modal's left accent and replaced the theme-dependent backdrop with a fixed black 70% overlay in both themes. CSS build/asset check passed; isolated Edge desktop-light/mobile-dark checks verified the backdrop color, zero left accent width, fit, keyboard dismissal and single submission. | Unassigned | — |
+| 11/13/2026 | Done: standardized shared confirmations for equipment delete/restore, category activation, account activation and role edits, permission changes, borrower eligibility, and return recording on develop. Preserved reservation cancellation/approval/rejection/release confirmations, POST contracts and history. Added validation recovery, submitter preservation, duplicate-submit protection, keyboard focus wrapping and live return summaries. Removed only the root Assignment C handoff. Verification: 13 JS tests passed; Release build and 11 UI integration tests passed (1 opt-in preview skipped); final targeted rendered-page regression passed; CSS build/asset check and isolated Edge desktop-light/mobile-dark dialog checks passed. Full application workflow browser testing was not run. | Unassigned | — |
 | 11/13/2026 | Refined the login form: replaced password Show/Hide text with two accessible eye icons (plain while hidden, crossed-out while visible), removed the injected “Required fields” legend while retaining field markers, and kept hover background transparent. Tailwind CSS build and UI asset check passed; WebApp build passed with 0 warnings/errors. WBS rows and progress counts unchanged. | Codex | — |
 | 11/9/2026 | Fixed login-page viewport overflow under Additional work: the sign-in document and layout are constrained to the viewport, with responsive spacing for short and narrow screens. Tailwind CSS build and asset check passed; isolated Debug WebApp build passed with 0 warnings/errors. Browser acceptance not verified. WBS rows and progress counts unchanged. | Codex | — |
 | 11/9/2026 | Right-aligned search fields and actions on the borrower-profile and Return & condition pages; retained the Return & condition screen-reader label and removed its visible label. Added server-side borrower eligibility filtering that combines with search and persists through pagination. Tailwind CSS build and WebApp build pass; manual browser comparison not performed. WBS rows and progress counts unchanged. | Codex | — |
@@ -453,6 +483,14 @@ The first version is complete when borrowers can securely reserve one available 
 
 | Date | Change | By |
 | --- | --- | --- |
+| 11/14/2026 | Prepared the completed confirmation/permissions/status-form fixes, dashboard legend and workbook milestone synchronization for Git handoff on develop. Verification: 492 .NET tests passed with 30 optional/interactive skips, 13 JavaScript tests passed, CSS build/asset check passed, and all 46 WBS rows matched the workbook. Feature statuses remain Done as requested; PR link is pending. | Codex |
+| 11/14/2026 | Synchronized all 46 leaf features with the supplied WBS workbook and marked them Done at the user's request. Copied baseline/actual dates and Days, reconciled colored owner assignments, added Notifications 56–57 and UI polish 58, renumbered Testing to 59, retained known PRs, and recalculated member/status summaries and WBS-linked checkboxes. Notification owner is unassigned in the source; optional/documentation-finalization and deployment tasks remain unconfirmed. | Codex |
+| 11/14/2026 | Completed and verified category reactivation repair under Additional work for Ponytail review finding 1. WBS owners, dates, statuses and progress counts unchanged. | Codex |
+| 11/13/2026 | Completed and verified Borrower permission restrictions and administrator self-deactivation UI protection under Additional work. WBS owners, dates and progress counts unchanged. | Codex |
+| 11/13/2026 | Completed and verified dashboard graph legend color markers under Additional work. WBS rows and progress counts unchanged. | Codex |
+| 11/13/2026 | Completed account-status form repair under Additional work; rendered-form HTTP regressions and account-administration suite passed. WBS rows and progress counts unchanged. | Codex |
+| 11/13/2026 | Completed and verified shared confirmation modal accent/backdrop refinement under Additional work. WBS rows and progress counts unchanged. | Codex |
+| 11/13/2026 | Completed cross-role action confirmations and root Assignment C cleanup under Additional work. Recounted all 44 WBS leaf rows: 8 Done, 33 In Review, 2 In Progress, 1 Not Started, 0 Blocked. WBS owners, dates and milestone checkboxes unchanged. | Codex |
 | 11/13/2026 | Refined the login form's password eye states and suppressed the dynamically inserted “Required fields” legend on login while preserving required markers. No WBS feature rows or progress counts changed. | Codex |
 | 11/9/2026 | Recorded the login-page viewport overflow fix under Additional work; WBS rows, owners, dates, milestone checkboxes and progress summary unchanged. | Codex |
 | 11/9/2026 | Recorded right-aligned search on borrower-profile and Return & condition pages and the eligibility filter on borrower profiles under Additional work; WBS rows, owners, dates, milestone checkboxes and progress summary unchanged. | Codex |

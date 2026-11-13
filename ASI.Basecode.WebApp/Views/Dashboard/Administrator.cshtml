@@ -63,14 +63,14 @@
                     <div class="inventory-category">
                         <div class="mb-2 flex items-baseline justify-between gap-3"><h3 class="font-display text-lg font-semibold text-ink">@category.Name</h3><span class="text-xs tabular-nums text-gray-500">@total item(s)</span></div>
                         <div class="inventory-bar flex h-3 w-full overflow-hidden bg-gray-200" role="img" aria-label="@category.Name: @category.Available available, @category.Reserved reserved, @category.Borrowed borrowed, @category.Maintenance under maintenance, @category.Unavailable unavailable">
-                            <span class="h-full bg-white" style="width:@(availablePercent.ToString("0.##", CultureInfo.InvariantCulture))%"></span>
-                            <span class="h-full bg-tint" style="width:@(reservedPercent.ToString("0.##", CultureInfo.InvariantCulture))%"></span>
-                            <span class="h-full bg-primary" style="width:@(borrowedPercent.ToString("0.##", CultureInfo.InvariantCulture))%"></span>
-                            <span class="h-full bg-gray-500" style="width:@(maintenancePercent.ToString("0.##", CultureInfo.InvariantCulture))%"></span>
-                            <span class="h-full bg-ink" style="width:@(unavailablePercent.ToString("0.##", CultureInfo.InvariantCulture))%"></span>
+                            <span class="h-full inventory-status-available" style="width:@(availablePercent.ToString("0.##", CultureInfo.InvariantCulture))%"></span>
+                            <span class="h-full inventory-status-reserved" style="width:@(reservedPercent.ToString("0.##", CultureInfo.InvariantCulture))%"></span>
+                            <span class="h-full inventory-status-borrowed" style="width:@(borrowedPercent.ToString("0.##", CultureInfo.InvariantCulture))%"></span>
+                            <span class="h-full inventory-status-maintenance" style="width:@(maintenancePercent.ToString("0.##", CultureInfo.InvariantCulture))%"></span>
+                            <span class="h-full inventory-status-unavailable" style="width:@(unavailablePercent.ToString("0.##", CultureInfo.InvariantCulture))%"></span>
                         </div>
                         <div class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-gray-500">
-                            <span>Available <strong class="font-semibold text-gray-700">@category.Available</strong></span><span>Reserved <strong class="font-semibold text-gray-700">@category.Reserved</strong></span><span>Borrowed <strong class="font-semibold text-gray-700">@category.Borrowed</strong></span><span>Maintenance <strong class="font-semibold text-gray-700">@category.Maintenance</strong></span><span>Unavailable <strong class="font-semibold text-gray-700">@category.Unavailable</strong></span>
+                            <span class="inventory-legend-item"><i class="inventory-legend-marker inventory-status-available" aria-hidden="true"></i>Available <strong class="font-semibold text-gray-700">@category.Available</strong></span><span class="inventory-legend-item"><i class="inventory-legend-marker inventory-status-reserved" aria-hidden="true"></i>Reserved <strong class="font-semibold text-gray-700">@category.Reserved</strong></span><span class="inventory-legend-item"><i class="inventory-legend-marker inventory-status-borrowed" aria-hidden="true"></i>Borrowed <strong class="font-semibold text-gray-700">@category.Borrowed</strong></span><span class="inventory-legend-item"><i class="inventory-legend-marker inventory-status-maintenance" aria-hidden="true"></i>Maintenance <strong class="font-semibold text-gray-700">@category.Maintenance</strong></span><span class="inventory-legend-item"><i class="inventory-legend-marker inventory-status-unavailable" aria-hidden="true"></i>Unavailable <strong class="font-semibold text-gray-700">@category.Unavailable</strong></span>
                         </div>
                     </div>
                 }

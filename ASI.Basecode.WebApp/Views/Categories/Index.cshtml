@@ -78,11 +78,20 @@
                             <button type="button" class="action-edit btn-open-edit" data-id="@category.CategoryId"
                                     data-code="@category.CategoryCode" data-name="@category.CategoryName"
                                     data-description="@category.Description" aria-label="Edit @category.CategoryName">Edit</button>
-                            <button type="button" class="action-edit btn-open-status" data-id="@category.CategoryId"
-                                    data-name="@category.CategoryName" data-active="@category.IsActive.ToString().ToLowerInvariant()">
-                                @(category.IsActive ? "Deactivate" : "Activate")
-                            </button>
+                            <form asp-action="SetActive" method="post" data-confirm-dialog="category-status-@category.CategoryId">
+                                <input type="hidden" name="CategoryId" value="@category.CategoryId" />
+                                <input type="hidden" name="IsActive" value="@((!category.IsActive).ToString().ToLowerInvariant())" />
+                                <button type="submit" class="@(category.IsActive ? "action-delete" : "action-edit")">@(category.IsActive ? "Deactivate" : "Activate")</button>
+                            </form>
                         </div>
+                            <partial name="Components/_ConfirmDialog" model="@(new ConfirmDialogModel
+                            {
+                                Id = $"category-status-{category.CategoryId}",
+                                Title = category.IsActive ? "Deactivate category?" : "Activate category?",
+                                Message = category.IsActive ? "Inactive categories cannot be selected for new items. Existing equipment and transaction history will be preserved." : "This category will be available when registering equipment. Existing equipment and history are unchanged.",
+                                Detail = $"{category.CategoryCode} · {category.CategoryName}",
+                                ConfirmText = category.IsActive ? "Deactivate" : "Activate", IsDestructive = category.IsActive
+                            })" />
                     </article>
                 }
             </div>
@@ -206,7 +215,7 @@
                                 {
                                     <span class="table-action-locked" title="Close the active reservation or loan before editing">Locked</span>
                                 }
-                                <form asp-action="SetEquipmentArchived" method="post">
+                                <form asp-action="SetEquipmentArchived" method="post" data-confirm-dialog="equipment-status-@item.EquipmentId">
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="id" value="@item.EquipmentId" />
                                     <input type="hidden" name="archived" value="@(!item.IsArchived).ToString().ToLowerInvariant()" />
@@ -214,8 +223,16 @@
                                     <input type="hidden" name="equipmentStatus" value="@Model.Equipment.StatusFilter" />
                                     <input type="hidden" name="equipmentCategoryId" value="@Model.Equipment.CategoryId" />
                                     <input type="hidden" name="equipmentPage" value="@Model.Equipment.Page" />
-                                    <button type="submit" class="action-delete" onclick="return confirm('@(item.IsArchived ? "Restore this item to active inventory?" : "Delete this item from active inventory? Its reservation and return history will be preserved.")')">@(item.IsArchived ? "Restore" : "Delete")</button>
+                                    <button type="submit" class="@(item.IsArchived ? "action-edit" : "action-delete")">@(item.IsArchived ? "Restore" : "Delete")</button>
                                 </form>
+                                <partial name="Components/_ConfirmDialog" model="@(new ConfirmDialogModel
+                                {
+                                    Id = $"equipment-status-{item.EquipmentId}",
+                                    Title = item.IsArchived ? "Restore equipment?" : "Delete equipment?",
+                                    Message = item.IsArchived ? "Restore this item to active inventory. Existing reservation and return history is unchanged." : "Remove this item from active inventory. Its reservation and return history will be preserved.",
+                                    Detail = $"{item.ItemCode} · {item.ItemName}",
+                                    ConfirmText = item.IsArchived ? "Restore" : "Delete", IsDestructive = !item.IsArchived
+                                })" />
                                 </div>
                             </td>
                         </tr>
@@ -276,34 +293,17 @@
     </div>
 </div>
 
-<div id="modal-status-category" class="management-modal fixed inset-0 z-50 hidden items-center justify-center bg-black/60 p-4" role="dialog" aria-modal="true" aria-labelledby="modal-status-title">
-    <div class="management-modal-card w-full max-w-md bg-white p-6 shadow-2xl">
-        <div class="mb-4 flex items-center justify-between border-b border-gray-200 pb-3">
-            <h3 id="modal-status-title" class="font-display text-xl font-semibold text-ink">Deactivate category</h3>
-            <button type="button" class="btn-close-modal text-gray-400 hover:text-ink text-lg font-bold" aria-label="Close modal">&times;</button>
-        </div>
-        <form asp-action="SetActive" method="post" id="form-status-category">
-            @Html.AntiForgeryToken()
-            <input type="hidden" name="CategoryId" id="status-category-id" />
-            <input type="hidden" name="IsActive" id="status-category-is-active" />
-            <p id="modal-status-message" class="text-sm leading-6 text-gray-700"><span id="modal-status-action-text">Are you sure you want to deactivate</span> <strong id="status-category-name" class="font-semibold text-ink"></strong><span id="modal-status-question-mark">?</span></p>
-            <p id="modal-status-hint" class="mt-2 text-xs leading-5 text-gray-500">Existing equipment and transaction history remain preserved. Inactive categories cannot be selected for new items.</p>
-            <div class="form-actions"><button type="button" class="btn-close-modal btn-secondary">Cancel</button><button type="submit" id="btn-status-confirm" class="btn-primary">Confirm</button></div>
-        </form>
-    </div>
-</div>
-
 @section Scripts {
+    <script src="~/js/confirm-dialog.js" asp-append-version="true"></script>
     <script src="~/js/management-modals.js" asp-append-version="true"></script>
     <partial name="_ValidationScriptsPartial" />
     <script>
         (() => {
             const createModal = document.getElementById('modal-create-category');
             const editModal = document.getElementById('modal-edit-category');
-            const statusModal = document.getElementById('modal-status-category');
             const openModal = modal => { if (modal) { modal.classList.remove('hidden'); modal.classList.add('flex'); } };
             const closeModal = modal => { if (modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); } };
-            const closeAll = () => [createModal, editModal, statusModal].forEach(closeModal);
+            const closeAll = () => [createModal, editModal].forEach(closeModal);
 
             document.getElementById('btn-open-create-modal')?.addEventListener('click', () => openModal(createModal));
             document.querySelectorAll('.btn-open-edit').forEach(button => button.addEventListener('click', () => {
@@ -313,18 +313,9 @@
                 document.getElementById('edit-category-description').value = button.dataset.description || '';
                 openModal(editModal);
             }));
-            document.querySelectorAll('.btn-open-status').forEach(button => button.addEventListener('click', () => {
-                const active = button.dataset.active === 'true';
-                document.getElementById('status-category-id').value = button.dataset.id;
-                document.getElementById('status-category-is-active').value = (!active).toString();
-                document.getElementById('status-category-name').textContent = button.dataset.name || 'this category';
-                document.getElementById('modal-status-title').textContent = active ? 'Deactivate category' : 'Activate category';
-                document.getElementById('modal-status-action-text').textContent = active ? 'Are you sure you want to deactivate' : 'Are you sure you want to activate';
-                document.getElementById('btn-status-confirm').textContent = active ? 'Deactivate' : 'Activate';
-                openModal(statusModal);
-            }));
+
             document.querySelectorAll('.btn-close-modal').forEach(button => button.addEventListener('click', closeAll));
-            [createModal, editModal, statusModal].forEach(modal => modal?.addEventListener('click', event => {
+            [createModal, editModal].forEach(modal => modal?.addEventListener('click', event => {
                 if (event.target === modal) closeModal(modal);
             }));
             document.addEventListener('keydown', event => { if (event.key === 'Escape') closeAll(); });

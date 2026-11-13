@@ -60,12 +60,20 @@
                     <td class="px-3 py-3 text-right">
                         <div class="table-row-actions table-row-actions--eligibility">
                             <a asp-action="Edit" asp-route-id="@borrower.BorrowerProfileId" class="action-edit">Edit</a>
-                            <form asp-action="UpdateEligibility" method="post" class="inline">
+                            <form asp-action="UpdateEligibility" method="post" class="inline" data-confirm-dialog="eligibility-@borrower.BorrowerProfileId">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="id" value="@borrower.BorrowerProfileId" />
                                 <input type="hidden" name="isEligible" value="@(!borrower.IsEligible ? "true" : "false")" />
                                 <button type="submit" class="@(borrower.IsEligible ? "action-delete" : "action-edit")">@(borrower.IsEligible ? "Mark ineligible" : "Mark eligible")</button>
                             </form>
+                            <partial name="Components/_ConfirmDialog" model="@(new ConfirmDialogModel
+                            {
+                                Id = $"eligibility-{borrower.BorrowerProfileId}",
+                                Title = borrower.IsEligible ? "Mark borrower ineligible?" : "Mark borrower eligible?",
+                                Message = borrower.IsEligible ? "This borrower will no longer be eligible to submit new reservation requests. Existing history is preserved." : "This borrower will be eligible to submit reservation requests, subject to the existing account and availability checks.",
+                                Detail = $"{borrower.SchoolId} · {borrower.BorrowerName}",
+                                ConfirmText = borrower.IsEligible ? "Mark ineligible" : "Mark eligible", IsDestructive = borrower.IsEligible
+                            })" />
                         </div>
                     </td>
                 </tr>
@@ -85,3 +93,7 @@
             }
         })" />
 </section>
+
+@section Scripts {
+    <script src="~/js/confirm-dialog.js" asp-append-version="true"></script>
+}

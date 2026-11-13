@@ -34,6 +34,9 @@ namespace ASI.Basecode.Resources.Constants
             public const string BorrowerManage = "borrower.manage";
             public const string UserRoleManage = "user_role.manage";
             public const string HistoryView = "history.view";
+
+            public static bool IsAllowedForBorrower(string permission) =>
+                permission == EquipmentBrowse || permission == ReservationCreate;
         }
 
         public static class ReservationStatuses
