@@ -218,7 +218,7 @@
                                 <form asp-action="SetEquipmentArchived" method="post" data-confirm-dialog="equipment-status-@item.EquipmentId">
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="id" value="@item.EquipmentId" />
-                                    <input type="hidden" name="archived" value="@(!item.IsArchived).ToString().ToLowerInvariant()" />
+                                    <input type="hidden" name="archived" value="@((!item.IsArchived).ToString().ToLowerInvariant())" />
                                     <input type="hidden" name="equipmentSearch" value="@Model.Equipment.Search" />
                                     <input type="hidden" name="equipmentStatus" value="@Model.Equipment.StatusFilter" />
                                     <input type="hidden" name="equipmentCategoryId" value="@Model.Equipment.CategoryId" />
