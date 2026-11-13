@@ -714,6 +714,14 @@ namespace ASI.Basecode.Services.Services
 
             var administratorRole = roles.SingleOrDefault(role =>
                 role.Name == DomainValues.Roles.Administrator);
+            var borrowerRole = roles.SingleOrDefault(role => role.Name == DomainValues.Roles.Borrower);
+            if (borrowerRole != null && requestedByPermission.Any(item =>
+                    item.Value.Contains(borrowerRole.Id) && !DomainValues.Permissions.IsAllowedForBorrower(item.Key)))
+            {
+                await transaction.RollbackAsync();
+                return UserAdministrationResult.Failure(
+                    "Borrowers can only be assigned catalog/calendar access and reservation submission.");
+            }
             if (administratorRole == null || !requestedByPermission[
                     DomainValues.Permissions.UserRoleManage].Contains(administratorRole.Id) ||
                 requestedByPermission[DomainValues.Permissions.UserRoleManage]

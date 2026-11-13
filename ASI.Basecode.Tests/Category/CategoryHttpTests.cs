@@ -36,6 +36,39 @@ namespace ASI.Basecode.Tests.Category
     public class CategoryHttpTests
     {
         [Fact]
+        public async Task RenderedCategoryStatusFormsDeactivateAndReactivateTheSameCategory()
+        {
+            await using var site = await CategoryHttpSite.CreateAsync();
+            long categoryId;
+            using (var scope = site.Environment.Provider.CreateScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<AsiBasecodeDBContext>();
+                var category = new EquipmentCategory { CategoryCode = "STATUS", CategoryName = "Status target", IsActive = true };
+                db.EquipmentCategories.Add(category);
+                await db.SaveChangesAsync();
+                categoryId = category.CategoryId;
+            }
+
+            foreach (var expectedActive in new[] { false, true })
+            {
+                var html = await site.Client.GetStringAsync("/Categories?tab=categories");
+                var form = Regex.Match(html, $"<form\\b[^>]*data-confirm-dialog=\"category-status-{categoryId}\"[^>]*>.*?</form>", RegexOptions.Singleline);
+                Assert.True(form.Success);
+                var fields = Regex.Matches(form.Value, "<input\\b[^>]*>")
+                    .Select(input => (
+                        Name: Regex.Match(input.Value, "name=\"([^\"]+)\"").Groups[1].Value,
+                        Value: Regex.Match(input.Value, "value=\"([^\"]*)\"").Groups[1].Value))
+                    .Where(input => input.Name.Length > 0)
+                    .ToDictionary(input => input.Name, input => WebUtility.HtmlDecode(input.Value));
+                var response = await site.Client.PostAsync("/Categories/SetActive", new FormUrlEncodedContent(fields));
+                Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+                using var verify = site.Environment.Provider.CreateScope();
+                var updated = await verify.ServiceProvider.GetRequiredService<AsiBasecodeDBContext>().EquipmentCategories.FindAsync(categoryId);
+                Assert.Equal(expectedActive, updated.IsActive);
+            }
+        }
+
+        [Fact]
         public async Task HttpCreate_WithForgedInactiveValue_CreatesActiveByDefault()
         {
             await using var site = await CategoryHttpSite.CreateAsync();
@@ -261,6 +294,12 @@ namespace ASI.Basecode.Tests.Category
         public async Task CategoryMetadataModals_DoNotExposeActiveCheckboxes()
         {
             await using var site = await CategoryHttpSite.CreateAsync();
+            using (var scope = site.Environment.Provider.CreateScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<AsiBasecodeDBContext>();
+                db.EquipmentCategories.Add(new EquipmentCategory { CategoryCode = "META", CategoryName = "Metadata category", IsActive = true });
+                await db.SaveChangesAsync();
+            }
             var html = await site.Client.GetStringAsync("/Categories?tab=categories");
 
             Assert.DoesNotContain("create-category-active", html);
@@ -270,7 +309,7 @@ namespace ASI.Basecode.Tests.Category
         }
 
         [Fact]
-        public async Task BrowserLiteralRendering_ActivateAndDeactivateStatusDialog_PreventsXSSAndSupportsRepeatOpen()
+        public async Task CategoryStatusDialogs_EncodeNamesAndUseUniqueDialogs()
         {
             await using var site = await CategoryHttpSite.CreateAsync();
             const string activeHostileName = "<img src=x onerror=alert('active')>\"&'";
@@ -308,28 +347,18 @@ namespace ASI.Basecode.Tests.Category
             Assert.Contains("data-name=\"" + HtmlEncoder.Default.Encode(activeHostileName) + "\"", html);
             Assert.Contains("data-name=\"" + HtmlEncoder.Default.Encode(inactiveHostileName) + "\"", html);
 
-            // 3. Stable DOM elements exist in the modal template
-            Assert.Contains("id=\"modal-status-action-text\"", html);
-            Assert.Contains("id=\"status-category-name\"", html);
-            Assert.Contains("id=\"modal-status-hint\"", html);
-            Assert.Contains("id=\"btn-status-confirm\"", html);
-
-            // 4. Script inspection: textContent is used in BOTH status branches and innerHTML is absent
-            Assert.DoesNotContain("message.innerHTML", html);
-            Assert.DoesNotContain("innerHTML =", html);
-            Assert.Contains(".textContent = active ? 'Are you sure you want to deactivate' : 'Are you sure you want to activate';", html);
-            Assert.Contains("document.getElementById('status-category-name').textContent = button.dataset.name || 'this category';", html);
-
-            // 5. Repeat-open DOM simulation:
-            // Simulating open Deactivate -> cancel -> open Deactivate again -> cancel -> open Activate
-            var nameNodeRegex = new Regex(@"<strong id=""status-category-name""[^>]*></strong>");
-            Assert.Matches(nameNodeRegex, html);
-
-            // Simulating DOM text assignments: textContent assignment always results in plain literal text
-            var assignedActive = WebUtility.HtmlEncode(activeHostileName);
-            var assignedInactive = WebUtility.HtmlEncode(inactiveHostileName);
-            Assert.NotEmpty(assignedActive);
-            Assert.NotEmpty(assignedInactive);
+            var dialogs = Regex.Matches(html, @"<dialog id=""category-status-[0-9]+""[^>]*>.*?</dialog>", RegexOptions.Singleline);
+            Assert.Equal(2, dialogs.Count);
+            Assert.Contains(dialogs, dialog => dialog.Value.Contains("Deactivate category?") &&
+                dialog.Value.Contains(HtmlEncoder.Default.Encode(activeHostileName)));
+            Assert.Contains(dialogs, dialog => dialog.Value.Contains("Activate category?") &&
+                dialog.Value.Contains(HtmlEncoder.Default.Encode(inactiveHostileName)));
+            Assert.Equal(2, dialogs.Select(dialog => Regex.Match(dialog.Value, @"id=""([^""]+)""").Groups[1].Value).Distinct().Count());
+            Assert.All(dialogs, dialog =>
+            {
+                Assert.Contains("data-confirm-dismiss", dialog.Value);
+                Assert.Contains("data-confirm-accept", dialog.Value);
+            });
         }
 
         [Fact]
