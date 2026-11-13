@@ -12,11 +12,17 @@
     </div>
 </div>
 
-<form method="get" asp-action="Index" class="filter-panel filter-panel--compact">
+<form method="get" asp-action="Index" class="filter-panel filter-panel--compact filter-panel--right-search">
     <div class="flex-1">
         <label class="sr-only" for="borrower-search">Search borrower profiles</label>
         <input id="borrower-search" name="search" value="@Model.Search" type="search" placeholder="Search school ID, name, or department" class="input w-full" />
     </div>
+    <label class="sr-only" for="borrower-eligibility">Filter by eligibility</label>
+    <select id="borrower-eligibility" name="eligibility" class="input">
+        <option value="" selected="@(Model.EligibilityFilter is null)">All eligibility</option>
+        <option value="eligible" selected="@(Model.EligibilityFilter == true)">Eligible</option>
+        <option value="ineligible" selected="@(Model.EligibilityFilter == false)">Ineligible</option>
+    </select>
     <button type="submit" class="btn-primary">Search</button>
     @if (!string.IsNullOrWhiteSpace(Model.Search))
     {
@@ -72,6 +78,10 @@
         {
             Page = Model.Page, TotalPages = Model.TotalPages, TotalCount = Model.TotalCount,
             Label = "Borrower profile pages",
-            Routes = { ["search"] = Model.Search }
+            Routes =
+            {
+                ["search"] = Model.Search,
+                ["eligibility"] = Model.EligibilityFilter == true ? "eligible" : Model.EligibilityFilter == false ? "ineligible" : string.Empty
+            }
         })" />
 </section>
