@@ -334,6 +334,7 @@ Shared rows count for each assigned member.
 
 | Date | Work | Owner | PR |
 | --- | --- | --- | --- |
+| 11/13/2026 | Fixed equipment soft delete/restore form values: Razor now renders a valid Boolean, so Delete archives active items and Restore returns archived items to inventory. A rendered-form HTTP regression verified both paths and database state (1 passed). WBS rows and progress counts unchanged. | Codex | — |
 | 11/13/2026 | Refined the login form: replaced password Show/Hide text with two accessible eye icons (plain while hidden, crossed-out while visible), removed the injected “Required fields” legend while retaining field markers, and kept hover background transparent. Tailwind CSS build and UI asset check passed; WebApp build passed with 0 warnings/errors. WBS rows and progress counts unchanged. | Codex | — |
 | 11/9/2026 | Fixed login-page viewport overflow under Additional work: the sign-in document and layout are constrained to the viewport, with responsive spacing for short and narrow screens. Tailwind CSS build and asset check passed; isolated Debug WebApp build passed with 0 warnings/errors. Browser acceptance not verified. WBS rows and progress counts unchanged. | Codex | — |
 | 11/9/2026 | Right-aligned search fields and actions on the borrower-profile and Return & condition pages; retained the Return & condition screen-reader label and removed its visible label. Added server-side borrower eligibility filtering that combines with search and persists through pagination. Tailwind CSS build and WebApp build pass; manual browser comparison not performed. WBS rows and progress counts unchanged. | Codex | — |
@@ -453,6 +454,7 @@ The first version is complete when borrowers can securely reserve one available 
 
 | Date | Change | By |
 | --- | --- | --- |
+| 11/13/2026 | Corrected equipment Delete/Restore hidden Boolean rendering and verified both transitions through the rendered forms; WBS rows and progress summary unchanged. | Codex |
 | 11/13/2026 | Refined the login form's password eye states and suppressed the dynamically inserted “Required fields” legend on login while preserving required markers. No WBS feature rows or progress counts changed. | Codex |
 | 11/9/2026 | Recorded the login-page viewport overflow fix under Additional work; WBS rows, owners, dates, milestone checkboxes and progress summary unchanged. | Codex |
 | 11/9/2026 | Recorded right-aligned search on borrower-profile and Return & condition pages and the eligibility filter on borrower profiles under Additional work; WBS rows, owners, dates, milestone checkboxes and progress summary unchanged. | Codex |

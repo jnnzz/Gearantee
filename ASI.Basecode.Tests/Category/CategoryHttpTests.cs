@@ -411,7 +411,7 @@ namespace ASI.Basecode.Tests.Category
         }
 
         [Fact]
-        public async Task HttpSetEquipmentArchived_ArchivesAndRestoresItem()
+        public async Task HttpSetEquipmentArchived_RenderedButtonsArchiveAndRestoreItem()
         {
             await using var site = await CategoryHttpSite.CreateAsync();
             long equipmentId;
@@ -443,11 +443,28 @@ namespace ASI.Basecode.Tests.Category
             var token = await site.Token("/Categories?tab=equipment");
             foreach (var archived in new[] { "true", "false" })
             {
+                var inventoryUrl = archived == "true"
+                    ? "/Categories/Index?tab=equipment"
+                    : "/Categories/Index?tab=equipment&equipmentStatus=archived";
+                var html = await site.Client.GetStringAsync(inventoryUrl);
+                var itemPosition = html.IndexOf("HTTP-EQ-ARCHIVE", StringComparison.Ordinal);
+                Assert.True(itemPosition >= 0, "Expected the equipment item in the inventory list.");
+                var formPosition = html.IndexOf("<form", itemPosition, StringComparison.OrdinalIgnoreCase);
+                Assert.True(formPosition > itemPosition, "Expected an action form after the equipment item.");
+                var formEnd = html.IndexOf("</form>", formPosition, StringComparison.OrdinalIgnoreCase);
+                Assert.True(formEnd > formPosition, "Expected the action form to be complete.");
+                var formHtml = html.Substring(formPosition, formEnd - formPosition);
+                var archiveField = Regex.Match(formHtml,
+                    "name=\"archived\"[^>]*value=\"([^\"]*)\"");
+                Assert.True(archiveField.Success, "Expected the archived field in the action form.");
+                var submittedValue = WebUtility.HtmlDecode(archiveField.Groups[1].Value);
+                Assert.Equal(archived, submittedValue);
+
                 var form = new FormUrlEncodedContent(new[]
                 {
                     new KeyValuePair<string, string>("__RequestVerificationToken", token),
                     new KeyValuePair<string, string>("id", equipmentId.ToString()),
-                    new KeyValuePair<string, string>("archived", archived)
+                    new KeyValuePair<string, string>("archived", submittedValue)
                 });
                 var response = await site.Client.PostAsync("/Categories/SetEquipmentArchived", form);
                 Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
