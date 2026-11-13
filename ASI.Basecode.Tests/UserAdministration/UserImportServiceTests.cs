@@ -21,7 +21,7 @@ namespace ASI.Basecode.Tests.UserAdministration
         {
             UserCode = code, FirstName = "Ana", LastName = "Test", Email = code + "@test.local",
             RoleName = role, Password = "Private!123456", ConfirmPassword = "Private!123456",
-            SchoolId = role == "Borrower" ? code : null, Department = role == "Borrower" ? "Science" : null
+            Department = role == "Borrower" ? "Science" : null
         };
 
         [Fact]
@@ -55,17 +55,21 @@ namespace ASI.Basecode.Tests.UserAdministration
         [InlineData("borrower")]
         [InlineData("duplicate-email")]
         [InlineData("duplicate-code")]
-        [InlineData("duplicate-school")]
+        [InlineData("missing-school-id")]
         [InlineData("existing-email")]
         [InlineData("existing-code")]
+        [InlineData("existing-id-and-email")]
+        [InlineData("existing-lowercase-id-and-email")]
+        [InlineData("existing-email-and-invalid-id")]
         public async Task ValidationErrorsCreateNothing(string problem)
         {
             await using var environment = await AdministrationTestEnvironment.CreateAsync();
             await using var scope = environment.Provider.CreateAsyncScope();
             var service = scope.ServiceProvider.GetRequiredService<IUserAdministrationService>();
             var db = scope.ServiceProvider.GetRequiredService<AsiBasecodeDBContext>();
+            scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>().Options.User.RequireUniqueEmail = true;
             var first = Account("A1", "Borrower");
-            var second = Account("A2", "Borrower");
+            var second = Account("A2", problem == "duplicate-code" ? "Custodian" : "Borrower");
             switch (problem)
             {
                 case "email": second.Email = "invalid"; break;
@@ -74,12 +78,27 @@ namespace ASI.Basecode.Tests.UserAdministration
                 case "borrower": second.Department = ""; break;
                 case "duplicate-email": second.Email = first.Email.ToUpperInvariant(); break;
                 case "duplicate-code": second.UserCode = first.UserCode.ToLowerInvariant(); break;
-                case "duplicate-school": second.SchoolId = first.SchoolId.ToLowerInvariant(); break;
+                case "missing-school-id": second.UserCode = ""; break;
                 case "existing-email": second.Email = "ADMIN@TEST.LOCAL"; break;
                 case "existing-code": second.UserCode = "ADMIN-TEST"; break;
+                case "existing-id-and-email":
+                case "existing-lowercase-id-and-email":
+                    second.UserCode = problem == "existing-id-and-email" ? "ADMIN-TEST" : "admin-test";
+                    second.Email = "ADMIN@TEST.LOCAL";
+                    break;
+                case "existing-email-and-invalid-id":
+                    second.UserCode = "invalid id";
+                    second.Email = "ADMIN@TEST.LOCAL";
+                    break;
             }
             var result = await service.ImportAsync(environment.ActorId, new[] { new UserImportRow(2, first), new UserImportRow(3, second) });
             Assert.NotEmpty(result.Errors);
+            if (problem is "missing-school-id" or "duplicate-code" or "existing-code")
+                Assert.Contains(result.Errors, error => error.Row == 3 && error.Field == "SchoolId");
+            if (problem is "existing-id-and-email" or "existing-lowercase-id-and-email")
+                Assert.Equal(new[] { "Email", "SchoolId" }, result.Errors.Select(error => error.Field));
+            if (problem == "existing-email-and-invalid-id")
+                Assert.Equal(new[] { "Email", "Account" }, result.Errors.Select(error => error.Field));
             Assert.Equal(0, result.CreatedCount);
             Assert.DoesNotContain(first.Password, JsonSerializer.Serialize(result.Errors));
             Assert.Equal(1, await db.Users.CountAsync());
@@ -112,17 +131,13 @@ namespace ASI.Basecode.Tests.UserAdministration
         public Task LaterFailureRollsBackEarlierAccounts() => CheckRollback(false);
 
         [Fact]
-        public async Task MismatchedSchoolIdRejectsBatch_RealTransitionAuditsOnce_StaleRepeatIsRejected()
+        public async Task RealTransitionAuditsOnce_StaleRepeatIsRejected()
         {
             await using var environment = await AdministrationTestEnvironment.CreateAsync();
             await using var scope = environment.Provider.CreateAsyncScope();
             var service = scope.ServiceProvider.GetRequiredService<IUserAdministrationService>();
             var db = scope.ServiceProvider.GetRequiredService<AsiBasecodeDBContext>();
             Assert.True((await service.CreateAsync(environment.ActorId, Account("SCHOOL", "Borrower"))).Succeeded);
-            var duplicate = Account("DIFFERENT", "Borrower");
-            duplicate.SchoolId = "SCHOOL";            Assert.NotEmpty((await service.ImportAsync(environment.ActorId,
-                new[] { new UserImportRow(2, duplicate) })).Errors);
-            Assert.Equal(2, await db.Users.CountAsync());
             var target = await db.Users.SingleAsync(user => user.UserCode == "SCHOOL");
             var command = new SetAccountActiveViewModel
                 { UserId = target.Id, ConcurrencyStamp = target.ConcurrencyStamp, IsActive = false };

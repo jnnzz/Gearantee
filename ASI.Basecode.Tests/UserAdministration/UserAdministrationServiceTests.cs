@@ -84,7 +84,6 @@ namespace ASI.Basecode.Tests.UserAdministration
                     LastName = "Santos",
                     Email = "mara@test.local",
                     RoleName = borrowerRole.Name,
-                    SchoolId = "STU-2001",
                     Department = "Information Technology",
                     Password = password,
                     ConfirmPassword = password
@@ -103,7 +102,7 @@ namespace ASI.Basecode.Tests.UserAdministration
         }
 
         [Fact]
-        public async Task CreateAsync_BorrowerWithoutPostedSchoolId_SucceedsAndDerivesIdentifier()
+        public async Task CreateAsync_BorrowerUsesSchoolIdAsLoginIdentifier()
         {
             using var database = new SqliteDb();
             using var provider = CreateProvider(database);
@@ -133,7 +132,6 @@ namespace ASI.Basecode.Tests.UserAdministration
                     LastName = "Reyes",
                     Email = "nina@test.local",
                     RoleName = borrowerRole.Name,
-                    // SchoolId intentionally omitted: the Create Account form no longer sends it.
                     Department = "Information Technology",
                     Password = password,
                     ConfirmPassword = password
@@ -143,6 +141,7 @@ namespace ASI.Basecode.Tests.UserAdministration
             var created = await users.FindByEmailAsync("nina@test.local");
             Assert.NotNull(created);
             Assert.Equal("STU-3001", created.UserCode);
+            Assert.Equal("STU-3001", created.UserName);
             Assert.True(await users.IsInRoleAsync(created, DomainValues.Roles.Borrower));
             await db.BorrowerProfiles.SingleAsync(item => item.UserId == created.Id);
         }

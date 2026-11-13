@@ -132,7 +132,7 @@ namespace ASI.Basecode.Tests.UserAdministration
                 else db.RolePermissions.RemoveRange(db.RolePermissions);
                 await db.SaveChangesAsync();
             }
-            using var form = Upload(UserImportCsv.Header + "\n0001,A,B,one@test.local,Custodian,Private!123456,,,", token);
+            using var form = Upload(UserImportCsv.Header + "\n0001,A,B,one@test.local,Custodian,Private!123456,,", token);
             Assert.Equal(HttpStatusCode.Forbidden, (await site.Client.PostAsync("/Users/Import", form)).StatusCode);
         }
 
@@ -141,13 +141,20 @@ namespace ASI.Basecode.Tests.UserAdministration
         {
             await using var site = await AdministrationHttpSite.CreateAsync();
             SavePreview("import.html", await site.Client.GetStringAsync("/Users/Import"));
-            Assert.Equal(UserImportCsv.Header + "\r\n", await site.Client.GetStringAsync("/Users/ImportTemplate"));
-            using var form = Upload(UserImportCsv.Header + "\n0001,A,B,one@test.local,Custodian,Private!123456,,,",
+            const string header = "SchoolId,FirstName,LastName,Email,RoleName,Password,Department,ContactNumber\r\n";
+            Assert.Equal(header, await site.Client.GetStringAsync("/Users/ImportTemplate"));
+            using var form = Upload(header + "0001,A,B,one@test.local,Borrower,Private!123456,Science,\n" +
+                "CUST-CSV,A,C,two@test.local,Custodian,Private!123457,,\n" +
+                "ADM-CSV,A,D,three@test.local,Administrator,Private!123458,,",
                 await site.Token("/Users/Import"));
             var response = await site.Client.PostAsync("/Users/Import", form);
             Assert.True(response.StatusCode == HttpStatusCode.Redirect, await response.Content.ReadAsStringAsync());
             using var scope = site.Environment.Provider.CreateScope();
-            Assert.Equal(2, await scope.ServiceProvider.GetRequiredService<AsiBasecodeDBContext>().Users.CountAsync());
+            var db = scope.ServiceProvider.GetRequiredService<AsiBasecodeDBContext>();
+            Assert.Equal(4, await db.Users.CountAsync());
+            var borrower = await db.Users.SingleAsync(user => user.UserCode == "0001");
+            Assert.Equal("0001", borrower.UserName);
+            Assert.Equal("Science", (await db.BorrowerProfiles.SingleAsync(profile => profile.UserId == borrower.Id)).Department);
             Assert.DoesNotContain("Private!123456", await response.Content.ReadAsStringAsync());
         }
 

@@ -7,9 +7,9 @@
         <p class="mt-2 text-sm text-gray-700">Create up to 100 accounts at once. Every account must pass validation: if any row fails, no accounts are created.</p>
         <a asp-action="ImportTemplate" class="mt-4 inline-flex font-semibold text-primary-strong underline underline-offset-4">Download the CSV template</a>
         <ul class="import-guidance mt-4 list-disc space-y-2 pl-5 text-sm text-gray-700">
-            <li>Use UTF-8 CSV, up to 1 MiB, with all nine template columns. Blank lines are ignored. Keep codes and school IDs as text to preserve leading zeroes.</li>
-            <li>Each account needs a unique user code and email, first and last name, an initial role, and its own password.</li>
-            <li>Choose Borrower, Custodian, or Administrator. Borrowers also need a unique school ID and department; eligibility starts disabled.</li>
+            <li>Use UTF-8 CSV, up to 1 MiB, with all eight template columns. Blank lines are ignored. Keep School IDs as text to preserve leading zeroes.</li>
+            <li>Each account needs a unique School ID and email, first and last name, an initial role, and its own password. The School ID is used to sign in.</li>
+            <li>Choose Borrower, Custodian, or Administrator. Borrowers also need a department and start with borrowing eligibility disabled.</li>
             <li>Passwords must meet the site's policy and be 8–100 characters. Contact number is optional. Quote fields containing commas or line breaks.</li>
             <li>The file contains passwords. Share it only through a secure channel and remove your local copy when no longer needed. The upload is processed in memory and is not saved by Gearantee.</li>
         </ul>

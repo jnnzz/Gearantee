@@ -295,11 +295,9 @@ namespace ASI.Basecode.Services.Services
                 await _db.Users.AnyAsync(user => user.UserCode == model.UserCode.Trim()))
             {
                 return UserAdministrationResult.Failure(
-                    "An account with that email or user code already exists.");
+                    "An account with that email or School ID already exists.");
             }
 
-            // The borrower school ID is derived from the account's user code, so only the
-            // department is entered here; a posted SchoolId is never trusted or persisted.
             if (role.Name == DomainValues.Roles.Borrower &&
                 string.IsNullOrWhiteSpace(model.Department))
             {
@@ -358,7 +356,7 @@ namespace ASI.Basecode.Services.Services
             catch (DbUpdateException exception) when (IsUniqueViolation(exception))
             {
                 return UserAdministrationResult.Failure(
-                    "The email, user code, or school ID is already in use.");
+                    "The email or School ID is already in use.");
             }
         }
 
@@ -438,8 +436,6 @@ namespace ASI.Basecode.Services.Services
 
             var needsBorrowerProfile = selectedRoles.Contains(
                 DomainValues.Roles.Borrower, StringComparer.OrdinalIgnoreCase);
-            // The school ID is derived from the user code and cannot be edited here, so it
-            // is neither required from nor persisted from the submitted form.
             if (needsBorrowerProfile &&
                 string.IsNullOrWhiteSpace(model.Department))
             {
@@ -562,7 +558,7 @@ namespace ASI.Basecode.Services.Services
             {
                 await transaction.RollbackAsync();
                 return UserAdministrationResult.Failure(
-                    "The email, user code, or school ID is already in use.");
+                    "The email or School ID is already in use.");
             }
             });
         }

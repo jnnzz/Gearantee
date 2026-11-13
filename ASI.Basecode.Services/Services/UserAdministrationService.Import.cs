@@ -1,6 +1,7 @@
 ﻿using ASI.Basecode.Data.Models;
 using ASI.Basecode.Resources.Constants;
 using ASI.Basecode.Services.ServiceModels.UserAdministration;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using System;
@@ -15,14 +16,6 @@ namespace ASI.Basecode.Services.Services
     {
         public async Task<UserAdministrationResult> CreateAsync(string actorUserId, CreateUserViewModel model)
         {
-            // The Create Account form no longer collects a separate school ID: for borrowers it
-            // is derived from the user code, so seed it before validation runs. CSV import keeps
-            // its own school-ID requirement in ImportAsync.
-            if (model != null)
-            {
-                model.SchoolId = model.UserCode?.Trim();
-            }
-
             return await _db.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
             {
             // Rebuild state per attempt so a rolled-back attempt cannot leave stale tracked
@@ -78,7 +71,6 @@ namespace ASI.Basecode.Services.Services
                 _db.ChangeTracker.Clear();
                 if (!await CanManageAsync(actorUserId)) return new UserImportResult { Forbidden = true };
                 var emails = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-                var codes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                 var schoolIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                 foreach (var row in rows)
                 {
@@ -86,11 +78,8 @@ namespace ASI.Basecode.Services.Services
                     errors.AddRange(await ValidateNewAccountAsync(model, row.RowNumber));
                     if (!emails.Add(_userManager.NormalizeEmail(model.Email.Trim())))
                         errors.Add(new(row.RowNumber, "Email", "Duplicate email in this file."));
-                    if (!codes.Add(_userManager.NormalizeName(model.UserCode.Trim())))
-                        errors.Add(new(row.RowNumber, "UserCode", "Duplicate user code in this file."));
-                    if (string.Equals(model.RoleName?.Trim(), DomainValues.Roles.Borrower, StringComparison.OrdinalIgnoreCase) &&
-                        !schoolIds.Add(model.SchoolId?.Trim() ?? string.Empty))
-                        errors.Add(new(row.RowNumber, "SchoolId", "Duplicate borrower school ID in this file."));
+                    if (!schoolIds.Add(_userManager.NormalizeName(model.UserCode.Trim())))
+                        errors.Add(new(row.RowNumber, "SchoolId", "Duplicate School ID in this file."));
                 }
                 if (errors.Count > 0) return new UserImportResult { Errors = errors };
 
@@ -126,8 +115,13 @@ namespace ASI.Basecode.Services.Services
             model.ContactNumber = CleanOptional(model.ContactNumber);
             var results = new List<ValidationResult>();
             Validator.TryValidateObject(model, new ValidationContext(model), results, true);
-            return results.Select(result => new UserImportError(row,
-                result.MemberNames.FirstOrDefault() ?? "Account", result.ErrorMessage)).ToList();
+            return results.Select(result =>
+            {
+                var field = result.MemberNames.FirstOrDefault();
+                return new UserImportError(row,
+                    field == nameof(CreateUserViewModel.UserCode) ? "SchoolId" : field ?? "Account",
+                    result.ErrorMessage);
+            }).ToList();
         }
 
         private async Task<List<UserImportError>> ValidateNewAccountAsync(CreateUserViewModel model, int row)
@@ -137,26 +131,30 @@ namespace ASI.Basecode.Services.Services
             var role = await _roleManager.FindByNameAsync(model.RoleName.Trim());
             if (role == null || !IsSupportedRole(role.Name))
                 errors.Add(new(row, "RoleName", "Choose Borrower, Custodian, or Administrator."));
-            if (await _userManager.FindByEmailAsync(model.Email.Trim()) != null)
+            var emailInUse = await _userManager.FindByEmailAsync(model.Email.Trim()) != null;
+            if (emailInUse)
                 errors.Add(new(row, "Email", "Email is already in use."));
-            if (await _db.Users.AnyAsync(user => user.UserCode == model.UserCode.Trim()))
-                errors.Add(new(row, "UserCode", "User code is already in use."));
-                if (string.Equals(role?.Name, DomainValues.Roles.Borrower, StringComparison.OrdinalIgnoreCase))
-            {
-                if (string.IsNullOrWhiteSpace(model.SchoolId))
-                    errors.Add(new(row, "SchoolId", "Borrowers need a school ID."));
-                else if (!string.Equals(model.SchoolId.Trim(), model.UserCode?.Trim(), StringComparison.Ordinal))
-                    errors.Add(new(row, "SchoolId", "School ID must match the user code."));
-                if (string.IsNullOrWhiteSpace(model.Department))
-                    errors.Add(new(row, "Department", "Borrowers need a department."));
-            }
+            var schoolIdInUse = await _db.Users.AnyAsync(user => user.UserCode == model.UserCode.Trim());
+            if (role?.Name == DomainValues.Roles.Borrower && string.IsNullOrWhiteSpace(model.Department))
+                errors.Add(new(row, "Department", "Borrowers need a department."));
 
             var candidate = new ApplicationUser { UserName = model.UserCode.Trim(), Email = model.Email.Trim() };
+            var otherIdentityError = false;
             foreach (var validator in _userManager.UserValidators)
             {
-                if (!(await validator.ValidateAsync(_userManager, candidate)).Succeeded)
-                    errors.Add(new(row, "Account", "Check the user code and email; identity validation failed."));
+                var validation = await validator.ValidateAsync(_userManager, candidate);
+                foreach (var error in validation.Errors)
+                {
+                    if (error.Code == nameof(IdentityErrorDescriber.DuplicateUserName))
+                        schoolIdInUse = true;
+                    else if (!(emailInUse && error.Code == nameof(IdentityErrorDescriber.DuplicateEmail)))
+                        otherIdentityError = true;
+                }
             }
+            if (schoolIdInUse)
+                errors.Add(new(row, "SchoolId", "School ID is already in use."));
+            if (otherIdentityError)
+                errors.Add(new(row, "Account", "Check the School ID and email; identity validation failed."));
             foreach (var validator in _userManager.PasswordValidators)
             {
                 if (!(await validator.ValidateAsync(_userManager, candidate, model.Password)).Succeeded)

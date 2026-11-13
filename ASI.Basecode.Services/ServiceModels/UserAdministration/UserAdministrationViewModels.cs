@@ -36,7 +36,7 @@ namespace ASI.Basecode.Services.ServiceModels.UserAdministration
     public class CreateUserViewModel
     {
         [Required, StringLength(100)]
-        [Display(Name = "User code / school ID")]
+        [Display(Name = "School ID")]
         public string UserCode { get; set; }
 
         [Required, StringLength(100)]
@@ -60,10 +60,6 @@ namespace ASI.Basecode.Services.ServiceModels.UserAdministration
         [Required, DataType(DataType.Password), Compare(nameof(Password))]
         [Display(Name = "Confirm password")]
         public string ConfirmPassword { get; set; }
-
-        [StringLength(100)]
-        [Display(Name = "School ID")]
-        public string SchoolId { get; set; }
 
         [StringLength(200)]
         public string Department { get; set; }
