@@ -69,6 +69,8 @@ namespace ASI.Basecode.WebApp.Controllers
             return View();
         }
 
+        // WBS 9–12: this controller coordinates the recovery screens:
+        // request -> OTP service/email -> OTP verification -> Identity reset token.
         [HttpGet]
         [AllowAnonymous]
         public IActionResult ForgotPassword()
@@ -115,6 +117,8 @@ namespace ASI.Basecode.WebApp.Controllers
             return View(new VerifyPasswordResetOtpViewModel { SchoolId = schoolId });
         }
 
+        // WBS 11–12: verifies the one-time code through PasswordResetOtpService;
+        // only a match is exchanged for an ASP.NET Identity reset token.
         [HttpPost]
         [AllowAnonymous]
         [ValidateAntiForgeryToken]
@@ -204,6 +208,8 @@ namespace ASI.Basecode.WebApp.Controllers
             return RedirectToAction(nameof(ForgotPassword));
         }
 
+        // WBS 12: ResetPassword.cshtml posts the Identity token and new password
+        // here; UserManager validates them and updates the account's password hash.
         [HttpPost]
         [AllowAnonymous]
         [ValidateAntiForgeryToken]

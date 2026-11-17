@@ -481,13 +481,36 @@ html[data-theme="dark"] {
   justify-content: flex-end;
 }
 .ui-refresh .filter-panel--right-search > div { flex: 0 1 380px; min-width: min(100%, 220px); }
+.ui-refresh .filter-panel--right-search > input:not([type="hidden"]) { width: auto; flex: 0 1 380px; min-width: min(100%, 220px); }
 .ui-refresh .filter-panel--right-search > select { flex: 0 1 190px; }
 .ui-refresh .filter-panel--right-search > button { flex: 0 1 292px; }
 .ui-refresh .filter-panel--right-search :is(.input, button, .btn-secondary) { min-height: 48px; }
+.ui-refresh .catalog-filter-panel { display: flex; justify-content: flex-end; }
+.ui-refresh .catalog-filter-controls {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.25fr) minmax(180px, .8fr) auto;
+  align-items: end;
+  gap: .65rem;
+  width: min(100%, 980px);
+  margin-left: auto;
+}
+.ui-refresh .catalog-filter-controls > div { min-width: 0; }
+.ui-refresh .catalog-filter-controls :is(.input, button, .btn-secondary) { min-height: 48px; }
+.ui-refresh .catalog-filter-actions { display: flex; align-items: center; justify-content: flex-end; gap: .5rem; }
+.ui-refresh .inventory-filter-row.filter-panel--right-search > button,
+.ui-refresh .inventory-filter-row.filter-panel--right-search > a.btn-primary { flex: 0 0 auto; }
+@media (max-width: 767px) {
+  .ui-refresh .catalog-filter-controls { grid-template-columns: minmax(0, 1fr) minmax(0, .85fr); }
+  .ui-refresh .catalog-filter-actions { grid-column: 1 / -1; }
+}
 @media (max-width: 599px) {
   .ui-refresh .filter-panel--right-search { flex-direction: column; align-items: stretch; }
   .ui-refresh .filter-panel--right-search > div { width: 100%; flex: 1 1 auto; }
+  .ui-refresh .filter-panel--right-search > input:not([type="hidden"]) { width: 100%; flex: 1 1 auto; }
   .ui-refresh .filter-panel--right-search > :is(select, button, a) { width: 100%; flex: 0 0 auto; }
+  .ui-refresh .catalog-filter-controls { grid-template-columns: minmax(0, 1fr); }
+  .ui-refresh .catalog-filter-actions { grid-column: auto; }
+  .ui-refresh .catalog-filter-actions > :is(button, a) { flex: 1; justify-content: center; }
 }
 .topbar-tools { display: flex; flex-shrink: 0; align-items: center; gap: 1rem; }
 .auth-page { min-height: calc(100dvh - 4.5rem); }

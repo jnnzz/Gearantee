@@ -53,6 +53,8 @@ namespace ASI.Basecode.WebApp.Controllers
             _supabaseOptions = supabaseOptions.Value;
         }
 
+        // WBS 25–28: the equipment tab is assembled here; list filters go
+        // to EquipmentItemService, and its forms/actions return to this page.
         [HttpGet]
         public async Task<IActionResult> Index(
             string tab = "equipment",
@@ -115,6 +117,8 @@ namespace ASI.Basecode.WebApp.Controllers
             return View("CreateEquipment", model);
         }
 
+        // WBS 26: receives CreateEquipment.cshtml, validates its fields and
+        // optional photo, then delegates the inventory write to EquipmentItemService.
         [HttpPost]
         [ValidateAntiForgeryToken]
         [RequestSizeLimit(MaxImageRequestBytes)]
@@ -190,6 +194,8 @@ namespace ASI.Basecode.WebApp.Controllers
             return View("EditEquipment", model);
         }
 
+        // WBS 27: receives EditEquipment.cshtml and delegates the item update;
+        // this controller also preserves or replaces the related stored image URL.
         [HttpPost]
         [ValidateAntiForgeryToken]
         [RequestSizeLimit(MaxImageRequestBytes)]
@@ -281,6 +287,8 @@ namespace ASI.Basecode.WebApp.Controllers
             return RedirectToAction(nameof(Index), new { tab = "equipment" });
         }
 
+        // WBS 28: the Index view's Delete/Restore form calls this action,
+        // which delegates the protected soft-archive state change to the service.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> SetEquipmentArchived(

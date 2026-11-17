@@ -15,6 +15,8 @@ using System.Threading.Tasks;
 
 namespace ASI.Basecode.Services.Services
 {
+    // WBS 52–55: shared query pipeline for the page and exports; keep scope,
+    // search, filters, ordering, and row mapping consistent in both methods below.
     public class BorrowingHistoryService : IBorrowingHistoryService
     {
         public const int PageSize = PaginationDefaults.PageSize;

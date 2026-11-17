@@ -5,6 +5,8 @@ using System.Linq;
 
 namespace ASI.Basecode.Services.Utilities
 {
+    // WBS 55: converts shared history rows to escaped CSV cells;
+    // BorrowingHistoryController streams these lines into the HTTP response.
     public static class BorrowingHistoryCsvFormatter
     {
         private static readonly string[] Headers =

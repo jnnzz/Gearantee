@@ -45,7 +45,10 @@ namespace ASI.Basecode.Services.Services
             _logger = logger;
         }
 
-        /// <inheritdoc />
+        /// <summary>
+        /// WBS 10–11: reserve an issuance, generate and hash the OTP, persist
+        /// it before sending through IBrevoEmailSender, and remove it if delivery fails.
+        /// </summary>
         public async Task IssueOtpAsync(
             ApplicationUser user,
             string fallbackEmail,
