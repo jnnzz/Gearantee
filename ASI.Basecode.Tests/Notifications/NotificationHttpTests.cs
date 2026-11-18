@@ -86,6 +86,32 @@ namespace ASI.Basecode.Tests.Notifications
         }
 
         [Fact]
+        public async Task Account_created_with_one_school_id_can_sign_in_and_request_a_reset()
+        {
+            await using var site = await UiAcceptanceSite.CreateAsync();
+            using var admin = site.NewClient();
+            using var borrower = site.NewClient();
+            await site.LoginAsync(admin, "UI-ADMIN");
+
+            const string id = "0098765";
+            const string email = "new-borrower@ui-fixture.invalid";
+            var create = await admin.GetStringAsync("/Users/Create");
+            Assert.Contains(">School ID <", create);
+            Assert.DoesNotContain("name=\"SchoolId\"", create);
+            var created = await Post(admin, "/Users/Create", create,
+                ("UserCode", id), ("FirstName", "Test"), ("LastName", "Borrower"),
+                ("Email", email), ("RoleName", "Borrower"), ("Department", "Science"),
+                ("Password", UiAcceptanceSite.Password), ("ConfirmPassword", UiAcceptanceSite.Password));
+            Assert.Equal(HttpStatusCode.Redirect, created.StatusCode);
+
+            var forgot = await borrower.GetStringAsync("/Account/ForgotPassword");
+            var request = await Post(borrower, "/Account/ForgotPassword", forgot, ("SchoolId", id));
+            Assert.Equal(HttpStatusCode.Redirect, request.StatusCode);
+            Assert.Equal(email, site.LastOtpEmail);
+            await site.LoginAsync(borrower, id);
+        }
+
+        [Fact]
         public async Task Inbox_endpoints_require_auth_and_antiforgery_and_never_update_another_users_rows()
         {
             await using var site = await UiAcceptanceSite.CreateAsync(notifications: true);
