@@ -26,7 +26,7 @@
             <button type="button" id="btn-open-create-modal" class="btn-primary">+ New category</button>
         </div>
 
-        <form method="get" asp-action="Index" class="inventory-filter-row category-filters" role="search" aria-label="Filter categories">
+        <form method="get" asp-action="Index" class="inventory-filter-row category-filters filter-panel--right-search" role="search" aria-label="Filter categories">
             <input type="hidden" name="tab" value="categories" />
             <input type="hidden" name="equipmentSearch" value="@Model.Equipment.Search" />
             <input type="hidden" name="equipmentStatus" value="@Model.Equipment.StatusFilter" />
@@ -112,7 +112,7 @@
     <section class="inventory-section inventory-panel" hidden="@(Model.ActiveTab != "equipment")" aria-labelledby="equipment-heading">
         <h2 id="equipment-heading" class="sr-only">Equipment items</h2>
 
-        <form method="get" asp-action="Index" class="inventory-filter-row equipment-filters" role="search" aria-label="Filter equipment items">
+        <form method="get" asp-action="Index" class="inventory-filter-row equipment-filters filter-panel--right-search" role="search" aria-label="Filter equipment items">
             <input type="hidden" name="tab" value="equipment" />
             <input type="hidden" name="categorySearch" value="@Model.CategorySearch" />
             <input type="hidden" name="categoryStatus" value="@Model.CategoryStatusFilter" />

@@ -26,7 +26,7 @@
             </form>
         }    </nav>
 
-    <form method="get" asp-action="Index" class="filter-panel filter-panel--compact">
+    <form method="get" asp-action="Index" class="filter-panel filter-panel--compact filter-panel--right-search">
         <div class="flex-1">
             <label class="sr-only" for="review-search">Search reservation requests</label>
             <input id="review-search" name="search" value="@Model.Search" type="search" placeholder="Search item code, item name, school ID, or borrower" class="input w-full" />

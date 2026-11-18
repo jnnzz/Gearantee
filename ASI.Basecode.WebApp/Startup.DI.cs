@@ -33,6 +33,8 @@ namespace ASI.Basecode.WebApp
             _services.AddScoped<IAccountService, AccountService>();
             _services.AddScoped<IAuditService, AuditService>();
 
+            // WBS 9–12: these registrations connect password recovery to
+            // the Brevo HTTP sender and Identity-backed OTP storage.
             _services.Configure<BrevoOptions>(
                 Configuration.GetSection(BrevoOptions.SectionName));
             _services.Configure<SupabaseOptions>(
@@ -73,6 +75,8 @@ namespace ASI.Basecode.WebApp
             // WBS 30.00â€“32.00: Borrower Profile Management
             _services.AddScoped<IBorrowerProfileService, BorrowerProfileService>();
 
+            // WBS 25–28: CategoriesController uses this service for the
+            // equipment list, form operations, and archive/restore actions.
             _services.AddScoped<ICategoryService, CategoryService>();
             _services.AddScoped<IEquipmentItemService, EquipmentItemService>();
             _services.AddScoped<IAvailabilityCalendarService, AvailabilityCalendarService>();
@@ -87,6 +91,7 @@ namespace ASI.Basecode.WebApp
             _services.AddScoped<ICatalogService, CatalogService>();
             _services.AddScoped<IReservationService, ReservationService>();
             _services.AddScoped<IReturnRecordService, ReturnRecordService>();
+            // WBS 52–55: the history page and exports share this query service.
             _services.AddScoped<IBorrowingHistoryService, BorrowingHistoryService>();
         }
     }

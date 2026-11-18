@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 
 namespace ASI.Basecode.Data
 {
+    // WBS 10–11: stores the hashed OTP state and issuance limits in
+    // ASP.NET Identity's AspNetUserTokens table for the reset service to verify.
     public sealed class IdentityPasswordResetOtpStore : IPasswordResetOtpStore
     {
         private const string Provider = "Gearantee";

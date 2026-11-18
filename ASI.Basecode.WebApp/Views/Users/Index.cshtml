@@ -24,7 +24,7 @@
             </div>
         </div>
 
-        <form method="get" asp-action="Index" class="filter-panel user-filters">
+        <form method="get" asp-action="Index" class="filter-panel user-filters filter-panel--right-search">
             <label class="sr-only" for="user-search">Search accounts</label>
             <input id="user-search" name="search" value="@Model.Search" type="search" placeholder="Search name, email, or School ID" class="input" />
             <label class="sr-only" for="user-status">Filter by status</label>

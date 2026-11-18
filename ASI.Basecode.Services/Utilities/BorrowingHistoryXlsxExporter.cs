@@ -11,7 +11,10 @@ using System.Threading.Tasks;
 
 namespace ASI.Basecode.Services.Utilities
 {
-    /// <summary>Writes the all-matching borrowing history stream into a bounded-memory XLSX file.</summary>
+    /// <summary>
+    /// WBS 55: writes the filtered row stream supplied by
+    /// BorrowingHistoryController.ExportExcel into an XLSX workbook.
+    /// </summary>
     public static class BorrowingHistoryXlsxExporter
     {
         public const string ContentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";

@@ -31,7 +31,7 @@
                aria-current="@(isActive ? "page" : null)">@tab.Label <span class="ml-1 text-xs text-gray-500">@tab.Count</span></a>
         }
     </nav>
-    <form method="get" asp-action="Index" class="filter-panel filter-panel--compact" role="search">
+    <form method="get" asp-action="Index" class="filter-panel filter-panel--compact filter-panel--right-search" role="search">
         <input type="hidden" name="status" value="@Model.StatusFilter" />
         <div class="flex-1"><label class="sr-only" for="borrowing-search">Search my borrowing history</label><input id="borrowing-search" type="search" name="search" value="@Model.Search" maxlength="100" class="input w-full" placeholder="Reservation code, equipment name or item code" /></div>
         <button type="submit" class="btn-primary">Search</button>
