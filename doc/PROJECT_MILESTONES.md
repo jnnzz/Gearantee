@@ -358,6 +358,7 @@ Shared rows count for each assigned member. One notification task has no owner m
 
 | Date | Work | Owner | PR |
 | --- | --- | --- | --- |
+| 11/20/2026 | WBS 17 follow-up: refresh the saving administrator's Identity cookie after a successful permission save so the redirected sidebar uses the updated claims. Other sessions receive the changes on their normal Identity refresh. | Codex | — |
 | 11/20/2026 | Expanded the local Development defense seed with separate Admin, Custodian and 12 Borrower logins, 30 additional equipment items across five categories, and 40 reservation examples covering pending, approved, rejected, active/overdue loans, and returns (including late and damaged cases). Seeded `GearanteeDev` without clearing existing data. Verification: 14 target login IDs, 30 expanded items, 40 defense reservations, 12 demo returns and 2 late returns confirmed; Release WebApp build passed with 0 warnings/errors. Tests not run. WBS rows and 46/46 progress counts unchanged. | Codex | — |
 | 11/19/2026 | Added concise source comments for Laroco's WBS trace: login and Identity, role dashboards, user/role administration, and the availability calendar. No behavior or WBS status changed. | Laroco | — |
 | 11/14/2026 | WBS 14–15 follow-up: use one School ID in account administration and the CSV import template. The CSV SchoolId maps to the existing account identifier. Administrators still set initial passwords. CSV validation shows specific duplicate messages once per field and still reports other Identity errors. | Laroco | — |
@@ -486,6 +487,7 @@ The first version is complete when borrowers can securely reserve one available 
 
 | Date | Change | By |
 | --- | --- | --- |
+| 11/20/2026 | Refreshed the saving administrator's permission claims immediately after a successful role permission update. | Codex |
 | 11/20/2026 | Expanded and seeded the local Development defense dataset: 14 role-specific demo login IDs, 30 additional inventory items, and 40 defense reservations with pending, approval, rejection, active/overdue loan, and return examples. Confirmed database counts; Release build passed with 0 warnings/errors. WBS rows and 46/46 progress summary unchanged. | Codex |
 | 11/19/2026 | Added defense-oriented comments tracing Laroco's WBS features from Razor views through controllers and services to Identity/EF Core. WBS rows and the 46/46 progress summary remain unchanged. | Codex |
 | 11/14/2026 | Mapped duplicate login names reported by Identity to the School ID field in CSV import, including IDs that differ only in casing. | Codex |

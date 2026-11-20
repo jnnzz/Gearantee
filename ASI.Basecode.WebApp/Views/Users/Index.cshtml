@@ -107,7 +107,7 @@
         <div class="mb-4 flex flex-wrap items-start justify-between gap-3">
             <div>
                 <h2 id="permissions-heading" class="font-display text-2xl font-semibold">Role permissions</h2>
-                <p class="mt-1 max-w-xl text-xs leading-5 text-gray-500">Choose which dashboard pages and actions each role can reach. Changes take effect on the next permission refresh.</p>
+                <p class="mt-1 max-w-xl text-xs leading-5 text-gray-500">Choose which pages and actions each role can access. Your menu updates after you save. Other signed-in users see changes when their session refreshes.</p>
             </div>
         </div>
 
@@ -174,7 +174,7 @@
 <partial name="Components/_ConfirmDialog" model="@(new ConfirmDialogModel
 {
     Id = "save-permissions-dialog", Title = "Save role permissions?",
-    Message = "These settings affect every account assigned to the changed roles. Changes take effect on the next permission refresh.",
+    Message = "These settings affect every account assigned to the changed roles.",
     Detail = "Role permissions for Borrower, Custodian and Administrator", ConfirmText = "Save permissions"
 })" />
 @section Scripts {

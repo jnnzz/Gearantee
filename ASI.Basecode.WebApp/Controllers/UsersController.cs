@@ -4,6 +4,7 @@ using ASI.Basecode.Services.Interfaces;
 using ASI.Basecode.Services.ServiceModels.UserAdministration;
 using ASI.Basecode.Services.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
@@ -262,7 +263,9 @@ namespace ASI.Basecode.WebApp.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Permissions(UpdateRolePermissionsViewModel model)
+        public async Task<IActionResult> Permissions(
+            UpdateRolePermissionsViewModel model,
+            [FromServices] SignInManager<ApplicationUser> signInManager)
         {
             // Save capability assignments for roles; individual controllers enforce those permissions.
             if (!await _userAdministration.CanManageAsync(UserId))
@@ -274,6 +277,15 @@ namespace ASI.Basecode.WebApp.Controllers
             if (result.Forbidden)
             {
                 return Forbid();
+            }
+
+            if (result.Succeeded)
+            {
+                var user = await signInManager.UserManager.GetUserAsync(User);
+                if (user?.IsActive == true)
+                {
+                    await signInManager.RefreshSignInAsync(user);
+                }
             }
 
             TempData[result.Succeeded ? "SuccessMessage" : "ErrorMessage"] = result.Message;
