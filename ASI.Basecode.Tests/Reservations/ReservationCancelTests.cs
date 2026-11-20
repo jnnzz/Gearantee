@@ -14,6 +14,8 @@ namespace ASI.Basecode.Tests.Reservations
 {
     public sealed class ReservationCancelTests
     {
+        // Cataraja: WBS 59 (shared), covering 37: exercise owner cancellation and
+        // Cataraja: invalid lifecycle cases, checking that cancellation does not delete history.
         private static readonly DateTime Now = Utc(2026, 10, 7, 0);
 
         private static Reservation Reload(SqliteDashboardDbContext db, long reservationId)

@@ -25,6 +25,8 @@ namespace ASI.Basecode.Tests.Reservations
     /// </summary>
     public sealed class ReservationReviewConcurrencyTests
     {
+        // Canencia: WBS 59 (shared): exercise actual SQL Server review/release permission races.
+        // Canencia: These opt-in tests complement SQLite workflow tests for database concurrency.
         private static readonly DateTime Now = Utc(2026, 10, 17, 0);
         private const string ReviewPermission = DomainValues.Permissions.ReservationReview;
         private const string ReleasePermission = DomainValues.Permissions.TransactionReleaseReturn;

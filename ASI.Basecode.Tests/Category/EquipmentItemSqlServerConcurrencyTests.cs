@@ -21,6 +21,9 @@ using Xunit;
 
 namespace ASI.Basecode.Tests.Category
 {
+    // ★ WBS 59 (shared testing): exercise WBS 27-28 against competing reservation writes.
+    // ★ These SQL Server tests check the actual transaction/row-lock boundary; SQLite
+    // ★ service tests alone cannot establish SQL Server lock behavior.
     public class EquipmentItemSqlServerConcurrencyTests
     {
         [InlineData(false)]

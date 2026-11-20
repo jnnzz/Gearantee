@@ -11,6 +11,8 @@ namespace ASI.Basecode.Tests.Reservations
 {
     public sealed class CatalogServiceTests
     {
+        // Cataraja: WBS 59 (shared), covering 34: arrange equipment and booking state,
+        // Cataraja: query the catalog service, then verify reservability, filters and displayed results.
         private static readonly System.DateTime Now = Utc(2026, 10, 7, 0);
 
         [Fact]

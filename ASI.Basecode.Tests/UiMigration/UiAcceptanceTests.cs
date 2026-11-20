@@ -14,6 +14,8 @@ namespace ASI.Basecode.Tests.UiMigration
 {
     public class UiAcceptanceTests
     {
+        // Cataraja: WBS 58-59 (shared): cover integrated role pages, form protection
+        // Cataraja: and validation redisplay through MVC; interactive preview uses disposable data.
         [Fact]
         public async Task BorrowerMatrixOnlyEnablesCatalogAndReservationPermissions()
         {

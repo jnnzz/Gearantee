@@ -28,6 +28,8 @@ namespace ASI.Basecode.Services.Utilities
         // Damaged or uncertain items are never made available automatically
         public static bool IsAllowed(string condition, string status)
         {
+            // Cataraja: WBS 45-46: shared inspection rule used by the return service.
+            // Cataraja: Damaged/uncertain items cannot be marked Available by a tampered form.
             return status != DomainValues.EquipmentStatuses.Available ||
                 condition == DomainValues.ReturnConditions.Good;
         }
@@ -50,6 +52,8 @@ namespace ASI.Basecode.Services.Utilities
         // Any lateness counts; partial days round up
         public static int DaysLate(DateTime dueUtc, DateTime returnedUtc)
         {
+            // Cataraja: WBS 47: exactly on time is zero; any later instant counts at
+            // Cataraja: least one day. Compare UTC instants to avoid local-time display ambiguity.
             if (returnedUtc <= dueUtc)
             {
                 return 0;

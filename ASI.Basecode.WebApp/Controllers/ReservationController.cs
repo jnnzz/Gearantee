@@ -41,6 +41,8 @@ namespace ASI.Basecode.WebApp.Controllers
         [HttpGet]
         public IActionResult Index(string status, int page = 1, string search = null)
         {
+            // Cataraja: WBS 36: pass the signed-in UserId so the service scopes the
+            // Cataraja: status/search list to this borrower before paging Reservation/Index.cshtml.
             var model = _reservationService.GetMyReservations(UserId, status, page, search);
             SetPageData("My borrowing history");
             ViewData["SuccessMessage"] = TempData["SuccessMessage"];
@@ -52,6 +54,8 @@ namespace ASI.Basecode.WebApp.Controllers
         [HttpGet]
         public IActionResult Details(long id)
         {
+            // Cataraja: WBS 36: the service checks ownership as well as the ID.
+            // Cataraja: A missing or other borrower's record returns 404 rather than exposing details.
             var reservation = _reservationService.RetrieveMyReservation(id, UserId);
             if (reservation == null) return NotFound();
 
@@ -66,6 +70,8 @@ namespace ASI.Basecode.WebApp.Controllers
         [Authorize(Policy = DomainValues.Permissions.ReservationCreate)]
         public IActionResult Create(long equipmentId, DateTime? from, DateTime? to)
         {
+            // Cataraja: WBS 35 GET: load the selected catalog item and optional dates
+            // Cataraja: into Create.cshtml. The posted request is validated again by the service.
             var item = _catalogService.RetrieveCatalogItem(equipmentId);
             if (item == null) return NotFound();
 
@@ -87,6 +93,8 @@ namespace ASI.Basecode.WebApp.Controllers
         [Authorize(Policy = DomainValues.Permissions.ReservationCreate)]
         public IActionResult Create(ReservationCreateViewModel model)
         {
+            // Cataraja: WBS 35 POST: reload trusted item display data, validate the form,
+            // Cataraja: then ask SubmitReservation to check eligibility, dates and booking conflicts.
             model.Item = _catalogService.RetrieveCatalogItem(model.EquipmentId);
             if (model.Item == null) return NotFound();
 
@@ -96,6 +104,8 @@ namespace ASI.Basecode.WebApp.Controllers
                 return View(model);
             }
 
+            // Cataraja: Save failures stay on the form with ModelState feedback; success
+            // Cataraja: redirects to the new request's details while TempData carries the message.
             var result = _reservationService.SubmitReservation(model, UserId);
             if (!result.Succeeded)
             {
@@ -113,6 +123,8 @@ namespace ASI.Basecode.WebApp.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult Cancel(long id)
         {
+            // Cataraja: WBS 37: CancelReservation checks ownership and current lifecycle
+            // Cataraja: before changing status. Cancellation preserves the request record and history.
             var result = _reservationService.CancelReservation(id, UserId);
             if (result.NotFound) return NotFound();
 
@@ -122,6 +134,8 @@ namespace ASI.Basecode.WebApp.Controllers
 
         private void SetCreatePageData()
         {
+            // Cataraja: WBS 35/58: show an eligibility explanation on the form; the
+            // Cataraja: service also checks eligibility on submission, beyond this display feedback.
             SetPageData("Request a reservation");
             ViewData["EligibilityError"] = _reservationService.CheckBorrowerEligibility(UserId);
         }

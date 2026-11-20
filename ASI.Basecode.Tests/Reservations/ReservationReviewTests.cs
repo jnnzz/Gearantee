@@ -17,6 +17,9 @@ namespace ASI.Basecode.Tests.Reservations
     /// </summary>
     public sealed class ReservationReviewTests
     {
+        // Canencia: WBS 59 (shared), covering 39-42: arrange a known request and custodian grants,
+        // Canencia: run a decision/handover, then assert stored status, release and audit outcomes.
+        // Canencia: The fixed clock makes expiry and availability assertions repeatable.
         private static readonly DateTime Now = Utc(2026, 10, 17, 0);
 
         private const string ReviewPermission = DomainValues.Permissions.ReservationReview;

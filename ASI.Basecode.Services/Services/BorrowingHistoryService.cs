@@ -51,6 +51,8 @@ namespace ASI.Basecode.Services.Services
             bool onlyOwnHistory,
             CancellationToken cancellationToken = default)
         {
+            // ★ WBS 52-54 flow: normalize -> permitted options -> validate -> scoped query
+            // ★ -> filters -> count/page -> display rows. The controller renders Index.cshtml.
             filter ??= new BorrowingHistoryFilterViewModel();
             var nowUtc = _timeProvider.GetUtcNow().UtcDateTime;
             var model = new BorrowingHistoryIndexViewModel
@@ -100,6 +102,8 @@ namespace ASI.Basecode.Services.Services
             bool onlyOwnHistory,
             [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
+            // ★ WBS 55: use the list's query, ordering and mapping without Skip/Take.
+            // ★ Yield rows as they arrive so CSV/XLSX do not build an all-records list.
             filter ??= new BorrowingHistoryFilterViewModel();
             NormalizeFilter(filter);
             if (ValidateFilter(filter) != null)
@@ -126,6 +130,8 @@ namespace ASI.Basecode.Services.Services
 
         public static string ValidateFilter(BorrowingHistoryFilterViewModel filter)
         {
+            // ★ WBS 54: invalid choices/dates return a message instead of silently ignoring
+            // ★ a filter. Index shows it; export actions reject invalid requests before writing.
             if (filter == null)
             {
                 return null;
@@ -188,6 +194,8 @@ namespace ASI.Basecode.Services.Services
             string userId,
             bool onlyOwnHistory)
         {
+            // ★ Apply ownership before any search, filter or export. A borrower-only
+            // ★ caller must never gain another account's rows by changing query parameters.
             var query = _db.Reservations.AsNoTracking();
             if (onlyOwnHistory)
             {
@@ -227,6 +235,8 @@ namespace ASI.Basecode.Services.Services
             BorrowingHistoryFilterViewModel filter,
             DateTime nowUtc)
         {
+            // ★ WBS 53-54: every Where combines with the others using AND. Within the
+            // ★ general Search clause, OR lets any supported text field match the term.
             if (filter.CategoryId.HasValue)
             {
                 query = query.Where(reservation =>
@@ -257,6 +267,8 @@ namespace ASI.Basecode.Services.Services
 
             if (!string.IsNullOrWhiteSpace(filter.Item))
             {
+                // ★ Legacy service input: current BorrowingHistoryController actions clear
+                // ★ Item and use Search for equipment text instead of exposing this field.
                 var item = filter.Item;
                 query = query.Where(reservation =>
                     reservation.EquipmentItem.ItemName.Contains(item) ||
@@ -265,6 +277,7 @@ namespace ASI.Basecode.Services.Services
 
             if (filter.FromDate.HasValue)
             {
+                // ★ Date filters refer to borrowing START, using Manila calendar dates.
                 var fromUtc = ManilaClock.ToUtc(filter.FromDate.Value.Date);
                 query = query.Where(reservation =>
                     reservation.ReservationStart >= fromUtc);
@@ -272,6 +285,7 @@ namespace ASI.Basecode.Services.Services
 
             if (filter.ToDate.HasValue)
             {
+                // ★ Exclusive next-midnight boundary includes the entire selected last day.
                 var toUtc = ManilaClock.ToUtc(filter.ToDate.Value.Date.AddDays(1));
                 query = query.Where(reservation =>
                     reservation.ReservationStart < toUtc);
@@ -303,6 +317,8 @@ namespace ASI.Basecode.Services.Services
 
             if (filter.LateReturn == "yes")
             {
+                // ★ A late return has an actual return; an unreturned overdue loan is
+                // ★ handled by the separate Overdue status predicate above.
                 query = query.Where(reservation =>
                     reservation.ReleaseRecord != null &&
                     reservation.ReleaseRecord.ReturnRecord != null &&
@@ -312,6 +328,8 @@ namespace ASI.Basecode.Services.Services
             }
             else if (filter.LateReturn == "no")
             {
+                // ★ This choice also includes records not returned yet, as well as
+                // ★ completed on-time returns without a stored late-return record.
                 query = query.Where(reservation =>
                     reservation.ReleaseRecord == null ||
                     reservation.ReleaseRecord.ReturnRecord == null ||
@@ -327,6 +345,8 @@ namespace ASI.Basecode.Services.Services
             HistoryProjectionRow row,
             DateTime nowUtc)
         {
+            // ★ WBS 52/55: derive lifecycle status once for both page and exports, then
+            // ★ convert stored UTC times to Manila display values and calculate late days.
             var isReturned = row.ReturnedAtUtc.HasValue;
             var isLate = isReturned &&
                 (row.HasLateReturnRecord || row.ReturnedAtUtc.Value > row.DueUtc);

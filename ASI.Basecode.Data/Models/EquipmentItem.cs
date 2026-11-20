@@ -17,6 +17,8 @@ namespace ASI.Basecode.Data.Models
         public string ConditionStatus { get; set; }
         public string ItemStatus { get; set; }
         public string ImageUrl { get; set; }
+        // ★ WBS 28: soft-delete flag set by EquipmentItemService.SetArchivedAsync.
+        // ★ Keep the row and reservation links; inventory filters decide which list shows it.
         public bool IsArchived { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;

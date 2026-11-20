@@ -21,6 +21,8 @@ namespace ASI.Basecode.Tests.BorrowerProfiles
     /// </summary>
     public class BorrowerProfileCrossScreenTests
     {
+        // Canencia: WBS 59 (shared), supporting 31-32: save through one administration screen,
+        // Canencia: then submit the other's older stamp and assert that newer data is preserved.
         [Fact]
         public async Task StaleAccountForm_CannotOverwriteANewerBorrowerProfileSave()
         {

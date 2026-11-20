@@ -6,6 +6,8 @@ namespace ASI.Basecode.Services.ServiceModels.Catalog
 {
     public class CatalogFilterViewModel
     {
+        // Cataraja: WBS 34: GET search/category/page inputs passed from CatalogController
+        // Cataraja: to CatalogService. The controller strips legacy date inputs from the current list.
         [StringLength(100)]
         [Display(Name = "Search")]
         public string Search { get; set; }
@@ -77,6 +79,8 @@ namespace ASI.Basecode.Services.ServiceModels.Catalog
 
     public class CatalogItemDetailsViewModel
     {
+        // Cataraja: WBS 34-35: details and booked windows help choose an item; the
+        // Cataraja: reservation POST reloads display data and rechecks availability before saving.
         public long EquipmentId { get; set; }
         public string ItemCode { get; set; } = string.Empty;
         public string ItemName { get; set; } = string.Empty;

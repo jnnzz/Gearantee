@@ -199,7 +199,9 @@ namespace ASI.Basecode.Tests.UiMigration
                     site.LockedItemId = db.EquipmentItems.Where(item => item.ItemCode == "DEMO-LAP-001").Select(item => item.EquipmentId).Single();
                     site.PendingId = db.Reservations.Where(item => item.Status == "Pending").Select(item => item.ReservationId).First();
                     site.PickupId = db.Reservations.Where(item => item.Purpose == "DEMO: Approved pickup today").Select(item => item.ReservationId).Single();
-                    site.RejectedId = db.Reservations.Where(item => item.Status == "Rejected").Select(item => item.ReservationId).Single();
+                    // The expanded demo seed includes several rejected requests. Select the
+                    // original scenario by its unique purpose, keeping Single's uniqueness check.
+                    site.RejectedId = db.Reservations.Where(item => item.Status == "Rejected" && item.Purpose == "DEMO: Rejected reservation").Select(item => item.ReservationId).Single();
                     site.ReleaseId = db.ReleaseRecords.Where(item => !db.ReturnRecords.Any(record => record.ReleaseRecordId == item.ReleaseRecordId)).Select(item => item.ReleaseRecordId).First();
                     site.ReturnedId = db.ReturnRecords.Select(item => item.ReturnRecordId).First();
                     var longItem = await db.EquipmentItems.SingleAsync(item => item.EquipmentId == site.AvailableItemId);

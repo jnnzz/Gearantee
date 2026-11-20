@@ -23,6 +23,8 @@ namespace ASI.Basecode.Services.Utilities
 
         public static string FormatRow(BorrowingHistoryRowViewModel row)
         {
+            // ★ WBS 55: keep the row values in the same 17-column order as the header
+            // ★ and XLSX exporter. Missing lifecycle dates become empty CSV cells.
             if (row == null)
             {
                 throw new ArgumentNullException(nameof(row));
@@ -52,6 +54,8 @@ namespace ASI.Basecode.Services.Utilities
 
         public static string EscapeCell(string value)
         {
+            // ★ User-entered text could be read as a spreadsheet formula. Prefix risky
+            // ★ values, then quote every cell and double embedded quotes for valid CSV.
             value ??= string.Empty;
             var significantText = value.TrimStart();
             if (significantText.Length > 0 && "=+-@".Contains(significantText[0]))

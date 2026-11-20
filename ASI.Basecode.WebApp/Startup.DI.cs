@@ -19,6 +19,8 @@ namespace ASI.Basecode.WebApp
     {
         private void ConfigureOtherServices()
         {
+            // ★ WBS 1 (shared): dependency injection resolves constructor interfaces here.
+            // ★ Scoped workflow services share a request scope with the registered UnitOfWork.
             _services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             _services.TryAddSingleton<IActionContextAccessor, ActionContextAccessor>();
             _services.TryAddSingleton<TimeProvider>(TimeProvider.System);
@@ -67,12 +69,16 @@ namespace ASI.Basecode.WebApp
                     client.Timeout = TimeSpan.FromSeconds(30);
                 });
 
+            // ★ WBS 9-12 connection: AccountController -> PasswordResetOtpService ->
+            // ★ IdentityPasswordResetOtpStore for state, and BrevoEmailSender for delivery.
             _services.AddScoped<IPasswordResetOtpStore, IdentityPasswordResetOtpStore>();
             _services.AddScoped<IPasswordResetOtpService, PasswordResetOtpService>();
             _services.AddScoped<IDashboardService, DashboardService>();
             _services.AddScoped<IUserAdministrationService, UserAdministrationService>();
 
             // WBS 30.00â€“32.00: Borrower Profile Management
+            // Canencia: WBS 30-32: resolve BorrowerProfileController's interface to the service
+            // Canencia: that queries profiles and performs audited administrative writes.
             _services.AddScoped<IBorrowerProfileService, BorrowerProfileService>();
 
             // WBS 25–28: CategoriesController uses this service for the
@@ -88,8 +94,14 @@ namespace ASI.Basecode.WebApp
             _services.AddScoped<IReturnRecordRepository, ReturnRecordRepository>();
 
             // Services
+            // Cataraja: WBS 34-35: CatalogController and reservation forms resolve
+            // Cataraja: this catalog service for item summaries and booked-window display data.
             _services.AddScoped<ICatalogService, CatalogService>();
+            // Canencia: WBS 39-42: ReservationReviewController uses this shared service for its
+            // Canencia: custodian queue/decisions/release; borrower submission uses other methods.
             _services.AddScoped<IReservationService, ReservationService>();
+            // Cataraja: WBS 44-47: ReturnRecordController delegates return lists and
+            // Cataraja: the inspection/late-return transaction to this registered implementation.
             _services.AddScoped<IReturnRecordService, ReturnRecordService>();
             // WBS 52–55: the history page and exports share this query service.
             _services.AddScoped<IBorrowingHistoryService, BorrowingHistoryService>();

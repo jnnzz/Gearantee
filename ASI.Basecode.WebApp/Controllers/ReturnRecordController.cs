@@ -35,6 +35,8 @@ namespace ASI.Basecode.WebApp.Controllers
         [HttpGet]
         public IActionResult Index(string tab, string search, int page = 1)
         {
+            // Cataraja: WBS 44/47: ReturnRecordService supplies the searched/paged
+            // Cataraja: On loan, Overdue, Returned and Late returns tabs for ReturnRecord/Index.
             var model = _returnRecordService.GetReturnRecords(tab, page, search);
             SetPageData("Return & condition");
             ViewData["SuccessMessage"] = TempData["SuccessMessage"];
@@ -46,6 +48,8 @@ namespace ASI.Basecode.WebApp.Controllers
         [HttpGet]
         public IActionResult Details(long id, string tab = null, string search = null, int page = 1)
         {
+            // Cataraja: WBS 44-47: display the saved inspection, receiver and late data;
+            // Cataraja: keep list context so the back link returns to the selected tab/search/page.
             var returnRecord = _returnRecordService.RetrieveReturnRecord(id);
             if (returnRecord == null) return NotFound();
 
@@ -65,6 +69,8 @@ namespace ASI.Basecode.WebApp.Controllers
             string search = null,
             int page = 1)
         {
+            // Cataraja: WBS 44 GET: retrieve an open loan and prefill Manila return time,
+            // Cataraja: Good condition and its default status for ReturnRecord/Create.cshtml.
             var loan = _returnRecordService.RetrieveActiveLoan(releaseRecordId);
             if (loan == null) return NotFound();
 
@@ -91,6 +97,8 @@ namespace ASI.Basecode.WebApp.Controllers
             string search,
             int page = 1)
         {
+            // Cataraja: WBS 44-47 POST: the service validates inspection/time/permission,
+            // Cataraja: then saves return, optional lateness and equipment condition/status together.
             if (!ModelState.IsValid)
             {
                 return RedisplayCreate(model, tab, search, page);
@@ -122,6 +130,8 @@ namespace ASI.Basecode.WebApp.Controllers
             string search,
             int page)
         {
+            // Cataraja: WBS 58 (shared UI): preserve entered values and list context
+            // Cataraja: after validation failure, but reload the loan in case another return won.
             model.Loan = _returnRecordService.RetrieveActiveLoan(model.ReleaseRecordId);
             if (model.Loan == null)
             {

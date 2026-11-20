@@ -14,6 +14,8 @@ namespace ASI.Basecode.Tests.Returns
 {
     public sealed class ReturnRecordServiceTests
     {
+        // Cataraja: WBS 59 (shared), covering 44-47: arrange a released loan, record
+        // Cataraja: an inspection, then check return/late rows, equipment changes and rejected inputs.
         private static readonly DateTime Now = Utc(2026, 10, 17, 4);
 
         [Theory]

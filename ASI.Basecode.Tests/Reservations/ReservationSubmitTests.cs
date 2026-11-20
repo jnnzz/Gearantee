@@ -12,6 +12,8 @@ namespace ASI.Basecode.Tests.Reservations
 {
     public sealed class ReservationSubmitTests
     {
+        // Cataraja: WBS 59 (shared), covering 35: submit known dates/items as a borrower
+        // Cataraja: and assert validation/eligibility/conflict outcomes plus the saved Pending request.
         private static readonly DateTime Now = Utc(2026, 10, 7, 0);
 
         private static ReservationCreateViewModel Request(EquipmentItem item, DateTime startUtc, DateTime endUtc, string purpose = "Thesis defense") =>

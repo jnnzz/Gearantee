@@ -26,6 +26,8 @@ appBuilder.Logging
     .AddConsole()
     .AddDebug();
 
+// ★ WBS 1 (shared setup): Startup registers the database, Identity and MVC; Startup.DI
+// ★ connects controller interfaces to workflow services, repositories and HTTP clients.
 var configurer = new StartupConfigurer(appBuilder.Configuration);
 configurer.ConfigureServices(appBuilder.Services);
 
@@ -63,6 +65,8 @@ app.MapGet("/health/database", async (AsiBasecodeDBContext dbContext) =>
             statusCode: StatusCodes.Status503ServiceUnavailable);
 }).AllowAnonymous();
 
+// ★ WBS 1: conventional routing maps /Account/ForgotPassword, /Categories/Index and
+// ★ /BorrowingHistory/Index to their actions; requests with no route open Account/Login.
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Account}/{action=Login}");

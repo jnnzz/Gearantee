@@ -12,6 +12,9 @@ using Xunit;
 
 namespace ASI.Basecode.Tests
 {
+    // ★ WBS 59 (shared testing), covering WBS 10-11: arrange saved state in FakeOtpStore,
+    // ★ exercise PasswordResetOtpService, then assert attempt/issuance and one-use rules.
+    // ★ No real Brevo email or production Identity database is needed by this fixture.
     public sealed class PasswordResetOtpServiceTests
     {
         [Fact]
@@ -45,6 +48,8 @@ namespace ASI.Basecode.Tests
         [Fact]
         public async Task ConcurrentReservationsNeverCheckMoreThanFiveGuesses()
         {
+            // ★ Arrange one valid code, race 100 reservations, then assert that at most
+            // ★ five checks were allowed. This targets the service's atomic attempt guard.
             var now = DateTimeOffset.UtcNow;
             var initialState = new PasswordResetOtpState(
                 now.AddMinutes(10),

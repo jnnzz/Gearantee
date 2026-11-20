@@ -22,6 +22,8 @@ namespace ASI.Basecode.Tests.Returns
     /// <summary>Opt-in SQL Server races for returns; set GEARANTEE_TEST_SQLSERVER=1.</summary>
     public sealed class ReturnRecordConcurrencyTests
     {
+        // Cataraja: WBS 59 (shared): use the opt-in SQL Server fixture for concurrent
+        // Cataraja: return/permission operations; SQLite rule tests alone do not prove SQL lock behavior.
         private static readonly DateTime Now = Utc(2026, 10, 17, 4);
 
         [SqlServerFact]

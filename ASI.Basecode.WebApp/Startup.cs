@@ -33,6 +33,8 @@ namespace ASI.Basecode.WebApp
 
         public void ConfigureServices(IServiceCollection services)
         {
+            // ★ WBS 1 (shared): register dependencies before controllers are constructed.
+            // ★ Services access SQL Server through this DbContext and the UnitOfWork setup.
             _services = services;
 
             services.AddMemoryCache();
@@ -52,6 +54,8 @@ namespace ASI.Basecode.WebApp
 
             ConfigureIdentityAndAuthorization();
 
+            // ★ WBS 9-11: these per-IP limits protect recovery endpoints before the action.
+            // ★ PasswordResetOtpService also enforces separate per-account issue/check limits.
             services.AddRateLimiter(options =>
             {
                 options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -125,6 +129,8 @@ namespace ASI.Basecode.WebApp
             }
 
             _app.UseSession();
+            // ★ WBS 1 request flow: choose endpoint -> apply rate limit -> identify caller
+            // ★ -> enforce permissions -> execute the routed controller action.
             _app.UseRouting();
             _app.UseRateLimiter();
             // Authenticate the Identity cookie before authorization evaluates roles and permission claims.
