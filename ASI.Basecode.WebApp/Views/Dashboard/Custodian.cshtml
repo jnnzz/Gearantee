@@ -2,6 +2,7 @@
 @using ASI.Basecode.Services.Utilities
 @using ASI.Basecode.WebApp.Models.Dashboard
 
+@* DashboardController.Custodian supplies data assembled by DashboardService.GetCustodianDashboardAsync. *@
 @if (ViewData["DashboardUnavailable"] is true)
 {
     <section class="table-surface p-8" aria-label="Dashboard unavailable">

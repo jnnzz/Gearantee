@@ -358,6 +358,8 @@ Shared rows count for each assigned member. One notification task has no owner m
 
 | Date | Work | Owner | PR |
 | --- | --- | --- | --- |
+| 11/20/2026 | Expanded the local Development defense seed with separate Admin, Custodian and 12 Borrower logins, 30 additional equipment items across five categories, and 40 reservation examples covering pending, approved, rejected, active/overdue loans, and returns (including late and damaged cases). Seeded `GearanteeDev` without clearing existing data. Verification: 14 target login IDs, 30 expanded items, 40 defense reservations, 12 demo returns and 2 late returns confirmed; Release WebApp build passed with 0 warnings/errors. Tests not run. WBS rows and 46/46 progress counts unchanged. | Codex | — |
+| 11/19/2026 | Added concise source comments for Laroco's WBS trace: login and Identity, role dashboards, user/role administration, and the availability calendar. No behavior or WBS status changed. | Laroco | — |
 | 11/14/2026 | WBS 14–15 follow-up: use one School ID in account administration and the CSV import template. The CSV SchoolId maps to the existing account identifier. Administrators still set initial passwords. CSV validation shows specific duplicate messages once per field and still reports other Identity errors. | Laroco | — |
 | 11/14/2026 | Done: repaired the category activation hidden value so Razor renders true/false correctly. Added a rendered-form HTTP regression that deactivates and reactivates the same category; aligned existing metadata and encoded-name confirmation tests with the shared dialogs. Release build and all 13 category HTTP tests passed, 0 failed/skipped. Tests used disposable SQLite data; the real database was not changed. | Unassigned | — |
 | 11/13/2026 | Done: restricted Borrower matrix editing to catalog/calendar and reservation submission; other cells render disabled/unchecked and forged grants are rejected server-side before changes are saved. Disabled self-deactivation on the administrator's own account page, omitted its POST form/dialog and retained server rejection of forged self-deactivation. Release build and targeted administration/rendered UI tests passed: 58 passed, 2 opt-in SQL Server tests skipped, 0 failed. Browser visual testing not repeated. | Unassigned | — |
@@ -484,6 +486,8 @@ The first version is complete when borrowers can securely reserve one available 
 
 | Date | Change | By |
 | --- | --- | --- |
+| 11/20/2026 | Expanded and seeded the local Development defense dataset: 14 role-specific demo login IDs, 30 additional inventory items, and 40 defense reservations with pending, approval, rejection, active/overdue loan, and return examples. Confirmed database counts; Release build passed with 0 warnings/errors. WBS rows and 46/46 progress summary unchanged. | Codex |
+| 11/19/2026 | Added defense-oriented comments tracing Laroco's WBS features from Razor views through controllers and services to Identity/EF Core. WBS rows and the 46/46 progress summary remain unchanged. | Codex |
 | 11/14/2026 | Mapped duplicate login names reported by Identity to the School ID field in CSV import, including IDs that differ only in casing. | Codex |
 | 11/14/2026 | Removed redundant Identity validation feedback when CSV rows already have specific duplicate email or School ID errors. | Codex |
 | 11/14/2026 | Implemented the WBS 14–15 School ID follow-up across account screens and CSV import. The tracker still counts 46 completed WBS tasks. | Codex |

@@ -84,6 +84,7 @@ namespace ASI.Basecode.WebApp.Controllers
             DateTimeOffset? start,
             DateTimeOffset? end)
         {
+            // The calendar JavaScript calls this read-only endpoint for filtered equipment and booking blocks.
             if (!ModelState.IsValid)
             {
                 return BadRequest(new { message = "One or more calendar filters are invalid." });

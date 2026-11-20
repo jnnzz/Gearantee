@@ -32,6 +32,7 @@ namespace ASI.Basecode.Services.Services
         public AvailabilityCalendarPageViewModel GetCalendarPage(
             AvailabilityCalendarFilterViewModel filter)
         {
+            // Load active equipment and categories for the initial page and its filter controls.
             filter ??= new AvailabilityCalendarFilterViewModel();
             NormalizeFilter(filter);
 
@@ -79,6 +80,7 @@ namespace ASI.Basecode.Services.Services
             DateTimeOffset start,
             DateTimeOffset end)
         {
+            // Read filtered equipment and blocking reservation/release/return records, then project them for the grid.
             filter ??= new AvailabilityCalendarFilterViewModel();
             NormalizeFilter(filter);
 

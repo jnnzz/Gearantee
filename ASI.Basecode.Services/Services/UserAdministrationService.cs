@@ -59,6 +59,7 @@ namespace ASI.Basecode.Services.Services
 
         public async Task<bool> CanManageAsync(string actorUserId)
         {
+            // Recheck that the acting account is active and still has the stored user-role management grant.
             if (string.IsNullOrWhiteSpace(actorUserId))
             {
                 return false;
@@ -98,6 +99,7 @@ namespace ASI.Basecode.Services.Services
             string roleId,
             int page)
         {
+            // EF Core reads Identity users and role assignments into the account-list view model.
             if (!await CanManageAsync(actorUserId))
             {
                 return null;
@@ -225,6 +227,7 @@ namespace ASI.Basecode.Services.Services
         public async Task<RolePermissionsViewModel> GetRolePermissionsAsync(
             string actorUserId)
         {
+            // The matrix is projected from persisted RolePermission and Permission records.
             if (!await CanManageAsync(actorUserId))
             {
                 return null;
@@ -285,6 +288,7 @@ namespace ASI.Basecode.Services.Services
             string actorUserId,
             CreateUserViewModel model)
         {
+            // Identity creates the user and password hash; the surrounding transaction also saves profile and audit data.
             var role = await _roleManager.FindByNameAsync(model.RoleName?.Trim());
             if (role == null || !IsSupportedRole(role.Name))
             {
@@ -364,6 +368,7 @@ namespace ASI.Basecode.Services.Services
             string actorUserId,
             EditUserViewModel model)
         {
+            // Update account, role, and borrower-profile data together, rejecting stale form stamps.
             return await _db.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
             {
             // Rebuild state per attempt so a rolled-back attempt cannot leave stale tracked
@@ -567,6 +572,7 @@ namespace ASI.Basecode.Services.Services
             string actorUserId,
             SetAccountActiveViewModel model)
         {
+            // Keep the account/history and change only sign-in eligibility; update the security stamp as well.
             return await _db.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
             {
             // Rebuild state per attempt so a rolled-back attempt cannot leave stale tracked
@@ -642,6 +648,7 @@ namespace ASI.Basecode.Services.Services
             string actorUserId,
             UpdateRolePermissionsViewModel model)
         {
+            // ApplicationClaimsPrincipalFactory reads these links when it builds permission claims.
             return await _db.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
             {
             // Rebuild state per attempt so a rolled-back attempt cannot leave stale tracked

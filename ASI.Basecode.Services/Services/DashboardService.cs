@@ -74,6 +74,7 @@ namespace ASI.Basecode.Services.Services
         public async Task<BorrowerDashboardModel> GetBorrowerDashboardAsync(
             string userId)
         {
+            // EF Core scopes reservation counts and rows to this user's BorrowerProfile.
             var displayName = await _db.Users
                 .AsNoTracking()
                 .Where(user => user.Id == userId)
@@ -172,6 +173,7 @@ namespace ASI.Basecode.Services.Services
 
         public async Task<CustodianDashboardModel> GetCustodianDashboardAsync()
         {
+            // EF Core combines pending reservations, approved pickups, active loans, and item attention flags.
             var now = _timeProvider.GetUtcNow().UtcDateTime;
             var (todayStart, todayEnd) = ManilaClock.TodayUtcRange(now);
             var model = new CustodianDashboardModel();
@@ -269,6 +271,7 @@ namespace ASI.Basecode.Services.Services
         public async Task<AdministratorDashboardModel>
             GetAdministratorDashboardAsync()
         {
+            // These queries aggregate items, categories, reservations, returns, and borrower eligibility.
             var now = _timeProvider.GetUtcNow().UtcDateTime;
             var (todayStart, todayEnd) = ManilaClock.TodayUtcRange(now);
             var model = new AdministratorDashboardModel();

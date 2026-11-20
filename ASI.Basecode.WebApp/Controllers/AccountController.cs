@@ -263,6 +263,7 @@ namespace ASI.Basecode.WebApp.Controllers
             return RedirectToAction(nameof(Login));
         }
 
+        // Login.cshtml posts here; Identity checks the password hash and issues the sign-in cookie.
         [HttpPost]
         [AllowAnonymous]
         [ValidateAntiForgeryToken]

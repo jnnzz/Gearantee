@@ -3,6 +3,7 @@
 @using ASI.Basecode.WebApp.Models.Dashboard
 @inject ASI.Basecode.Services.Interfaces.IImageStorageService ImageStorage
 
+@* DashboardController.Borrower supplies data assembled by DashboardService.GetBorrowerDashboardAsync. *@
 @if (ViewData["DashboardUnavailable"] is true)
 {
     <section class="table-surface p-8" aria-label="Dashboard unavailable">

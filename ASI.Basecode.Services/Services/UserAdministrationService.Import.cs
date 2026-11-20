@@ -45,6 +45,7 @@ namespace ASI.Basecode.Services.Services
 
         public async Task<UserImportResult> ImportAsync(string actorUserId, IReadOnlyList<UserImportRow> rows)
         {
+            // UserImportCsv parses the file; this transaction validates and creates the complete batch or none of it.
             if (!await CanManageAsync(actorUserId)) return new UserImportResult { Forbidden = true };
             if (rows == null || rows.Count == 0 || rows.Count > UserImportCsv.MaxRows)
                 return ImportFailure(0, "File", "Import between 1 and 100 accounts.");

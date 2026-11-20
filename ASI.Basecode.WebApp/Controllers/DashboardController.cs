@@ -36,6 +36,7 @@ namespace ASI.Basecode.WebApp.Controllers
         [HttpGet]
         public IActionResult Index()
         {
+            // Send each signed-in user to the dashboard for their assigned role.
             if (User.IsInRole(DomainValues.Roles.Administrator))
             {
                 return RedirectToAction(nameof(Administrator));
@@ -64,6 +65,7 @@ namespace ASI.Basecode.WebApp.Controllers
                 DisplayName = User.FindFirst("display_name")?.Value ?? "there"
             };
 
+            // The service loads this borrower's profile-scoped counts and reservation rows.
             try
             {
                 model = await _dashboardService.GetBorrowerDashboardAsync(UserId);
@@ -92,6 +94,7 @@ namespace ASI.Basecode.WebApp.Controllers
         {
             var localNow = ManilaClock.NowLocal;
             var model = new CustodianDashboardModel();
+            // The service gathers the custodian's approval, pickup, and return work queue.
             try
             {
                 model = await _dashboardService.GetCustodianDashboardAsync();
@@ -116,6 +119,7 @@ namespace ASI.Basecode.WebApp.Controllers
         {
             var localNow = ManilaClock.NowLocal;
             var model = new AdministratorDashboardModel();
+            // The service builds inventory, borrower, loan, and maintenance summaries.
             try
             {
                 model = await _dashboardService.GetAdministratorDashboardAsync();
