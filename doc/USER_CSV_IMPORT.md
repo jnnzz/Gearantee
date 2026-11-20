@@ -5,19 +5,19 @@ Open **Users & Roles → Create account → Import CSV** using an active Adminis
 ## File format
 
 ```csv
-UserCode,FirstName,LastName,Email,RoleName,Password,SchoolId,Department,ContactNumber
+SchoolId,FirstName,LastName,Email,RoleName,Password,Department,ContactNumber
 ```
 
-- Use all nine headers exactly once; header order and capitalization may vary. Extra headers are rejected.
+- Use all eight headers exactly once; header order and capitalization may vary. To update an older file, keep the values from `UserCode`, name that column `SchoolId`, and remove the old borrower-only `SchoolId` column.
 - Use UTF-8 CSV (a UTF-8 BOM is supported), maximum **1 MiB** and **100 account records**. Blank lines are ignored. Errors identify the physical starting line of a record, including records with quoted line breaks.
-- Required for every account: user code, first name, last name, email, initial role, and password.
+- Each account needs a School ID, first name, last name, email, initial role, and password. The School ID is the account's sign-in ID.
 - Supported initial roles: `Borrower`, `Custodian`, `Administrator`. Assign additional roles later through Edit account.
-- Borrowers also require a school ID and department; imported borrower profiles start **ineligible**. The school ID is the borrower's account identifier, so the `SchoolId` value must equal that row's `UserCode`.
-- Contact number is optional. School ID and department may be blank for non-borrowers.
+- Borrowers also require a department and start **ineligible**. Department may be blank for staff.
+- Contact number is optional.
 - Each password must be 8–100 characters and satisfy the configured Identity policy (normally uppercase, lowercase, digit, and non-alphanumeric character). Password whitespace is preserved; other fields are trimmed.
-- Codes and school IDs are strings. Configure spreadsheet columns as text before entering leading zeroes; the importer cannot restore zeroes removed by a spreadsheet.
+- Format the School ID column as text before entering values with leading zeroes. The importer cannot restore zeroes removed by a spreadsheet.
 - Quote fields containing commas or line breaks; double an embedded quotation mark. Do not use a simple comma-split conversion.
-- Emails, user codes, and borrower school IDs must not duplicate existing accounts or another row. In-file duplicate detection is case-insensitive; Identity normalization and SQL Server constraints also apply.
+- School IDs and emails must be unique across all roles and across existing accounts and CSV rows. Duplicate detection within a file is case insensitive.
 
 ## Results and retrying
 

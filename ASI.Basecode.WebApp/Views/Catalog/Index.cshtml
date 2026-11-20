@@ -15,24 +15,26 @@
 <section aria-label="Catalog results">
     <p class="mb-4 text-sm text-gray-500">@Model.TotalCount matching equipment</p>
 
-    <form method="get" asp-action="Index" class="filter-panel filter-panel--compact">
-        <div>
-            <label for="catalog-search" class="mb-1 block text-xs font-medium text-gray-700">Search</label>
-            <input id="catalog-search" name="Search" value="@filter.Search" type="search" maxlength="100" placeholder="Name, item code, brand, model" class="input" />
-        </div>
-        <div>
-            <label for="catalog-category" class="mb-1 block text-xs font-medium text-gray-700">Category</label>
-            <select id="catalog-category" name="CategoryId" class="input">
-                <option value="">All categories</option>
-                @foreach (var category in Model.Categories)
-                {
-                    <option value="@category.CategoryId" selected="@(filter.CategoryId == category.CategoryId)">@category.CategoryName</option>
-                }
-            </select>
-        </div>
-        <div class="flex items-end gap-2">
-            <button type="submit" class="btn-primary min-h-10 flex-1 xl:flex-none">Search</button>
-            <a asp-action="Index" class="btn-secondary inline-flex min-h-10 items-center border border-gray-200 bg-white px-3 text-sm font-semibold text-gray-700">Clear</a>
+    <form method="get" asp-action="Index" class="filter-panel catalog-filter-panel">
+        <div class="catalog-filter-controls">
+            <div>
+                <label for="catalog-search" class="sr-only">Search</label>
+                <input id="catalog-search" name="Search" value="@filter.Search" type="search" maxlength="100" placeholder="Name, item code, brand, model" class="input" />
+            </div>
+            <div>
+                <label for="catalog-category" class="sr-only">Category</label>
+                <select id="catalog-category" name="CategoryId" class="input">
+                    <option value="">All categories</option>
+                    @foreach (var category in Model.Categories)
+                    {
+                        <option value="@category.CategoryId" selected="@(filter.CategoryId == category.CategoryId)">@category.CategoryName</option>
+                    }
+                </select>
+            </div>
+            <div class="catalog-filter-actions">
+                <button type="submit" class="btn-primary min-h-10">Search</button>
+                <a asp-action="Index" class="btn-secondary min-h-10">Clear</a>
+            </div>
         </div>
     </form>
 

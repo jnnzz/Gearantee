@@ -33,9 +33,9 @@
     </div>
 
     <form method="get" asp-action="Index" class="space-y-3">
-        <div class="filter-panel filter-panel--compact">
+        <div class="filter-panel filter-panel--compact filter-panel--right-search">
             <div class="min-w-0 flex-1">
-                <label for="history-search" class="mb-1 block text-xs font-medium text-gray-700">Search borrower, ID, or item</label>
+                <label for="history-search" class="sr-only">Search borrower, ID, or item</label>
                 <input id="history-search" name="Search" value="@filter.Search" type="search" maxlength="100" class="input w-full" placeholder="Name, school ID, user code, item" />
             </div>
             <button type="submit" class="btn-primary min-h-10">Search</button>

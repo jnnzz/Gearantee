@@ -9,6 +9,8 @@ using System.Threading.Tasks;
 
 namespace ASI.Basecode.Data.Repositories
 {
+    // WBS 26–28: EquipmentItemService uses these row locks inside a
+    // SERIALIZABLE transaction for registration and item state changes.
     public class EquipmentItemRepository : BaseRepository, IEquipmentItemRepository
     {
         public EquipmentItemRepository(IUnitOfWork unitOfWork) : base(unitOfWork) { }

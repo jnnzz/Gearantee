@@ -149,7 +149,6 @@ namespace ASI.Basecode.Tests.BorrowerProfiles
                 RoleName = DomainValues.Roles.Borrower,
                 Password = "Borrower!12345",
                 ConfirmPassword = "Borrower!12345",
-                SchoolId = userCode,
                 Department = "College of Nursing",
                 ContactNumber = contactNumber
             });

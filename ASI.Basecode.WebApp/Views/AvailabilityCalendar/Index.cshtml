@@ -8,13 +8,14 @@
 @section Styles {
     <link rel="stylesheet" href="~/css/availability-week.css" asp-append-version="true" />
 }
+@* The controller supplies filter/API settings; availability-calendar.js fetches Events and draws this grid. *@
 <section class="calendar-page" aria-label="Equipment availability">
     <p class="mb-5 text-sm text-gray-500">A shared view of reservations, active loans and current maintenance.</p>
     @if (!string.IsNullOrWhiteSpace(Model.ValidationMessage))
     {
         <div class="validation-summary-errors mb-4" role="alert">@Model.ValidationMessage</div>
     }
-    <form id="availability-filters" method="get" asp-action="Index" class="calendar-search" role="search">
+    <form id="availability-filters" method="get" asp-action="Index" class="calendar-search filter-panel--right-search" role="search">
         <div class="calendar-search-field"><label class="sr-only" for="availability-search">Search equipment</label><input id="availability-search" type="search" name="Search" maxlength="100" value="@Model.Filter.Search" class="input" placeholder="Search item name or code" /></div>
         <div><label class="sr-only" for="availability-category">Category</label><select id="availability-category" name="CategoryId" class="input"><option value="">All categories</option>@foreach (var category in Model.Categories) { <option value="@category.CategoryId" selected="@(Model.Filter.CategoryId == category.CategoryId)">@category.CategoryName</option> }</select></div>
         <input id="availability-date" type="hidden" name="Date" value="@selectedDate" data-min="@AvailabilityCalendarFilterViewModel.MinDate" data-max="@AvailabilityCalendarFilterViewModel.MaxDate" />

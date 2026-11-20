@@ -4,6 +4,7 @@ using ASI.Basecode.Services.Interfaces;
 using ASI.Basecode.Services.ServiceModels.UserAdministration;
 using ASI.Basecode.Services.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
@@ -13,6 +14,7 @@ using System.Threading.Tasks;
 
 namespace ASI.Basecode.WebApp.Controllers
 {
+    // Admin screens are protected here, then the service rechecks the persisted management permission.
     [Authorize(
         Roles = DomainValues.Roles.Administrator,
         Policy = DomainValues.Permissions.UserRoleManage)]
@@ -55,6 +57,7 @@ namespace ASI.Basecode.WebApp.Controllers
             MemoryBufferThreshold = UserImportCsv.MaxRequestBytes)]
         public async Task<IActionResult> Import(IFormFile csvFile)
         {
+            // Parse the uploaded CSV, then pass all rows to one all-or-nothing service transaction.
             if (!await _userAdministration.CanManageAsync(UserId)) return Forbid();
             ViewData["Title"] = "Import accounts";
             ViewData["Eyebrow"] = "Administration";
@@ -84,6 +87,7 @@ namespace ASI.Basecode.WebApp.Controllers
             string role,
             int page = 1)
         {
+            // The service returns filtered account rows and the role-permission matrix for this page.
             if (!await _userAdministration.CanManageAsync(UserId))
             {
                 return Forbid();
@@ -122,6 +126,7 @@ namespace ASI.Basecode.WebApp.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CreateUserViewModel model)
         {
+            // Valid form data is handed to Identity and UserAdministrationService for account creation.
             if (!await _userAdministration.CanManageAsync(UserId))
             {
                 return Forbid();
@@ -177,6 +182,7 @@ namespace ASI.Basecode.WebApp.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(EditUserViewModel model)
         {
+            // The service updates Identity fields, role links, and the optional borrower profile.
             if (!await _userAdministration.CanManageAsync(UserId))
             {
                 return Forbid();
@@ -228,6 +234,7 @@ namespace ASI.Basecode.WebApp.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> SetActive(SetAccountActiveViewModel model)
         {
+            // This POST changes sign-in eligibility while preserving the account and its history.
             if (!await _userAdministration.CanManageAsync(UserId))
             {
                 return Forbid();
@@ -256,8 +263,11 @@ namespace ASI.Basecode.WebApp.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Permissions(UpdateRolePermissionsViewModel model)
+        public async Task<IActionResult> Permissions(
+            UpdateRolePermissionsViewModel model,
+            [FromServices] SignInManager<ApplicationUser> signInManager)
         {
+            // Save capability assignments for roles; individual controllers enforce those permissions.
             if (!await _userAdministration.CanManageAsync(UserId))
             {
                 return Forbid();
@@ -267,6 +277,15 @@ namespace ASI.Basecode.WebApp.Controllers
             if (result.Forbidden)
             {
                 return Forbid();
+            }
+
+            if (result.Succeeded)
+            {
+                var user = await signInManager.UserManager.GetUserAsync(User);
+                if (user?.IsActive == true)
+                {
+                    await signInManager.RefreshSignInAsync(user);
+                }
             }
 
             TempData[result.Succeeded ? "SuccessMessage" : "ErrorMessage"] = result.Message;

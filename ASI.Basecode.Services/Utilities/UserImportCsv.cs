@@ -15,7 +15,7 @@ namespace ASI.Basecode.Services.Services
         public const int MaxRows = 100;
         public const int MaxFileBytes = 1024 * 1024;
         public const int MaxRequestBytes = MaxFileBytes + 65536;
-        public const string Header = "UserCode,FirstName,LastName,Email,RoleName,Password,SchoolId,Department,ContactNumber";
+        public const string Header = "SchoolId,FirstName,LastName,Email,RoleName,Password,Department,ContactNumber";
 
         public static async Task<UserCsvParseResult> ParseAsync(
             Stream input, CancellationToken cancellationToken = default)
@@ -57,7 +57,7 @@ namespace ASI.Basecode.Services.Services
                 if (header.Length != expected.Length ||
                     header.Distinct(StringComparer.OrdinalIgnoreCase).Count() != expected.Length ||
                     expected.Any(name => !header.Contains(name, StringComparer.OrdinalIgnoreCase)))
-                    return Failure(1, "Header", "Use all nine template headers exactly once, with no extra columns.");
+                    return Failure(1, "Header", "Download the current CSV template and use all eight headers exactly once, with no extra columns.");
 
                 var indexes = expected.ToDictionary(name => name,
                     name => Array.FindIndex(header, item => string.Equals(item, name, StringComparison.OrdinalIgnoreCase)));
@@ -72,7 +72,7 @@ namespace ASI.Basecode.Services.Services
                     var fields = parser.ReadFields();
                     if (fields.Length != expected.Length)
                     {
-                        errors.Add(new UserImportError(rowNumber, "Row", "Expected nine columns. Quote fields that contain commas."));
+                        errors.Add(new UserImportError(rowNumber, "Row", "Expected eight columns. Quote fields that contain commas."));
                         continue;
                     }
                     string Value(string name) => fields[indexes[name]].Trim();
@@ -80,10 +80,10 @@ namespace ASI.Basecode.Services.Services
                     var password = fields[indexes["Password"]];
                     rows.Add(new UserImportRow(rowNumber, new CreateUserViewModel
                     {
-                        UserCode = Value("UserCode"), FirstName = Value("FirstName"),
+                        UserCode = Value("SchoolId"), FirstName = Value("FirstName"),
                         LastName = Value("LastName"), Email = Value("Email"),
                         RoleName = Value("RoleName"), Password = password, ConfirmPassword = password,
-                        SchoolId = Value("SchoolId"), Department = Value("Department"),
+                        Department = Value("Department"),
                         ContactNumber = string.IsNullOrWhiteSpace(Value("ContactNumber")) ? null : Value("ContactNumber")
                     }));
                 }

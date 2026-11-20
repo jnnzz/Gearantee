@@ -59,6 +59,7 @@ namespace ASI.Basecode.Services.Services
 
         public async Task<bool> CanManageAsync(string actorUserId)
         {
+            // Recheck that the acting account is active and still has the stored user-role management grant.
             if (string.IsNullOrWhiteSpace(actorUserId))
             {
                 return false;
@@ -98,6 +99,7 @@ namespace ASI.Basecode.Services.Services
             string roleId,
             int page)
         {
+            // EF Core reads Identity users and role assignments into the account-list view model.
             if (!await CanManageAsync(actorUserId))
             {
                 return null;
@@ -225,6 +227,7 @@ namespace ASI.Basecode.Services.Services
         public async Task<RolePermissionsViewModel> GetRolePermissionsAsync(
             string actorUserId)
         {
+            // The matrix is projected from persisted RolePermission and Permission records.
             if (!await CanManageAsync(actorUserId))
             {
                 return null;
@@ -285,6 +288,7 @@ namespace ASI.Basecode.Services.Services
             string actorUserId,
             CreateUserViewModel model)
         {
+            // Identity creates the user and password hash; the surrounding transaction also saves profile and audit data.
             var role = await _roleManager.FindByNameAsync(model.RoleName?.Trim());
             if (role == null || !IsSupportedRole(role.Name))
             {
@@ -295,11 +299,9 @@ namespace ASI.Basecode.Services.Services
                 await _db.Users.AnyAsync(user => user.UserCode == model.UserCode.Trim()))
             {
                 return UserAdministrationResult.Failure(
-                    "An account with that email or user code already exists.");
+                    "An account with that email or School ID already exists.");
             }
 
-            // The borrower school ID is derived from the account's user code, so only the
-            // department is entered here; a posted SchoolId is never trusted or persisted.
             if (role.Name == DomainValues.Roles.Borrower &&
                 string.IsNullOrWhiteSpace(model.Department))
             {
@@ -358,7 +360,7 @@ namespace ASI.Basecode.Services.Services
             catch (DbUpdateException exception) when (IsUniqueViolation(exception))
             {
                 return UserAdministrationResult.Failure(
-                    "The email, user code, or school ID is already in use.");
+                    "The email or School ID is already in use.");
             }
         }
 
@@ -366,6 +368,7 @@ namespace ASI.Basecode.Services.Services
             string actorUserId,
             EditUserViewModel model)
         {
+            // Update account, role, and borrower-profile data together, rejecting stale form stamps.
             return await _db.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
             {
             // Rebuild state per attempt so a rolled-back attempt cannot leave stale tracked
@@ -438,8 +441,6 @@ namespace ASI.Basecode.Services.Services
 
             var needsBorrowerProfile = selectedRoles.Contains(
                 DomainValues.Roles.Borrower, StringComparer.OrdinalIgnoreCase);
-            // The school ID is derived from the user code and cannot be edited here, so it
-            // is neither required from nor persisted from the submitted form.
             if (needsBorrowerProfile &&
                 string.IsNullOrWhiteSpace(model.Department))
             {
@@ -562,7 +563,7 @@ namespace ASI.Basecode.Services.Services
             {
                 await transaction.RollbackAsync();
                 return UserAdministrationResult.Failure(
-                    "The email, user code, or school ID is already in use.");
+                    "The email or School ID is already in use.");
             }
             });
         }
@@ -571,6 +572,7 @@ namespace ASI.Basecode.Services.Services
             string actorUserId,
             SetAccountActiveViewModel model)
         {
+            // Keep the account/history and change only sign-in eligibility; update the security stamp as well.
             return await _db.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
             {
             // Rebuild state per attempt so a rolled-back attempt cannot leave stale tracked
@@ -646,6 +648,7 @@ namespace ASI.Basecode.Services.Services
             string actorUserId,
             UpdateRolePermissionsViewModel model)
         {
+            // ApplicationClaimsPrincipalFactory reads these links when it builds permission claims.
             return await _db.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
             {
             // Rebuild state per attempt so a rolled-back attempt cannot leave stale tracked
@@ -714,6 +717,14 @@ namespace ASI.Basecode.Services.Services
 
             var administratorRole = roles.SingleOrDefault(role =>
                 role.Name == DomainValues.Roles.Administrator);
+            var borrowerRole = roles.SingleOrDefault(role => role.Name == DomainValues.Roles.Borrower);
+            if (borrowerRole != null && requestedByPermission.Any(item =>
+                    item.Value.Contains(borrowerRole.Id) && !DomainValues.Permissions.IsAllowedForBorrower(item.Key)))
+            {
+                await transaction.RollbackAsync();
+                return UserAdministrationResult.Failure(
+                    "Borrowers can only be assigned catalog/calendar access and reservation submission.");
+            }
             if (administratorRole == null || !requestedByPermission[
                     DomainValues.Permissions.UserRoleManage].Contains(administratorRole.Id) ||
                 requestedByPermission[DomainValues.Permissions.UserRoleManage]

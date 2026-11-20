@@ -52,6 +52,8 @@ namespace ASI.Basecode.Services.Services
             _equipmentItemRepository = equipmentItemRepository;
         }
 
+        // WBS 25: supplies the Equipment tab's server-side search, filters,
+        // paging, and locked-item state to CategoriesController.Index.
         public async Task<EquipmentItemIndexViewModel> GetEquipmentItemsAsync(
             string actorUserId,
             string search = null,
@@ -223,6 +225,8 @@ namespace ASI.Basecode.Services.Services
                 .SingleOrDefaultAsync();
         }
 
+        // WBS 26: validates and registers an item, allocating its code inside
+        // the protected write flow; CategoriesController handles form and image feedback.
         public async Task<EquipmentItemOperationResult> CreateAsync(
             string actorUserId,
             EquipmentItemFormViewModel model)
@@ -344,6 +348,8 @@ namespace ASI.Basecode.Services.Services
             });
         }
 
+        // WBS 27: reloads and locks the item before editing so reservation
+        // activity cannot race with an inventory change.
         public async Task<EquipmentItemOperationResult> UpdateAsync(
             string actorUserId,
             EquipmentItemFormViewModel model)
@@ -440,6 +446,8 @@ namespace ASI.Basecode.Services.Services
             });
         }
 
+        // WBS 28: Delete is a soft archive (IsArchived), preserving history;
+        // restore uses this path too, and locked/borrowed items are rejected.
         public async Task<EquipmentItemOperationResult> SetArchivedAsync(
             string actorUserId,
             long equipmentId,

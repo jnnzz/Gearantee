@@ -127,6 +127,7 @@ namespace ASI.Basecode.WebApp
             _app.UseSession();
             _app.UseRouting();
             _app.UseRateLimiter();
+            // Authenticate the Identity cookie before authorization evaluates roles and permission claims.
             _app.UseAuthentication();
             _app.UseAuthorization();
         }

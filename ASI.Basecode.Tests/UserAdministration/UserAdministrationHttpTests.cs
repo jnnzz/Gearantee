@@ -30,6 +30,64 @@ namespace ASI.Basecode.Tests.UserAdministration
 {
     public class UserAdministrationHttpTests
     {
+        [Fact]
+        public async Task OwnAccountHasNoStatusFormAndForgedDeactivationIsRejected()
+        {
+            await using var site = await AdministrationHttpSite.CreateAsync();
+            var path = "/Users/Edit/" + site.Environment.ActorId;
+            var html = await site.Client.GetStringAsync(path);
+            Assert.Contains("You cannot deactivate your own account.", html);
+            Assert.DoesNotContain("data-confirm-dialog=\"account-status-dialog\"", html);
+            Assert.Matches("<button[^>]*disabled[^>]*>Deactivate</button>", html);
+            string stamp;
+            using (var scope = site.Environment.Provider.CreateScope())
+                stamp = (await scope.ServiceProvider.GetRequiredService<AsiBasecodeDBContext>().Users.SingleAsync()).ConcurrencyStamp;
+            var response = await site.Client.PostAsync("/Users/SetActive", new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["UserId"] = site.Environment.ActorId, ["ConcurrencyStamp"] = stamp, ["IsActive"] = "false",
+                ["__RequestVerificationToken"] = await site.Token(path)
+            }));
+            Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+            using var verify = site.Environment.Provider.CreateScope();
+            Assert.True((await verify.ServiceProvider.GetRequiredService<AsiBasecodeDBContext>().Users.SingleAsync()).IsActive);
+            Assert.Contains("You cannot deactivate your own account.", await site.Client.GetStringAsync(path));
+        }
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public async Task AccountStatusFormPostsRenderedValuesAndChangesOnlyTheTarget(bool initiallyActive)
+        {
+            await using var site = await AdministrationHttpSite.CreateAsync();
+            string id;
+            using (var scope = site.Environment.Provider.CreateScope())
+            {
+                var service = scope.ServiceProvider.GetRequiredService<IUserAdministrationService>();
+                Assert.True((await service.CreateAsync(site.Environment.ActorId, UserImportServiceTests.Account("STATUS-TARGET"))).Succeeded);
+                var db = scope.ServiceProvider.GetRequiredService<AsiBasecodeDBContext>();
+                var target = await db.Users.SingleAsync(user => user.UserCode == "STATUS-TARGET");
+                id = target.Id;
+                target.IsActive = initiallyActive;
+                await db.SaveChangesAsync();
+            }
+
+            var html = await site.Client.GetStringAsync("/Users/Edit/" + id);
+            var form = Regex.Match(html, "<form\\b[^>]*action=\"[^\"]*SetActive[^\"]*\"[^>]*>.*?</form>", RegexOptions.Singleline);
+            Assert.True(form.Success);
+            var values = Regex.Matches(form.Value, "<input\\b[^>]*>")
+                .Select(input => (
+                    Name: Regex.Match(input.Value, "name=\"([^\"]+)\"").Groups[1].Value,
+                    Value: Regex.Match(input.Value, "value=\"([^\"]*)\"").Groups[1].Value))
+                .Where(input => input.Name.Length > 0)
+                .ToDictionary(input => input.Name, input => WebUtility.HtmlDecode(input.Value));
+            var response = await site.Client.PostAsync("/Users/SetActive", new FormUrlEncodedContent(values));
+            Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+            using var verify = site.Environment.Provider.CreateScope();
+            var verifyDb = verify.ServiceProvider.GetRequiredService<AsiBasecodeDBContext>();
+            Assert.Equal(!initiallyActive, (await verifyDb.Users.SingleAsync(user => user.Id == id)).IsActive);
+            Assert.True((await verifyDb.Users.SingleAsync(user => user.Id == site.Environment.ActorId)).IsActive);
+        }
+
         [Theory]
         [InlineData(null, HttpStatusCode.Unauthorized)]
         [InlineData("Borrower", HttpStatusCode.Forbidden)]
@@ -74,7 +132,7 @@ namespace ASI.Basecode.Tests.UserAdministration
                 else db.RolePermissions.RemoveRange(db.RolePermissions);
                 await db.SaveChangesAsync();
             }
-            using var form = Upload(UserImportCsv.Header + "\n0001,A,B,one@test.local,Custodian,Private!123456,,,", token);
+            using var form = Upload(UserImportCsv.Header + "\n0001,A,B,one@test.local,Custodian,Private!123456,,", token);
             Assert.Equal(HttpStatusCode.Forbidden, (await site.Client.PostAsync("/Users/Import", form)).StatusCode);
         }
 
@@ -83,13 +141,20 @@ namespace ASI.Basecode.Tests.UserAdministration
         {
             await using var site = await AdministrationHttpSite.CreateAsync();
             SavePreview("import.html", await site.Client.GetStringAsync("/Users/Import"));
-            Assert.Equal(UserImportCsv.Header + "\r\n", await site.Client.GetStringAsync("/Users/ImportTemplate"));
-            using var form = Upload(UserImportCsv.Header + "\n0001,A,B,one@test.local,Custodian,Private!123456,,,",
+            const string header = "SchoolId,FirstName,LastName,Email,RoleName,Password,Department,ContactNumber\r\n";
+            Assert.Equal(header, await site.Client.GetStringAsync("/Users/ImportTemplate"));
+            using var form = Upload(header + "0001,A,B,one@test.local,Borrower,Private!123456,Science,\n" +
+                "CUST-CSV,A,C,two@test.local,Custodian,Private!123457,,\n" +
+                "ADM-CSV,A,D,three@test.local,Administrator,Private!123458,,",
                 await site.Token("/Users/Import"));
             var response = await site.Client.PostAsync("/Users/Import", form);
             Assert.True(response.StatusCode == HttpStatusCode.Redirect, await response.Content.ReadAsStringAsync());
             using var scope = site.Environment.Provider.CreateScope();
-            Assert.Equal(2, await scope.ServiceProvider.GetRequiredService<AsiBasecodeDBContext>().Users.CountAsync());
+            var db = scope.ServiceProvider.GetRequiredService<AsiBasecodeDBContext>();
+            Assert.Equal(4, await db.Users.CountAsync());
+            var borrower = await db.Users.SingleAsync(user => user.UserCode == "0001");
+            Assert.Equal("0001", borrower.UserName);
+            Assert.Equal("Science", (await db.BorrowerProfiles.SingleAsync(profile => profile.UserId == borrower.Id)).Department);
             Assert.DoesNotContain("Private!123456", await response.Content.ReadAsStringAsync());
         }
 

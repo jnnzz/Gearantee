@@ -13,15 +13,14 @@ namespace ASI.Basecode.Tests.UserAdministration
     public class UserImportCsvTests
     {
         [Fact]
-        public async Task ParsesUtf8BomQuotedFieldsAndPreservesCodesAndPasswordWhitespace()
+        public async Task ParsesUtf8BomQuotedFieldsAndPreservesSchoolIdAndPasswordWhitespace()
         {
-            var csv = "\uFEFF" + UserImportCsv.Header + "\r\n001,\"Ana, Maria\",\"Dela \"\"Cruz\"\"\",ana@example.test,Borrower, Password!123 ,0001,\"Arts\nStudies\",\r\n";
+            var csv = "\uFEFF" + UserImportCsv.Header + "\r\n001,\"Ana, Maria\",\"Dela \"\"Cruz\"\"\",ana@example.test,Borrower, Password!123 ,\"Arts\nStudies\",\r\n";
             var result = await Parse(csv);
             Assert.Empty(result.Errors);
             var row = Assert.Single(result.Rows);
             Assert.Equal(2, row.RowNumber);
             Assert.Equal("001", row.Account.UserCode);
-            Assert.Equal("0001", row.Account.SchoolId);
             Assert.Equal("Ana, Maria", row.Account.FirstName);
             Assert.Equal("Dela \"Cruz\"", row.Account.LastName);
             Assert.Equal("Arts\nStudies", row.Account.Department);
@@ -31,8 +30,9 @@ namespace ASI.Basecode.Tests.UserAdministration
         [Theory]
         [InlineData("")]
         [InlineData(UserImportCsv.Header)]
-        [InlineData("UserCode,FirstName,LastName,Email,RoleName,Password,SchoolId,Department,Email\n")]
-        [InlineData("UserCode,FirstName,LastName,Email,RoleName,Password,SchoolId,Department,Unknown\n")]
+        [InlineData("SchoolId,FirstName,LastName,Email,RoleName,Password,Department,Email\n")]
+        [InlineData("SchoolId,FirstName,LastName,Email,RoleName,Password,Department,Unknown\n")]
+        [InlineData("UserCode,FirstName,LastName,Email,RoleName,Password,SchoolId,Department,ContactNumber\n001,A,B,a@test.local,Borrower,Secret!123,001,Science,\n")]
         [InlineData(UserImportCsv.Header + "\n001,A,B,a@test.local,Borrower,Secret!123\n")]
         [InlineData(UserImportCsv.Header + "\n001,A,B,a@test.local,Borrower,\"Secret!123\n")]
         public async Task InvalidFilesReturnSafeErrorsAndNoRows(string csv)
@@ -47,7 +47,7 @@ namespace ASI.Basecode.Tests.UserAdministration
         public async Task RejectsOversizeTooManyRowsAndNonUtf8()
         {
             Assert.NotEmpty((await Parse(new string('a', UserImportCsv.MaxFileBytes + 1))).Errors);
-            var rows = Enumerable.Range(1, 101).Select(i => $"{i},A,B,u{i}@test.local,Custodian,Secret!123,,,");
+            var rows = Enumerable.Range(1, 101).Select(i => $"{i},A,B,u{i}@test.local,Custodian,Secret!123,,");
             Assert.NotEmpty((await Parse(UserImportCsv.Header + "\n" + string.Join("\n", rows))).Errors);
             using var stream = new MemoryStream(new byte[] { 0xff, 0xfe, 0x00 });
             Assert.NotEmpty((await UserImportCsv.ParseAsync(stream)).Errors);

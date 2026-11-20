@@ -34,6 +34,8 @@ namespace ASI.Basecode.WebApp.Controllers
             _borrowingHistoryService = borrowingHistoryService;
         }
 
+        // WBS 52–54: binds the page filters, enforces the caller's history
+        // scope, then asks the service for the filtered page model.
         [HttpGet]
         public async Task<IActionResult> Index(
             [FromQuery] BorrowingHistoryFilterViewModel filter,
@@ -65,6 +67,8 @@ namespace ASI.Basecode.WebApp.Controllers
             return View(model);
         }
 
+        // WBS 55: exports reuse the validated filters and role scope from
+        // Index, then stream service rows through the CSV formatter.
         [HttpGet]
         public async Task<IActionResult> Export(
             [FromQuery] BorrowingHistoryFilterViewModel filter,
@@ -116,6 +120,8 @@ namespace ASI.Basecode.WebApp.Controllers
             return new EmptyResult();
         }
 
+        // WBS 55: XLSX uses the same scope and filtered row stream as CSV;
+        // the exporter writes those rows and returns a temporary workbook stream.
         [HttpGet]
         public async Task<IActionResult> ExportExcel(
             [FromQuery] BorrowingHistoryFilterViewModel filter,

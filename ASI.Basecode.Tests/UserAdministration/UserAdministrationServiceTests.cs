@@ -84,7 +84,6 @@ namespace ASI.Basecode.Tests.UserAdministration
                     LastName = "Santos",
                     Email = "mara@test.local",
                     RoleName = borrowerRole.Name,
-                    SchoolId = "STU-2001",
                     Department = "Information Technology",
                     Password = password,
                     ConfirmPassword = password
@@ -103,7 +102,7 @@ namespace ASI.Basecode.Tests.UserAdministration
         }
 
         [Fact]
-        public async Task CreateAsync_BorrowerWithoutPostedSchoolId_SucceedsAndDerivesIdentifier()
+        public async Task CreateAsync_BorrowerUsesSchoolIdAsLoginIdentifier()
         {
             using var database = new SqliteDb();
             using var provider = CreateProvider(database);
@@ -133,7 +132,6 @@ namespace ASI.Basecode.Tests.UserAdministration
                     LastName = "Reyes",
                     Email = "nina@test.local",
                     RoleName = borrowerRole.Name,
-                    // SchoolId intentionally omitted: the Create Account form no longer sends it.
                     Department = "Information Technology",
                     Password = password,
                     ConfirmPassword = password
@@ -143,12 +141,13 @@ namespace ASI.Basecode.Tests.UserAdministration
             var created = await users.FindByEmailAsync("nina@test.local");
             Assert.NotNull(created);
             Assert.Equal("STU-3001", created.UserCode);
+            Assert.Equal("STU-3001", created.UserName);
             Assert.True(await users.IsInRoleAsync(created, DomainValues.Roles.Borrower));
             await db.BorrowerProfiles.SingleAsync(item => item.UserId == created.Id);
         }
 
         [Fact]
-        public async Task UpdatePermissionsAsync_PersistsMatrixAndRejectsStaleRoleStamps()
+        public async Task UpdatePermissionsAsync_PersistsMatrixAndRejectsRestrictedBorrowerGrantsAndStaleRoleStamps()
         {
             using var database = new SqliteDb();
             using var provider = CreateProvider(database);
@@ -206,8 +205,21 @@ namespace ASI.Basecode.Tests.UserAdministration
                 }).ToList()
             };
 
+            foreach (var assignment in submission.Assignments.Where(item =>
+                !DomainValues.Permissions.IsAllowedForBorrower(item.PermissionName)))
+            {
+                assignment.RoleIds.Add(borrowerRole.Id);
+                var denied = await service.UpdatePermissionsAsync(actor.Id, submission);
+                Assert.False(denied.Succeeded);
+                Assert.Contains("Borrowers can only", denied.Message);
+                assignment.RoleIds.Remove(borrowerRole.Id);
+            }
+            submission.Assignments.Single(item => item.PermissionName == DomainValues.Permissions.ReservationCreate)
+                .RoleIds.Add(borrowerRole.Id);
             var result = await service.UpdatePermissionsAsync(actor.Id, submission);
             Assert.True(result.Succeeded, result.Message);
+            Assert.True(await db.RolePermissions.AnyAsync(link => link.RoleId == borrowerRole.Id &&
+                link.PermissionId == db.Permissions.Single(item => item.PermissionName == DomainValues.Permissions.ReservationCreate).PermissionId));
             Assert.False(await db.RolePermissions.AnyAsync(link =>
                 link.RoleId == borrowerRole.Id &&
                 link.PermissionId == db.Permissions.Single(item =>

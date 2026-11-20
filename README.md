@@ -140,7 +140,7 @@ This copies the pinned FullCalendar bundle and its MIT license into `wwwroot/lib
 
 ## Preview the dashboards with sample data
 
-The development-only `--seed-demo` command creates idempotent dashboard sample rows and one account (`DEMO-001`) that has Borrower, Custodian, and Administrator roles. Set its password as a local secret first:
+The Development-only `--seed-demo` command adds defense sample data without deleting existing records. It creates separate Admin, Custodian, and Borrower logins, 12 additional borrower profiles, two extra equipment categories, 30 additional equipment items, and 40 additional reservations covering pending, approved, rejected, active, overdue, good-return, late-return, and damaged-return cases. It also keeps the multi-role `DEMO-001` account and its 11 existing reservations. Set `SeedDemo:Password` as a local secret; new role-specific accounts use that password with `Aa1!` appended to meet the current password policy:
 
 ```powershell
 dotnet user-secrets set "SeedDemo:Password" "choose-a-strong-local-password" --project .\ASI.Basecode.WebApp\ASI.Basecode.WebApp.csproj
@@ -148,7 +148,7 @@ $env:ASPNETCORE_ENVIRONMENT = "Development"
 dotnet run --project .\ASI.Basecode.WebApp\ASI.Basecode.WebApp.csproj -- --seed-demo
 ```
 
-Sign in with user code `DEMO-001` and the password you selected. Use the development-only role switcher to preview each dashboard. Do not use demo seed data in production.
+Sign in with `DEMO-ADMIN-001`, `DEMO-CUST-001`, or `DEMO-BRW-001` through `DEMO-BRW-012`, using the password you selected followed by `Aa1!`. The ineligible borrower profiles are `DEMO-BRW-011` and `DEMO-BRW-012`. The existing `DEMO-001` account retains its previous password and all three roles. Rerunning the command adds missing demo setup and does not clear the database. Use this command only with the local Development database.
 
 ## Run the Application
 

@@ -15,7 +15,7 @@
         <h2 id="return-heading" class="font-display text-2xl font-semibold text-ink">Return and condition check</h2>
         <p class="mt-1 text-sm text-gray-500">Times are Philippine time. Inspect the item before saving; this can't be edited later.</p>
 
-        <form asp-action="Create" method="post" class="mt-6">
+        <form asp-action="Create" method="post" class="mt-6" data-confirm-dialog="record-return-dialog">
             <div asp-validation-summary="ModelOnly" class="validation-summary-errors" role="alert"></div>
             <input type="hidden" asp-for="ReleaseRecordId" />
             <input type="hidden" name="tab" value="@returnTab" />
@@ -54,6 +54,7 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/confirm-dialog.js" asp-append-version="true"></script>
     <script>
         // Non-Good condition can't go back to Available
         (function () {
@@ -91,3 +92,10 @@
         })();
     </script>
 }
+
+<partial name="Components/_ConfirmDialog" model="@(new ConfirmDialogModel
+{
+    Id = "record-return-dialog", Title = "Record this return?",
+    Message = "Confirm the inspected condition and resulting equipment status. This return cannot be edited after saving.",
+    Detail = $"{loan.ReservationCode} · {loan.ItemCode} · {loan.ItemName} · {loan.BorrowerName}", ConfirmText = "Record return"
+})" />

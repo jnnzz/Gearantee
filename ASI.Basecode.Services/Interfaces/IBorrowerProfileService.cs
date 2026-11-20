@@ -6,6 +6,7 @@ namespace ASI.Basecode.Services.Interfaces
     public interface IBorrowerProfileService
     {
         Task<BorrowerProfileListViewModel> GetBorrowerProfilesAsync(string search, int page);
+        Task<BorrowerProfileListViewModel> GetBorrowerProfilesAsync(string search, int page, bool? isEligible);
         Task<BorrowerProfileViewModel> GetBorrowerProfileAsync(long id);
 
         /// <summary>

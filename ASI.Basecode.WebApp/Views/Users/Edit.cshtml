@@ -1,20 +1,21 @@
 @model ASI.Basecode.Services.ServiceModels.UserAdministration.EditUserViewModel
 @{
+    var isOwnAccount = Model.Id == User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 }
 
+@* The edit and account-status forms post to separate UsersController actions. *@
 <div class="role-page form-layout">
     <a asp-action="Index" class="mb-5 inline-flex text-sm font-semibold text-primary-strong underline underline-offset-4">← Back to users &amp; roles</a>
     <section class="surface">
         <div class="flex flex-wrap items-start justify-between gap-3">
             <div>
-                <p class="item-code">@Model.UserCode</p>
                 <h2 class="mt-1 font-display text-xl font-semibold">Account details</h2>
-                <p class="mt-1 text-sm text-gray-500">User code: <span class="font-semibold text-gray-700">@Model.UserCode</span></p>
+                <p class="mt-1 text-sm text-gray-500">School ID: <span class="font-semibold text-gray-700">@Model.UserCode</span></p>
             </div>
             <partial name="Components/_StatusBadge" model="@(Model.IsActive ? "Active" : "Deactivated")" />
         </div>
 
-        <form asp-action="Edit" method="post" class="mt-6">
+        <form asp-action="Edit" method="post" class="mt-6" data-confirm-dialog="save-account-dialog">
             <div asp-validation-summary="ModelOnly" class="validation-summary-errors" role="alert"></div>
             <p class="required-legend"><span class="required-marker" data-required-marker aria-hidden="true">*</span> Required fields. Department is required only when Borrower is assigned.</p>
             <input asp-for="Id" type="hidden" />
@@ -45,11 +46,6 @@
                 <legend class="font-display text-lg font-semibold">Borrower profile</legend>
                 <p class="mb-3 text-xs text-gray-500">Required whenever the Borrower role is assigned. Eligibility remains a separate decision.</p>
                 <div class="form-grid grid gap-4 sm:grid-cols-2">
-                    <div>
-                        <span class="mb-1 block text-sm font-medium">School ID</span>
-                        <p class="input bg-gray-100 text-gray-700">@Model.UserCode</p>
-                        <p class="mt-1 text-xs text-gray-500">Derived from the user code and not editable here.</p>
-                    </div>
                     <div><label asp-for="Department" class="mb-1 block text-sm font-medium">Department <span class="required-marker" data-required-marker data-borrower-required-marker aria-hidden="true">*</span></label><input asp-for="Department" class="input" /><span asp-validation-for="Department" class="field-validation-error"></span></div>
                     <div><label asp-for="ContactNumber" class="mb-1 block text-sm font-medium"></label><input asp-for="ContactNumber" class="input" /><span asp-validation-for="ContactNumber" class="field-validation-error"></span></div>
                 </div>
@@ -67,17 +63,28 @@
             <h3 class="font-display text-lg font-semibold">@(Model.IsActive ? "Deactivate account" : "Reactivate account")</h3>
             <p class="mt-1 max-w-xl text-xs leading-5 text-gray-500">@(Model.IsActive ? "This blocks future sign-ins while retaining the account and its borrowing history." : "This allows the account to sign in again. Existing history is unchanged.")</p>
         </div>
-        <form asp-action="SetActive" method="post" onsubmit="return confirm('@(Model.IsActive ? "Deactivate" : "Reactivate") this account?');">
-            <input type="hidden" name="UserId" value="@Model.Id" />
-            <input type="hidden" name="ConcurrencyStamp" value="@Model.ConcurrencyStamp" />
-            <input type="hidden" name="IsActive" value="@(!Model.IsActive)" />
-            <button type="submit" class="@(Model.IsActive ? "btn-danger" : "btn-secondary")">@(Model.IsActive ? "Deactivate" : "Reactivate")</button>
-        </form>
+        @if (isOwnAccount)
+        {
+            <div>
+                <button type="button" class="btn-danger" disabled title="You cannot deactivate your own account.">Deactivate</button>
+                <p class="mt-2 text-xs text-gray-500">You cannot deactivate your own account.</p>
+            </div>
+        }
+        else
+        {
+            <form asp-action="SetActive" method="post" data-confirm-dialog="account-status-dialog">
+                <input type="hidden" name="UserId" value="@Model.Id" />
+                <input type="hidden" name="ConcurrencyStamp" value="@Model.ConcurrencyStamp" />
+                <input type="hidden" name="IsActive" value="@((!Model.IsActive).ToString().ToLowerInvariant())" />
+                <button type="submit" class="@(Model.IsActive ? "btn-danger" : "btn-secondary")">@(Model.IsActive ? "Deactivate" : "Reactivate")</button>
+            </form>
+        }
     </section>
 </div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/confirm-dialog.js" asp-append-version="true"></script>
     <script>
         (() => {
             const roleBoxes = document.querySelectorAll('input[name="SelectedRoles"]');
@@ -97,4 +104,21 @@
             syncProfile();
         })();
     </script>
+}
+
+<partial name="Components/_ConfirmDialog" model="@(new ConfirmDialogModel
+{
+    Id = "save-account-dialog", Title = "Save account and role changes?",
+    Message = "The account details and selected roles will be updated. Role changes affect which pages and actions this user can access.",
+    Detail = $"{Model.UserCode} · {Model.FirstName} {Model.LastName}", ConfirmText = "Save changes"
+})" />
+@if (!isOwnAccount)
+{
+<partial name="Components/_ConfirmDialog" model="@(new ConfirmDialogModel
+{
+    Id = "account-status-dialog", Title = Model.IsActive ? "Deactivate account?" : "Reactivate account?",
+    Message = Model.IsActive ? "This blocks future sign-ins. The account and borrowing history will be preserved." : "This allows the account to sign in again. Existing history is unchanged.",
+    Detail = $"{Model.UserCode} · {Model.FirstName} {Model.LastName}",
+    ConfirmText = Model.IsActive ? "Deactivate" : "Reactivate", IsDestructive = Model.IsActive
+})" />
 }

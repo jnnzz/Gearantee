@@ -11,6 +11,8 @@ using Microsoft.Extensions.Options;
 
 namespace ASI.Basecode.Services.Services
 {
+    // WBS 10: adapter from the OTP service to Brevo's transactional-email API.
+    // Startup.DI configures its base URL; BrevoOptions supplies the key and sender.
     public sealed class BrevoEmailSender : IBrevoEmailSender
     {
         private readonly HttpClient _httpClient;

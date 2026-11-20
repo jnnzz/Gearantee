@@ -13,6 +13,8 @@ namespace ASI.Basecode.Services.ServiceModels
 
         public string Search { get; set; }
 
+        public bool? EligibilityFilter { get; set; }
+
         public int Page { get; set; } = 1;
 
         public int TotalPages { get; set; } = 1;

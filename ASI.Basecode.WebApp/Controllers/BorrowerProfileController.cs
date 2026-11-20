@@ -31,9 +31,16 @@ namespace ASI.Basecode.WebApp.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Index(string search, int page = 1)
+        public async Task<IActionResult> Index(string search, string eligibility, int page = 1)
         {
-            var model = await _borrowerProfileService.GetBorrowerProfilesAsync(search, page);
+            bool? isEligible = eligibility?.Trim().ToLowerInvariant() switch
+            {
+                "eligible" => true,
+                "ineligible" => false,
+                _ => null
+            };
+
+            var model = await _borrowerProfileService.GetBorrowerProfilesAsync(search, page, isEligible);
             return View(model);
         }
 
