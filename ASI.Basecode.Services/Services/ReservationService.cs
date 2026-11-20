@@ -68,6 +68,8 @@ namespace ASI.Basecode.Services.Services
 
         public string CheckBorrowerEligibility(string userId)
         {
+            // Cataraja: WBS 35: use the stored profile/account state for form feedback.
+            // Cataraja: SubmitReservation applies the same eligibility helper before creating a request.
             return EligibilityError(FindProfile(userId));
         }
 
@@ -93,6 +95,8 @@ namespace ASI.Basecode.Services.Services
 
         public ReservationResult SubmitReservation(ReservationCreateViewModel model, string userId)
         {
+            // Cataraja: WBS 35 flow: validate input/profile -> full-day UTC window ->
+            // Cataraja: equipment/submission locks -> availability/duplicate checks -> Pending insert.
             if (model == null)
             {
                 return ReservationResult.Fail("The reservation form is incomplete. Reload and try again.");
@@ -124,6 +128,8 @@ namespace ASI.Basecode.Services.Services
                 return ReservationResult.Fail($"The purpose must be {PurposeMaxLength} characters or fewer.");
             }
 
+            // Cataraja: Selected days are inclusive in the form; store an exclusive
+            // Cataraja: next-midnight end in UTC so the complete final borrowing day is covered.
             var startUtc = ManilaClock.ToUtc(model.ReservationStart.Value.Date);
             var endUtc = ManilaClock.ToUtc(model.ReservationEnd.Value.Date.AddDays(1));
 
@@ -215,6 +221,8 @@ namespace ASI.Basecode.Services.Services
 
         public ReservationIndexViewModel GetMyReservations(string userId, string status, int page, string search = null)
         {
+            // Cataraja: WBS 36: find this borrower's profile, expire stale requests,
+            // Cataraja: scope by profile ID, then search/filter/page the visible status records.
             var model = new ReservationIndexViewModel { Search = (search ?? string.Empty).Trim() };
             if (model.Search.Length > 100) model.Search = model.Search.Substring(0, 100);
             var profile = FindProfile(userId);
@@ -280,6 +288,8 @@ namespace ASI.Basecode.Services.Services
 
         public ReservationDetailsViewModel RetrieveMyReservation(long reservationId, string userId)
         {
+            // Cataraja: WBS 36: require both reservation ID and this borrower's profile.
+            // Cataraja: Projection includes review, release and return details for the status page.
             var profile = FindProfile(userId);
             if (profile == null)
             {
@@ -321,6 +331,8 @@ namespace ASI.Basecode.Services.Services
 
         public ReservationResult CancelReservation(long reservationId, string userId)
         {
+            // Cataraja: WBS 37: check ownership/lifecycle first, then repeat allowed-state
+            // Cataraja: conditions in the transactional UPDATE to protect against a concurrent release.
             var profile = FindProfile(userId);
             if (profile == null)
             {

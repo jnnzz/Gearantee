@@ -6,6 +6,8 @@ namespace ASI.Basecode.Services.ServiceModels.Returns
 {
     public class ReturnRecordViewModel
     {
+        // Cataraja: WBS 44-47: the return form submits loan ID, actual return time,
+        // Cataraja: condition/status and notes; ReturnRecordService checks and persists the inspection.
         [Required]
         public long ReleaseRecordId { get; set; }
 
@@ -82,6 +84,8 @@ namespace ASI.Basecode.Services.ServiceModels.Returns
 
     public class ReturnRecordIndexViewModel
     {
+        // Cataraja: WBS 44/47/58: carry visible rows, tabs and paging/search values
+        // Cataraja: together so ReturnRecord/Index can keep navigation and empty results consistent.
         public List<ReturnRecordListItemViewModel> Items { get; set; } = new List<ReturnRecordListItemViewModel>();
         public List<ReturnRecordTab> Tabs { get; set; } = new List<ReturnRecordTab>();
         public string Tab { get; set; } = string.Empty;

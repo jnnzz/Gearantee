@@ -11,6 +11,9 @@ namespace ASI.Basecode.Tests.UiMigration
 {
     public class SharedUiTests
     {
+        // Cataraja: WBS 58-59 (shared): render pages through the MVC test host and
+        // Cataraja: inspect common controls, labels, role-specific actions and navigation contracts.
+        // Cataraja: These markup checks complement browser checks for visual layout and keyboard use.
         [Fact]
         public async Task Refinement_tabs_actions_and_filters_render_for_the_correct_roles()
         {

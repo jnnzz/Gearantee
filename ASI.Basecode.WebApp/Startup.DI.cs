@@ -94,10 +94,14 @@ namespace ASI.Basecode.WebApp
             _services.AddScoped<IReturnRecordRepository, ReturnRecordRepository>();
 
             // Services
+            // Cataraja: WBS 34-35: CatalogController and reservation forms resolve
+            // Cataraja: this catalog service for item summaries and booked-window display data.
             _services.AddScoped<ICatalogService, CatalogService>();
             // Canencia: WBS 39-42: ReservationReviewController uses this shared service for its
             // Canencia: custodian queue/decisions/release; borrower submission uses other methods.
             _services.AddScoped<IReservationService, ReservationService>();
+            // Cataraja: WBS 44-47: ReturnRecordController delegates return lists and
+            // Cataraja: the inspection/late-return transaction to this registered implementation.
             _services.AddScoped<IReturnRecordService, ReturnRecordService>();
             // WBS 52–55: the history page and exports share this query service.
             _services.AddScoped<IBorrowingHistoryService, BorrowingHistoryService>();

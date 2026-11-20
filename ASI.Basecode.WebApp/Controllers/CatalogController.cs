@@ -38,6 +38,8 @@ namespace ASI.Basecode.WebApp.Controllers
         [HttpGet]
         public IActionResult Index([FromQuery] CatalogFilterViewModel filter)
         {
+            // Cataraja: WBS 34 flow: Catalog/Index.cshtml -> this action -> CatalogService.
+            // Cataraja: Strip legacy date query values here; the current list uses search/category.
             if (Request.Query.ContainsKey("From") || Request.Query.ContainsKey("To"))
             {
                 return RedirectToAction(nameof(Index), new { filter.Search, filter.CategoryId });
@@ -52,6 +54,8 @@ namespace ASI.Basecode.WebApp.Controllers
         [HttpGet]
         public IActionResult Details(long id, DateTime? from, DateTime? to)
         {
+            // Cataraja: WBS 34: load one reservable item and its booked windows for
+            // Cataraja: Details.cshtml; a reservation link continues to ReservationController.Create.
             var item = _catalogService.RetrieveCatalogItem(id);
             if (item == null) return NotFound();
 
@@ -63,6 +67,8 @@ namespace ASI.Basecode.WebApp.Controllers
 
         private void SetPageData(string title)
         {
+            // Cataraja: WBS 58 (shared UI): send one title and the caller's workspace
+            // Cataraja: label to the shared layout rather than duplicating page headings in each view.
             ViewData["Title"] = title;
             ViewData["Eyebrow"] = User.IsInRole(DomainValues.Roles.Administrator) ? "Administrator workspace"
                 : User.IsInRole(DomainValues.Roles.Custodian) ? "Custodian workspace"

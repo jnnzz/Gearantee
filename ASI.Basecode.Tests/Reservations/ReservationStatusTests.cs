@@ -12,6 +12,8 @@ namespace ASI.Basecode.Tests.Reservations
 {
     public sealed class ReservationStatusTests
     {
+        // Cataraja: WBS 59 (shared), covering 36: seed lifecycle records, then verify
+        // Cataraja: owner-scoped lists/details, status labels and paging from ReservationService.
         private static readonly DateTime Now = Utc(2026, 10, 7, 0);
 
         [Fact]

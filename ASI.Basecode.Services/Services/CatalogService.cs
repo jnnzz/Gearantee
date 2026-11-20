@@ -31,6 +31,8 @@ namespace ASI.Basecode.Services.Services
 
         public CatalogIndexViewModel GetCatalog(CatalogFilterViewModel filter)
         {
+            // Cataraja: WBS 34: start with the shared reservable-item predicate, apply
+            // Cataraja: search/category filters, count and fetch one ordered page for the catalog.
             filter ??= new CatalogFilterViewModel();
             var nowUtc = _timeProvider.GetUtcNow().UtcDateTime;
             var model = new CatalogIndexViewModel { Filter = filter };
@@ -68,6 +70,8 @@ namespace ASI.Basecode.Services.Services
 
             if (filter.From.HasValue || filter.To.HasValue)
             {
+                // Cataraja: Service callers may still supply a date window; validate it
+                // Cataraja: and exclude blockers. CatalogController.Index strips these legacy inputs.
                 model.WindowError = ReservationAvailability.ValidateWindow(filter.From, filter.To, nowUtc);
                 if (model.WindowError == null)
                 {
@@ -112,6 +116,8 @@ namespace ASI.Basecode.Services.Services
 
         public CatalogItemDetailsViewModel RetrieveCatalogItem(long id)
         {
+            // Cataraja: WBS 34 details: project the item, derive its current loan label,
+            // Cataraja: and add a bounded list of blocking windows converted to Manila time.
             var nowUtc = _timeProvider.GetUtcNow().UtcDateTime;
             var activeLoans = ActiveLoans();
 
@@ -174,6 +180,8 @@ namespace ASI.Basecode.Services.Services
 
         private IQueryable<Reservation> ActiveLoans()
         {
+            // Cataraja: A release without a return means an active loan, including
+            // Cataraja: overdue loans; its display label must not imply the equipment is free.
             return _reservationRepository.GetReservations()
                 .Where(reservation =>
                     reservation.ReleaseRecord != null &&

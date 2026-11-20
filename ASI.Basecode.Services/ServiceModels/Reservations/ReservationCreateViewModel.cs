@@ -6,6 +6,8 @@ namespace ASI.Basecode.Services.ServiceModels.Reservations
 {
     public class ReservationCreateViewModel
     {
+        // Cataraja: WBS 35: Create.cshtml submits item ID, borrowing days and purpose.
+        // Cataraja: Annotations feed ModelState; ReservationService enforces the business/date rules.
         [Required]
         public long EquipmentId { get; set; }
 

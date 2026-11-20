@@ -59,6 +59,8 @@ namespace ASI.Basecode.Services.Services
 
         public ReturnRecordIndexViewModel GetReturnRecords(string tab, int page, string search)
         {
+            // Cataraja: WBS 44/47: search before counting and paging the return desk;
+            // Cataraja: distinguish overdue open loans from completed returns with a LateReturn row.
             var nowUtc = _timeProvider.GetUtcNow().UtcDateTime;
             var normalizedSearch = search?.Trim() ?? string.Empty;
             var searchIsTooLong = normalizedSearch.Length > MaxSearchLength;
@@ -172,6 +174,8 @@ namespace ASI.Basecode.Services.Services
 
         public ReturnRecordListItemViewModel RetrieveActiveLoan(long releaseRecordId)
         {
+            // Cataraja: WBS 44 GET support: only released, unreturned loans can open
+            // Cataraja: the return form. The POST still handles a loan returned by another request.
             var row = ProjectLoans(ActiveLoans()
                     .Where(reservation => reservation.ReleaseRecord.ReleaseRecordId == releaseRecordId))
                 .FirstOrDefault();
@@ -185,6 +189,8 @@ namespace ASI.Basecode.Services.Services
 
         public ReturnRecordResult AddReturnRecord(ReturnRecordViewModel model, string userId)
         {
+            // Cataraja: WBS 44-47 flow: validate inspection and times -> find loan ->
+            // Cataraja: create return/late child -> authorize and lock -> update equipment -> commit.
             if (model == null)
             {
                 return ReturnRecordResult.Fail("The return form is incomplete. Reload and try again.");
@@ -202,6 +208,8 @@ namespace ASI.Basecode.Services.Services
                 return ReturnRecordResult.Fail("Choose the item's status after inspection.");
             }
 
+            // Cataraja: WBS 45-46: inspected condition and operational status are distinct;
+            // Cataraja: only Good items may become Available. Reject invalid pairs on the server.
             if (!ReturnInspection.IsAllowed(condition, status))
             {
                 return ReturnRecordResult.Fail("Only items in Good condition can go back to Available. Choose Under Maintenance or Unavailable.");
@@ -282,6 +290,8 @@ namespace ASI.Basecode.Services.Services
                 CreatedAt = nowUtc
             };
 
+            // Cataraja: WBS 47: compare actual return with the scheduled due instant.
+            // Cataraja: Positive lateness creates a child record; partial late days round up.
             var daysLate = ReturnInspection.DaysLate(loan.DueAt, returnedUtc);
             if (daysLate > 0)
             {
@@ -318,6 +328,8 @@ namespace ASI.Basecode.Services.Services
                     return ReturnRecordResult.Missing();
                 }
 
+                // Cataraja: WBS 45-46: update the locked item's condition/status in the
+                // Cataraja: same transaction as its return, so inventory and return history agree.
                 lockedItem.ConditionStatus = condition;
                 lockedItem.ItemStatus = status;
                 lockedItem.UpdatedAt = nowUtc;
@@ -360,6 +372,8 @@ namespace ASI.Basecode.Services.Services
 
         public ReturnRecordDetailsViewModel RetrieveReturnRecord(long returnRecordId)
         {
+            // Cataraja: WBS 44-47 details: map saved inspection and late information,
+            // Cataraja: plus receiver/recording time, for the completed-return view.
             var row = ProjectReturns(_returnRecordRepository.GetReturnRecords()
                     .AsNoTracking()
                     .Where(record => record.ReturnRecordId == returnRecordId))
@@ -392,6 +406,8 @@ namespace ASI.Basecode.Services.Services
         // DB-backed check; cookie claims aren't refreshed when grants change
         private bool CanRecordReturns(string userId)
         {
+            // Cataraja: WBS 44: require an active Custodian/Administrator with the
+            // Cataraja: persisted release/return permission, independently of visible UI controls.
             if (string.IsNullOrWhiteSpace(userId))
             {
                 return false;

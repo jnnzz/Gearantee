@@ -358,6 +358,7 @@ Shared rows count for each assigned member. One notification task has no owner m
 
 | Date | Work | Owner | PR |
 | --- | --- | --- | --- |
+| 11/21/2026 | Added Cataraja-prefixed study comments for all ten assigned/shared tasks: catalog/reservations (WBS 34-37), returns/condition/status/lateness (44-47), and UI polish/testing (58-59). Explained controller/service/model/DI connections, ownership, date boundaries, validation and transaction behavior, plus existing tests. Verified comment-only source additions and retained all existing study markers. No application tests run; WBS dates, owners, statuses, milestone checkboxes and 46 Done count retained. | Codex | — |
 | 11/21/2026 | Added purpose/flow/file-connection comments for Member 4's eight assigned/shared tasks: borrower records and eligibility (WBS 30-32), reservation review/approval/rejection/release (39-42), and relevant existing testing fixtures (59). Covered controllers, services, models and DI, including stale edit checks, persisted permissions, conditional decisions, handover and audit boundaries. Prefixed all 85 new comment lines with Canencia: for identification. Source verified as added comments only; application tests not run. WBS rows, owners, dates, checkboxes and 46 Done progress count retained. | Codex | — |
 | 11/21/2026 | Merged upstream/develop at 1af9a02 into docs/assigned-task-flow-comments, preserving both branches' tracker additions and all 191 starred study comments. Release WebApp build passed with 0 warnings/errors; application tests not run. Verified all 46 WBS rows remain Done; WBS dates, owners, statuses and milestone checkboxes retained. | Codex | — |
 | 11/21/2026 | Prefixed the 191 assigned-task study comment lines from commit 49120f7 with a star marker across 25 C# files for easy identification. Verified that removing only the marker reproduces each original file byte-for-byte. WBS rows, dates, owners, milestone checkboxes and progress counts unchanged; all 46 WBS rows remain Done. | Codex | — |
@@ -492,6 +493,7 @@ The first version is complete when borrowers can securely reserve one available 
 
 | Date | Change | By |
 | --- | --- | --- |
+| 11/21/2026 | Added Cataraja-labelled workflow and testing comments under Additional work for WBS 34-37, 44-47 and shared 58-59; runtime source and WBS progress retained. | Codex |
 | 11/21/2026 | Documented borrower-profile and custodian review/release workflows plus related tests with Canencia-prefixed, WBS-labelled comments under Additional work; no runtime source or WBS status changes. | Codex |
 | 11/21/2026 | Synchronized the study-comment branch with upstream/develop (1af9a02); resolved tracker-only conflicts by retaining both histories and verified the merged Release build. | Codex |
 | 11/21/2026 | Added star markers to the assigned-task comments and prepared the update for the existing docs/assigned-task-flow-comments branch under Additional work. | Codex |
