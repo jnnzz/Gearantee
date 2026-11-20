@@ -133,6 +133,7 @@ namespace ASI.Basecode.WebApp
             // ★ -> enforce permissions -> execute the routed controller action.
             _app.UseRouting();
             _app.UseRateLimiter();
+            // Authenticate the Identity cookie before authorization evaluates roles and permission claims.
             _app.UseAuthentication();
             _app.UseAuthorization();
         }

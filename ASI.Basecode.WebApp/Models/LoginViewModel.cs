@@ -5,6 +5,7 @@ namespace ASI.Basecode.WebApp.Models
 {
     public class LoginViewModel
     {
+        // The form calls this a School ID; accounts store the same value as Identity's username.
         [JsonPropertyName("userId")]
         [Required(ErrorMessage = "Enter your School ID.")]
         [Display(Name = "School ID")]

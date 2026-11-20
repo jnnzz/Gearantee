@@ -15,6 +15,7 @@
             <h2 id="login-heading">Sign in</h2>
             <p class="login-intro">Use your School ID and password.</p>
 
+            @* This form posts LoginViewModel to AccountController.Login. *@
             <form id="login-form" asp-action="Login" asp-controller="Account" method="post"
                   data-hide-required-legend>
                 <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />

@@ -3,6 +3,7 @@
     var isOwnAccount = Model.Id == User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 }
 
+@* The edit and account-status forms post to separate UsersController actions. *@
 <div class="role-page form-layout">
     <a asp-action="Index" class="mb-5 inline-flex text-sm font-semibold text-primary-strong underline underline-offset-4">← Back to users &amp; roles</a>
     <section class="surface">

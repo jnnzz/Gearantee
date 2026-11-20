@@ -8,6 +8,7 @@
 @section Styles {
     <link rel="stylesheet" href="~/css/availability-week.css" asp-append-version="true" />
 }
+@* The controller supplies filter/API settings; availability-calendar.js fetches Events and draws this grid. *@
 <section class="calendar-page" aria-label="Equipment availability">
     <p class="mb-5 text-sm text-gray-500">A shared view of reservations, active loans and current maintenance.</p>
     @if (!string.IsNullOrWhiteSpace(Model.ValidationMessage))

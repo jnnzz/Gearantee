@@ -32,6 +32,7 @@ namespace ASI.Basecode.WebApp.Authorization
             var identity = await base.GenerateClaimsAsync(user);
             var roleNames = await UserManager.GetRolesAsync(user);
 
+            // RolePermission links become permission claims that controller policies can check.
             var permissions = await (
                 from role in _dbContext.Roles
                 join rolePermission in _dbContext.RolePermissions

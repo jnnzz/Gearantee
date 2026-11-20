@@ -102,6 +102,7 @@
     }
     let request;
     async function load() {
+        // Send the selected filters and visible date range to AvailabilityCalendarController.Events.
         request?.abort();
         const controller = new AbortController(); request = controller;
         grid.replaceChildren(); loading.classList.remove("hidden"); error.classList.add("hidden"); retry.classList.add("hidden");

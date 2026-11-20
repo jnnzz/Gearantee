@@ -6,6 +6,7 @@
     <link rel="stylesheet" href="~/css/admin-inventory.css" asp-append-version="true" />
 }
 
+@* DashboardController.Administrator supplies data assembled by DashboardService.GetAdministratorDashboardAsync. *@
 @if (ViewData["DashboardUnavailable"] is true)
 {
     <section class="table-surface p-8" aria-label="Dashboard unavailable">

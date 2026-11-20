@@ -15,6 +15,7 @@ namespace ASI.Basecode.WebApp
     {
         private void ConfigureIdentityAndAuthorization()
         {
+            // Identity stores accounts and roles through EF Core and configures password, lockout, and cookie behavior.
             _services
                 .AddIdentity<ApplicationUser, IdentityRole>(options =>
                 {
@@ -55,6 +56,7 @@ namespace ASI.Basecode.WebApp
                 options.SlidingExpiration = true;
                 options.Events.OnValidatePrincipal = async context =>
                 {
+                    // Reject a signed-in account after an administrator deactivates it.
                     await SecurityStampValidator.ValidatePrincipalAsync(context);
                     if (context.Principal?.Identity?.IsAuthenticated != true)
                     {
