@@ -358,6 +358,8 @@ Shared rows count for each assigned member. One notification task has no owner m
 
 | Date | Work | Owner | PR |
 | --- | --- | --- | --- |
+| 11/21/2026 | Expanded study comments across all 14 Member 2 assignments: shared startup/DI (WBS 1), recovery/OTP/Brevo (9-12), equipment list/forms/locks/archive (25-28), history scope/search/filters/CSV/XLSX (52-55), and existing targeted test fixtures (59). Comments explain purpose, file connections, key branches and data flow without personal names. Source changes verified as added comment lines only; no application tests required or run. All 46 WBS rows remain Done and progress counts unchanged. | Codex | — |
+| 11/21/2026 | Created a 53-page study PDF for all 14 Member 2 assignments (WBS 1, 9-12, 25-28, 52-55 and 59): pseudocode, controller/service connections, selected controller source with original line numbers, and panel practice answers. Based on local snapshot c2ba8cb and 23 source files; verified all task sections, 51 bookmarks, text bounds and rendered page layouts. No application tests run for this document. WBS statuses and progress counts unchanged. | Codex | — |
 | 11/14/2026 | WBS 14–15 follow-up: use one School ID in account administration and the CSV import template. The CSV SchoolId maps to the existing account identifier. Administrators still set initial passwords. CSV validation shows specific duplicate messages once per field and still reports other Identity errors. | Laroco | — |
 | 11/14/2026 | Done: repaired the category activation hidden value so Razor renders true/false correctly. Added a rendered-form HTTP regression that deactivates and reactivates the same category; aligned existing metadata and encoded-name confirmation tests with the shared dialogs. Release build and all 13 category HTTP tests passed, 0 failed/skipped. Tests used disposable SQLite data; the real database was not changed. | Unassigned | — |
 | 11/13/2026 | Done: restricted Borrower matrix editing to catalog/calendar and reservation submission; other cells render disabled/unchecked and forged grants are rejected server-side before changes are saved. Disabled self-deactivation on the administrator's own account page, omitted its POST form/dialog and retained server rejection of forged self-deactivation. Release build and targeted administration/rendered UI tests passed: 58 passed, 2 opt-in SQL Server tests skipped, 0 failed. Browser visual testing not repeated. | Unassigned | — |
@@ -484,6 +486,8 @@ The first version is complete when borrowers can securely reserve one available 
 
 | Date | Change | By |
 | --- | --- | --- |
+| 11/21/2026 | Added workflow and debugging comments for the 14 assigned/shared tasks under Additional work, preserving runtime source and all WBS dates, owners, statuses, counts and milestone checkboxes. | Codex |
+| 11/21/2026 | Added the assigned-task pseudocode and controller study PDF under output/pdf and recorded it as Additional work; retained all 46 completed WBS rows, owners, dates, milestone checkboxes and progress counts. | Codex |
 | 11/14/2026 | Mapped duplicate login names reported by Identity to the School ID field in CSV import, including IDs that differ only in casing. | Codex |
 | 11/14/2026 | Removed redundant Identity validation feedback when CSV rows already have specific duplicate email or School ID errors. | Codex |
 | 11/14/2026 | Implemented the WBS 14–15 School ID follow-up across account screens and CSV import. The tracker still counts 46 completed WBS tasks. | Codex |

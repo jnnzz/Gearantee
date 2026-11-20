@@ -6,6 +6,8 @@ using System.ComponentModel.DataAnnotations;
 
 namespace ASI.Basecode.Services.ServiceModels.EquipmentItem
 {
+    // WBS 25: EquipmentItemService returns filtered rows and paging values through
+    // this model; CategoriesController attaches it to the combined management page.
     public class EquipmentItemIndexViewModel
     {
         public string Search { get; set; }
@@ -37,6 +39,9 @@ namespace ASI.Basecode.Services.ServiceModels.EquipmentItem
         public bool IsLocked { get; set; }
     }
 
+    // WBS 26-27: shared form data for CreateEquipment.cshtml and EditEquipment.cshtml.
+    // Annotations feed controller ModelState; the service repeats business validation
+    // and reloads authoritative code/lock data before changing the stored item.
     public class EquipmentItemFormViewModel
     {
         public long EquipmentId { get; set; }
@@ -98,6 +103,8 @@ namespace ASI.Basecode.Services.ServiceModels.EquipmentItem
         public bool IsActive { get; set; }
     }
 
+    // WBS 26-28: services return outcomes instead of HTTP responses. CategoriesController
+    // maps these flags to a form error, Forbid, NotFound or a success-message redirect.
     public class EquipmentItemOperationResult
     {
         public bool Succeeded { get; private set; }

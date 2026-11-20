@@ -13,6 +13,8 @@ namespace ASI.Basecode.Data
     {
         private const string Provider = "Gearantee";
         private const string TokenName = "PasswordResetOtp";
+        // Issuance limits survive consuming TokenName, so a verified code cannot be
+        // used to reset its own cooldown. The service reads these two states separately.
         private const string RateLimitTokenName = "PasswordResetOtpRateLimit";
 
         private readonly AsiBasecodeDBContext _dbContext;
@@ -79,6 +81,8 @@ namespace ASI.Basecode.Data
             string replacementValue,
             CancellationToken cancellationToken = default)
         {
+            // WBS 11: one SQL update both checks the expected state and saves the new
+            // attempt count. A stale competing request affects zero rows and returns false.
             var rowsAffected = await _dbContext
                 .Set<IdentityUserToken<string>>()
                 .Where(token =>
@@ -122,6 +126,8 @@ namespace ASI.Basecode.Data
             string expectedValue,
             CancellationToken cancellationToken = default)
         {
+            // One conditional delete consumes a code once. Include expectedValue so
+            // an older verifier/failed-email cleanup cannot remove a newly issued code.
             var rowsAffected = await _dbContext
                 .Set<IdentityUserToken<string>>()
                 .Where(token =>

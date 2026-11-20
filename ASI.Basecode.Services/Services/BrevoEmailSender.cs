@@ -35,6 +35,8 @@ namespace ASI.Basecode.Services.Services
             string otp,
             CancellationToken cancellationToken = default)
         {
+            // WBS 10: PasswordResetOtpService supplies the generated code; this adapter
+            // formats its email and passes it to the shared Brevo transport below.
             var safeRecipientName = WebUtility.HtmlEncode(recipientName);
             var htmlContent = $@"
 <!doctype html>
@@ -57,6 +59,8 @@ namespace ASI.Basecode.Services.Services
         public async Task SendAsync(string recipientEmail, string recipientName, string subject, string htmlContent,
             CancellationToken cancellationToken = default)
         {
+            // BrevoOptions is bound in Startup.DI. Validate settings before constructing
+            // the request; credentials stay in configuration rather than email content.
             if (string.IsNullOrWhiteSpace(_options.ApiKey))
             {
                 throw new InvalidOperationException(
@@ -69,6 +73,8 @@ namespace ASI.Basecode.Services.Services
                     "Brevo:SenderEmail is not configured.");
             }
 
+            // The configured HttpClient base URL plus v3/smtp/email identifies Brevo's
+            // transactional email endpoint. JSON supplies sender, recipient and message.
             using var request = new HttpRequestMessage(
                 HttpMethod.Post,
                 "v3/smtp/email")
@@ -93,10 +99,13 @@ namespace ASI.Basecode.Services.Services
                 })
             };
 
+            // Authenticate the server-to-server API call; the browser does not send it.
             request.Headers.TryAddWithoutValidation("api-key", _options.ApiKey);
             request.Headers.Accept.Add(
                 new MediaTypeWithQualityHeaderValue("application/json"));
 
+            // A successful response means provider acceptance. A failure throws back
+            // to the caller; the OTP service then tries to invalidate its saved OTP.
             using var response = await _httpClient.SendAsync(
                 request,
                 cancellationToken);

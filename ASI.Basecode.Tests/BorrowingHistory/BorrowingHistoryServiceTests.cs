@@ -13,6 +13,9 @@ using Xunit;
 
 namespace ASI.Basecode.Tests.BorrowingHistory
 {
+    // WBS 59 (shared testing), covering WBS 52-54: seed a known borrowing lifecycle,
+    // call the history service with a fixed clock/filter, then check scope, dates and rows.
+    // Fixing time makes Overdue/Late assertions reproducible instead of clock-dependent.
     public sealed class BorrowingHistoryServiceTests
     {
         [Fact]

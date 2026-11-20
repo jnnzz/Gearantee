@@ -75,6 +75,8 @@ namespace ASI.Basecode.WebApp.Controllers
         [AllowAnonymous]
         public IActionResult ForgotPassword()
         {
+            // WBS 9: render Views/Account/ForgotPassword.cshtml with an empty School ID.
+            // Its form posts to the ForgotPassword overload immediately below.
             return View(new ForgotPasswordViewModel());
         }
 
@@ -85,11 +87,14 @@ namespace ASI.Basecode.WebApp.Controllers
         public async Task<IActionResult> ForgotPassword(
             ForgotPasswordViewModel model)
         {
+            // WBS 9 -> 10: validate the request before looking up the registered account.
+            // Returning the view keeps ModelState errors available to the form.
             if (!ModelState.IsValid)
             {
                 return View(model);
             }
 
+            // School ID is the account's UserName; the caller cannot choose a delivery email.
             var schoolId = model.SchoolId.Trim();
             var user = await _userManager.FindByNameAsync(schoolId);
             if (user != null && user.IsActive && !string.IsNullOrWhiteSpace(user.Email))
@@ -100,6 +105,8 @@ namespace ASI.Basecode.WebApp.Controllers
                 await _passwordResetOtpService.IssueOtpAsync(user, user.Email);
             }
 
+            // TempData carries the School ID across this redirect, not the secret code.
+            // Both eligible and unknown accounts follow this same visible navigation.
             TempData["PasswordResetSchoolId"] = schoolId;
             return RedirectToAction(nameof(ForgotPasswordCheckInbox));
         }
@@ -108,6 +115,8 @@ namespace ASI.Basecode.WebApp.Controllers
         [AllowAnonymous]
         public IActionResult ForgotPasswordCheckInbox()
         {
+            // WBS 11: recover the previous request's School ID and show OTP entry.
+            // Reading TempData normally marks it for removal after this request.
             if (TempData["PasswordResetSchoolId"] is not string schoolId ||
                 string.IsNullOrWhiteSpace(schoolId))
             {
@@ -126,6 +135,8 @@ namespace ASI.Basecode.WebApp.Controllers
         public async Task<IActionResult> VerifyPasswordResetOtp(
             VerifyPasswordResetOtpViewModel model)
         {
+            // The view model requires a six-digit OTP. Keep errors on CheckInbox so
+            // the user can correct the code without losing the School ID in the model.
             if (!ModelState.IsValid)
             {
                 return View(nameof(ForgotPasswordCheckInbox), model);
@@ -141,6 +152,8 @@ namespace ASI.Basecode.WebApp.Controllers
                 return View(nameof(ForgotPasswordCheckInbox), model);
             }
 
+            // Reserve and count this check BEFORE comparing the hash. The service's
+            // expected-value update prevents simultaneous guesses sharing one attempt.
             var reservation = await _passwordResetOtpService
                 .TryReserveAttemptAsync(user.Id, DateTimeOffset.UtcNow);
             if (!reservation.IsReserved)
@@ -153,6 +166,7 @@ namespace ASI.Basecode.WebApp.Controllers
                 return View(nameof(ForgotPasswordCheckInbox), model);
             }
 
+            // The database holds the OTP hash; compare it through Identity's hasher.
             var verificationResult = _passwordHasher.VerifyHashedPassword(
                 user,
                 reservation.State.OtpHash,
@@ -181,6 +195,8 @@ namespace ASI.Basecode.WebApp.Controllers
                 return View(nameof(ForgotPasswordCheckInbox), model);
             }
 
+            // Consume this exact state before allowing password reset. If another request
+            // already consumed/replaced it, stop here instead of issuing a second token.
             if (!await _passwordResetOtpService.TryConsumeAsync(
                     user.Id,
                     reservation.ReservedValue))
@@ -191,6 +207,8 @@ namespace ASI.Basecode.WebApp.Controllers
                 return View(nameof(ForgotPasswordCheckInbox), model);
             }
 
+            // WBS 11 -> 12: the Identity reset token is separate from the email OTP.
+            // Pass it to ResetPassword.cshtml in the form model rather than a URL.
             var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
             return View(
                 nameof(ResetPassword),
@@ -205,6 +223,7 @@ namespace ASI.Basecode.WebApp.Controllers
         [AllowAnonymous]
         public IActionResult ResetPassword()
         {
+            // A direct GET restarts recovery; the reset form is rendered after OTP success.
             return RedirectToAction(nameof(ForgotPassword));
         }
 
@@ -229,6 +248,8 @@ namespace ASI.Basecode.WebApp.Controllers
                 return View(model);
             }
 
+            // Identity validates the token and configured password policy, then saves
+            // the password hash. The controller never stores the plaintext password.
             var result = await _userManager.ResetPasswordAsync(
                 user,
                 model.Token,
@@ -239,6 +260,8 @@ namespace ASI.Basecode.WebApp.Controllers
                 return View(model);
             }
 
+            // Password update has succeeded. Clear prior login failures/lockout so
+            // the user can try the new password; cleanup failures are logged separately.
             var resetFailedAccessResult =
                 await _userManager.ResetAccessFailedCountAsync(user);
             if (!resetFailedAccessResult.Succeeded)

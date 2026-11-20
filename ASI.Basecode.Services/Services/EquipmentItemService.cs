@@ -61,6 +61,8 @@ namespace ASI.Basecode.Services.Services
             long? categoryId = null,
             int page = 1)
         {
+            // WBS 25: CategoriesController.Index supplies actor and list filters.
+            // This access check also protects callers that bypass the management UI.
             if (!await _categoryService.CanManageAsync(actorUserId))
             {
                 return null;
@@ -110,6 +112,8 @@ namespace ASI.Basecode.Services.Services
                 }
             }
 
+            // Filter first, then count and page in SQL. Read-only projection returns
+            // rows for Categories/Index without tracking every matching equipment entity.
             var totalCount = await query.CountAsync();
             var totalPages = Math.Max(1, (int)Math.Ceiling(totalCount / (double)PageSize));
             page = Math.Min(page, totalPages);
@@ -158,6 +162,7 @@ namespace ASI.Basecode.Services.Services
 
         public async Task<EquipmentItemFormViewModel> GetCreateFormAsync(string actorUserId)
         {
+            // WBS 26 GET support: provide permitted category options to the create view.
             if (!await _categoryService.CanManageAsync(actorUserId))
             {
                 return null;
@@ -173,6 +178,8 @@ namespace ASI.Basecode.Services.Services
             string actorUserId,
             long equipmentId)
         {
+            // WBS 27 GET support: load stored values and lock flags for the edit view.
+            // UpdateAsync rechecks the lock inside its transaction when the form is posted.
             if (!await _categoryService.CanManageAsync(actorUserId))
             {
                 return null;
@@ -241,6 +248,8 @@ namespace ASI.Basecode.Services.Services
                 return EquipmentItemOperationResult.Failure("Equipment details are required.");
             }
 
+            // WBS 26: ignore a submitted code; registration allocates its final code
+            // from the selected category's counter while holding that category lock.
             model.ItemCode = "GENERATED";
             var normalized = Normalize(model);
             if (!normalized.IsValid)
@@ -390,6 +399,8 @@ namespace ASI.Basecode.Services.Services
                     "This item has a pending reservation or active loan and cannot be changed until that transaction is closed.");
             }
 
+            // WBS 27: the existing code stays authoritative even if a client tampers
+            // with a read-only/hidden form value. Only validated editable fields change.
             model.ItemCode = item.ItemCode;
             var normalized = Normalize(model);
             if (!normalized.IsValid)
@@ -499,6 +510,8 @@ namespace ASI.Basecode.Services.Services
                     "Activate the item's category before restoring this equipment item.");
             }
 
+            // WBS 28: preserve this row and its history links. Active/archived list
+            // filters use this flag; restore runs the same method with false.
             item.IsArchived = isArchived;
             item.UpdatedAt = DateTime.UtcNow;
             await _unitOfWork.SaveChangesAsync();
@@ -567,6 +580,8 @@ namespace ASI.Basecode.Services.Services
 
         private async Task<bool> IsLockedAsync(EquipmentItem item)
         {
+            // WBS 27-28: protect Borrowed items, unexpired Pending reservations, and
+            // Approved reservations still awaiting release or completion of the loan.
             if (item.ItemStatus == DomainValues.EquipmentStatuses.Borrowed)
             {
                 return true;
@@ -594,6 +609,8 @@ namespace ASI.Basecode.Services.Services
 
         private static NormalizedEquipmentItem Normalize(EquipmentItemFormViewModel model)
         {
+            // Shared create/edit rules: trim fields, accept known condition/status values,
+            // enforce lengths, and permit Available only when condition is Good.
             var itemCode = model.ItemCode?.Trim().ToUpperInvariant();
             var itemName = model.ItemName?.Trim();
             var location = model.Location?.Trim();

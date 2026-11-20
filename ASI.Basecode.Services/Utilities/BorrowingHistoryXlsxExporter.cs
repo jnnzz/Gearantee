@@ -38,6 +38,8 @@ namespace ASI.Basecode.Services.Utilities
             IAsyncEnumerable<BorrowingHistoryRowViewModel> rows,
             CancellationToken cancellationToken = default)
         {
+            // WBS 55: BorrowingHistoryController passes the filtered asynchronous row
+            // stream. OpenXmlWriter writes progressively into a temporary workbook file.
             if (rows == null) throw new ArgumentNullException(nameof(rows));
 
             var path = Path.Combine(
@@ -88,6 +90,8 @@ namespace ASI.Basecode.Services.Utilities
                     workbookPart.Workbook.Save();
                 }
 
+                // ASP.NET sends this file stream as the download. DeleteOnClose removes
+                // the temporary workbook when the response disposes it; catch handles errors.
                 return new FileStream(
                     path,
                     FileMode.Open,
@@ -175,6 +179,8 @@ namespace ASI.Basecode.Services.Utilities
             uint rowIndex,
             BorrowingHistoryRowViewModel row)
         {
+            // Keep the CSV column order. Write dates/numbers as typed cells and user
+            // values as literal text, preserving codes with leading zeros and avoiding formulas.
             if (row == null) throw new InvalidDataException("The borrowing history stream returned a null row.");
 
             var texts = new[]
