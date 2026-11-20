@@ -83,7 +83,9 @@ namespace ASI.Basecode.Tests.UiMigration
             await using var site = await UiAcceptanceSite.CreateAsync();
             using var custodian = site.NewClient();
             await site.LoginAsync(custodian, "UI-CUST");
-            var history = await custodian.GetStringAsync("/BorrowingHistory/Index");
+            // Select late returns explicitly: expanded demo data can move them off
+            // the first unfiltered page, but this test must still exercise their badge.
+            var history = await custodian.GetStringAsync("/BorrowingHistory/Index?LateReturn=yes");
             Assert.Matches("<span class=\"status-badge status-danger\">Yes · \\d+ days?</span>", history);
             var deniedResponse = await custodian.GetAsync("/Account/AccessDenied");
             Assert.Equal(HttpStatusCode.Forbidden, deniedResponse.StatusCode);
