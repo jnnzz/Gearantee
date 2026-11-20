@@ -77,6 +77,8 @@ namespace ASI.Basecode.WebApp
             _services.AddScoped<IUserAdministrationService, UserAdministrationService>();
 
             // WBS 30.00â€“32.00: Borrower Profile Management
+            // Canencia: WBS 30-32: resolve BorrowerProfileController's interface to the service
+            // Canencia: that queries profiles and performs audited administrative writes.
             _services.AddScoped<IBorrowerProfileService, BorrowerProfileService>();
 
             // WBS 25–28: CategoriesController uses this service for the
@@ -93,6 +95,8 @@ namespace ASI.Basecode.WebApp
 
             // Services
             _services.AddScoped<ICatalogService, CatalogService>();
+            // Canencia: WBS 39-42: ReservationReviewController uses this shared service for its
+            // Canencia: custodian queue/decisions/release; borrower submission uses other methods.
             _services.AddScoped<IReservationService, ReservationService>();
             _services.AddScoped<IReturnRecordService, ReturnRecordService>();
             // WBS 52–55: the history page and exports share this query service.

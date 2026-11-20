@@ -65,6 +65,8 @@ namespace ASI.Basecode.Services.Services
             int page,
             bool? isEligible)
         {
+            // Canencia: WBS 30: read-only query -> search/eligibility filters -> count -> bounded page.
+            // Canencia: Project joins Identity names/School ID into display rows for the controller.
             IQueryable<BorrowerProfile> query = _db.BorrowerProfiles.AsNoTracking();
 
             var term = search?.Trim().ToLowerInvariant();
@@ -105,6 +107,7 @@ namespace ASI.Basecode.Services.Services
 
         public async Task<BorrowerProfileViewModel> GetBorrowerProfileAsync(long id)
         {
+            // Canencia: WBS 31 GET support: include the current stamp so an older edit can be detected.
             return await Project(
                     _db.BorrowerProfiles.AsNoTracking()
                         .Where(profile => profile.BorrowerProfileId == id))
@@ -116,6 +119,8 @@ namespace ASI.Basecode.Services.Services
             long id,
             BorrowerProfileUpdateViewModel model)
         {
+            // Canencia: WBS 31: validate -> administrative transaction -> persisted access check
+            // Canencia: -> stamp check -> profile/audit save -> sign-in claim refresh -> commit.
             if (model == null)
             {
                 return BorrowerProfileResult.Failure(
@@ -174,6 +179,7 @@ namespace ASI.Basecode.Services.Services
 
             profile.Department = after.Department;
             profile.ContactNumber = after.ContactNumber;
+            // Canencia: Invalidate other open forms, including edits opened in Users & Roles.
             profile.ConcurrencyStamp = NewStamp();
             profile.UpdatedAt = DateTime.UtcNow;
 
@@ -200,6 +206,8 @@ namespace ASI.Basecode.Services.Services
             long id,
             bool isEligible)
         {
+            // Canencia: WBS 32: save the requested eligibility under the administrative write lock.
+            // Canencia: Reservation submission reads eligibility from the stored borrower profile.
             return await _db.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
             {
             // Rebuild state on every attempt: if an earlier attempt saved IsEligible but failed
@@ -265,6 +273,8 @@ namespace ASI.Basecode.Services.Services
         private static IQueryable<BorrowerProfileViewModel> Project(
             IQueryable<BorrowerProfile> profiles)
         {
+            // Canencia: WBS 30-31: School ID/name come from Identity; department, contact and
+            // Canencia: eligibility come from BorrowerProfile. Read paths share this projection.
             return profiles.Select(profile => new BorrowerProfileViewModel
             {
                 BorrowerProfileId = profile.BorrowerProfileId,
@@ -331,6 +341,8 @@ namespace ASI.Basecode.Services.Services
         /// </summary>
         private async Task<IDbContextTransaction> BeginAdministrativeWriteAsync()
         {
+            // Canencia: WBS 31-32: serialize with account/role administration so a permission
+            // Canencia: revocation cannot slip between the actor check and this profile commit.
             var transaction = await _db.Database.BeginTransactionAsync(IsolationLevel.Serializable);
             if (_db.Database.IsSqlServer())
             {
@@ -346,6 +358,8 @@ namespace ASI.Basecode.Services.Services
         /// </summary>
         private async Task<BorrowerProfileResult> TrySaveAsync(IDbContextTransaction transaction)
         {
+            // Canencia: Profile and staged audit share the UnitOfWork. A failed save rolls back
+            // Canencia: the transaction; stale writes return a result the controller can explain.
             try
             {
                 await _unitOfWork.SaveChangesAsync();

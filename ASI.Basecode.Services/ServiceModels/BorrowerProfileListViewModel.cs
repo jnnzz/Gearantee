@@ -8,6 +8,8 @@ namespace ASI.Basecode.Services.ServiceModels
     /// </summary>
     public class BorrowerProfileListViewModel
     {
+        // Canencia: WBS 30: return visible rows and selected filters together so Index.cshtml
+        // Canencia: can preserve the current search/eligibility choice while navigating pages.
         public IReadOnlyList<BorrowerProfileViewModel> Borrowers { get; set; } =
             new List<BorrowerProfileViewModel>();
 

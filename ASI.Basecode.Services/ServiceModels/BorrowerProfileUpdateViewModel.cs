@@ -4,6 +4,8 @@ namespace ASI.Basecode.Services.ServiceModels
 {
     public class BorrowerProfileUpdateViewModel
     {
+        // Canencia: WBS 31: Edit.cshtml posts only editable profile fields and the loaded stamp.
+        // Canencia: ModelState checks these annotations; the service validates access and freshness.
         [Required, StringLength(200)]
         public string Department { get; set; }
 

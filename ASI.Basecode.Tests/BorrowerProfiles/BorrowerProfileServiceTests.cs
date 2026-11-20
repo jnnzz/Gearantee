@@ -30,6 +30,8 @@ namespace ASI.Basecode.Tests.BorrowerProfiles
     /// </summary>
     public class BorrowerProfileServiceTests
     {
+        // Canencia: WBS 59 (shared), covering 30-32: arrange isolated Identity/profile records,
+        // Canencia: call the service, then reload persisted state to check updates and audit behavior.
         // ---------------------------------------------------------------- reads
 
         [Fact]

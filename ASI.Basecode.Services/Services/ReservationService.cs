@@ -385,6 +385,8 @@ namespace ASI.Basecode.Services.Services
 
         public ReservationReviewIndexViewModel GetReviewQueue(string status, string search, int page)
         {
+            // Canencia: WBS 39: expire stale Pending requests, compute tab counts, then search,
+            // Canencia: filter, order and page the custodian queue for ReservationReview/Index.
             var nowUtc = _timeProvider.GetUtcNow().UtcDateTime;
             ExpireStalePendingForAll(nowUtc);
 
@@ -407,6 +409,7 @@ namespace ASI.Basecode.Services.Services
                 .GroupBy(reservation => reservation.Status)
                 .Select(group => new { Status = group.Key, Count = group.Count() })
                 .ToDictionary(group => group.Status, group => group.Count);
+            // Canencia: Awaiting Release means Approved, no handover yet, and not past the due time.
             var awaitingReleaseCount = queue.Count(reservation =>
                 reservation.Status == DomainValues.ReservationStatuses.Approved &&
                 reservation.ReleaseRecord == null &&
@@ -470,6 +473,8 @@ namespace ASI.Basecode.Services.Services
 
         public ReservationReviewDetailsViewModel RetrieveForReview(long reservationId)
         {
+            // Canencia: WBS 39 details: reuse the shared reservation projection and enrich it
+            // Canencia: with borrower, reviewer, rejection reason and release information.
             var nowUtc = _timeProvider.GetUtcNow().UtcDateTime;
             ExpireStalePendingForAll(nowUtc);
 
@@ -487,6 +492,8 @@ namespace ASI.Basecode.Services.Services
 
         public ReservationResult ApproveReservation(string actorUserId, long reservationId)
         {
+            // Canencia: WBS 40: authorize -> equipment lock -> reload state/time -> availability
+            // Canencia: and overlap checks -> conditional Pending-to-Approved write -> audit/commit.
             // Fast rejection only. The authoritative check is repeated under the shared
             // administration lock in the write transaction below.
             if (!CanReview(actorUserId, DomainValues.Permissions.ReservationReview))
@@ -591,6 +598,8 @@ namespace ASI.Basecode.Services.Services
                     return ReservationResult.Fail("This item is already booked or on loan during that window, so the request can't be approved.");
                 }
 
+                // Canencia: Update only a still-Pending future request. Zero affected rows means
+                // Canencia: the state changed before this decision could be applied.
                 var approved = _reservationRepository.GetReservations()
                     .Where(reservation =>
                         reservation.ReservationId == reservationId &&
@@ -619,6 +628,8 @@ namespace ASI.Basecode.Services.Services
         }
         public ReservationResult RejectReservation(string actorUserId, long reservationId, string reason)
         {
+            // Canencia: WBS 41: validate permission/reason, reload within the transaction, then
+            // Canencia: conditionally change Pending to Rejected with reviewer, reason and timestamps.
             if (!CanReview(actorUserId, DomainValues.Permissions.ReservationReview))
             {
                 return ReservationResult.Denied(DeniedMessage);
@@ -661,6 +672,8 @@ namespace ASI.Basecode.Services.Services
                     return ReservationResult.Fail(DecisionRefusal("reject", state.Status));
                 }
 
+                // Canencia: Keep the predicate on Pending so a stale reject cannot overwrite an
+                // Canencia: approval/cancellation. Save notification/audit with the successful decision.
                 var rejected = _reservationRepository.GetReservations()
                     .Where(reservation =>
                         reservation.ReservationId == reservationId &&
@@ -692,6 +705,8 @@ namespace ASI.Basecode.Services.Services
 
         public ReservationResult ReleaseEquipment(string actorUserId, long reservationId, string notes)
         {
+            // Canencia: WBS 42: release has its own permission. Under the equipment lock, require
+            // Canencia: Approved, no prior release and no other active loan before recording handover.
             if (!CanReview(actorUserId, DomainValues.Permissions.TransactionReleaseReturn))
             {
                 return ReservationResult.Denied(DeniedMessage);
@@ -777,6 +792,8 @@ namespace ASI.Basecode.Services.Services
                     return ReservationResult.Fail("This item is still on loan to another borrower, so it can't be released again yet.");
                 }
 
+                // Canencia: One transaction records who handed over the item and when, changes
+                // Canencia: inventory to Borrowed, and saves the staged notification/audit events.
                 _db.ReleaseRecords.Add(new ReleaseRecord
                 {
                     ReservationId = reservationId,
@@ -813,6 +830,8 @@ namespace ASI.Basecode.Services.Services
 
         private bool CanReview(string actorUserId, string permissionName)
         {
+            // Canencia: WBS 40-42: reload active user, Custodian role and the requested database
+            // Canencia: permission rather than trusting the page's visible buttons or old claims.
             if (string.IsNullOrWhiteSpace(actorUserId))
             {
                 return false;
@@ -839,6 +858,8 @@ namespace ASI.Basecode.Services.Services
 
         private ReviewState LoadReviewState(long reservationId)
         {
+            // Canencia: Re-read stored decision/loan state before each write; a details page can
+            // Canencia: remain open while another custodian or the borrower changes the request.
             return _reservationRepository.GetReservations()
                 .AsNoTracking()
                 .Where(reservation => reservation.ReservationId == reservationId)
@@ -898,6 +919,8 @@ namespace ASI.Basecode.Services.Services
             ReservationRow row,
             DateTime nowUtc)
         {
+            // Canencia: WBS 39: flags guide rendering; Approve/Reject/Release still enforce their
+            // Canencia: own rules against current state when the corresponding form is submitted.
             ToListItem(item, row, nowUtc);
 
             item.BorrowerName = string.Join(" ", new[] { row.BorrowerFirstName, row.BorrowerLastName }

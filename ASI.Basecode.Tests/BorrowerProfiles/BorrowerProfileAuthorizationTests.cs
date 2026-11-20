@@ -15,6 +15,8 @@ namespace ASI.Basecode.Tests.BorrowerProfiles
     /// </summary>
     public class BorrowerProfileAuthorizationTests
     {
+        // Canencia: WBS 59 (shared): inspect the controller's role/policy and POST guards.
+        // Canencia: Service tests separately exercise the persisted authorization checks on writes.
         [Fact]
         public void BorrowerProfileController_RequiresAdministratorAndBorrowerManagePermission()
         {

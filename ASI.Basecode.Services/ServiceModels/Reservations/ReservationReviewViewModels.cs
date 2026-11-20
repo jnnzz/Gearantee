@@ -25,6 +25,8 @@ namespace ASI.Basecode.Services.ServiceModels.Reservations
 
     public class ReservationReviewDetailsViewModel : ReservationReviewListItemViewModel
     {
+        // Canencia: WBS 39-42: Details.cshtml displays these values alongside the shared action
+        // Canencia: flags, and its decision/release forms post the reservation ID back to the controller.
         public string Brand { get; set; }
         public string Model { get; set; }
         public string Location { get; set; } = string.Empty;
@@ -56,6 +58,7 @@ namespace ASI.Basecode.Services.ServiceModels.Reservations
     /// <summary>Rejection form. The reason is required and matches the column width.</summary>
     public class RejectReservationViewModel
     {
+        // Canencia: WBS 41: match the required reason and length rule used by RejectReservation.
         [Required, StringLength(1000)]
         [Display(Name = "Reason for rejection")]
         public string Reason { get; set; }
@@ -64,6 +67,7 @@ namespace ASI.Basecode.Services.ServiceModels.Reservations
     /// <summary>Release form. Notes are optional and match the column width.</summary>
     public class ReleaseReservationViewModel
     {
+        // Canencia: WBS 42: optional handover notes are validated before creating the release record.
         [StringLength(1000)]
         [Display(Name = "Release notes (optional)")]
         public string Notes { get; set; }
