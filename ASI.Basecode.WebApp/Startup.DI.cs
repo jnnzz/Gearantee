@@ -19,8 +19,8 @@ namespace ASI.Basecode.WebApp
     {
         private void ConfigureOtherServices()
         {
-            // WBS 1 (shared): dependency injection resolves constructor interfaces here.
-            // Scoped workflow services share a request scope with the registered UnitOfWork.
+            // ★ WBS 1 (shared): dependency injection resolves constructor interfaces here.
+            // ★ Scoped workflow services share a request scope with the registered UnitOfWork.
             _services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             _services.TryAddSingleton<IActionContextAccessor, ActionContextAccessor>();
             _services.TryAddSingleton<TimeProvider>(TimeProvider.System);
@@ -69,8 +69,8 @@ namespace ASI.Basecode.WebApp
                     client.Timeout = TimeSpan.FromSeconds(30);
                 });
 
-            // WBS 9-12 connection: AccountController -> PasswordResetOtpService ->
-            // IdentityPasswordResetOtpStore for state, and BrevoEmailSender for delivery.
+            // ★ WBS 9-12 connection: AccountController -> PasswordResetOtpService ->
+            // ★ IdentityPasswordResetOtpStore for state, and BrevoEmailSender for delivery.
             _services.AddScoped<IPasswordResetOtpStore, IdentityPasswordResetOtpStore>();
             _services.AddScoped<IPasswordResetOtpService, PasswordResetOtpService>();
             _services.AddScoped<IDashboardService, DashboardService>();

@@ -3,8 +3,8 @@ using System.Collections.Generic;
 
 namespace ASI.Basecode.Services.ServiceModels.BorrowingHistory
 {
-    // WBS 53-55: GET inputs shared by Index and CSV/XLSX exports. The controller
-    // binds them; BorrowingHistoryService normalizes and validates before filtering.
+    // ★ WBS 53-55: GET inputs shared by Index and CSV/XLSX exports. The controller
+    // ★ binds them; BorrowingHistoryService normalizes and validates before filtering.
     public class BorrowingHistoryFilterViewModel
     {
         public string Search { get; set; } = string.Empty;
@@ -18,8 +18,8 @@ namespace ASI.Basecode.Services.ServiceModels.BorrowingHistory
         public int Page { get; set; } = 1;
     }
 
-    // WBS 52/55: one projected record used by the Razor table and both exporters.
-    // MapRow supplies derived status/late information and Manila-local dates.
+    // ★ WBS 52/55: one projected record used by the Razor table and both exporters.
+    // ★ MapRow supplies derived status/late information and Manila-local dates.
     public class BorrowingHistoryRowViewModel
     {
         public long ReservationId { get; set; }
@@ -51,8 +51,8 @@ namespace ASI.Basecode.Services.ServiceModels.BorrowingHistory
         public string CategoryName { get; set; } = string.Empty;
     }
 
-    // WBS 52: the page receives its visible rows, selected filter values, dropdown
-    // choices and paging metadata together so navigation can preserve the current query.
+    // ★ WBS 52: the page receives its visible rows, selected filter values, dropdown
+    // ★ choices and paging metadata together so navigation can preserve the current query.
     public class BorrowingHistoryIndexViewModel
     {
         public BorrowingHistoryFilterViewModel Filter { get; set; } = new();

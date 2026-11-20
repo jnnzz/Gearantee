@@ -358,6 +358,7 @@ Shared rows count for each assigned member. One notification task has no owner m
 
 | Date | Work | Owner | PR |
 | --- | --- | --- | --- |
+| 11/21/2026 | Prefixed the 191 assigned-task study comment lines from commit 49120f7 with a star marker across 25 C# files for easy identification. Verified that removing only the marker reproduces each original file byte-for-byte. WBS rows, dates, owners, milestone checkboxes and progress counts unchanged; all 46 WBS rows remain Done. | Codex | — |
 | 11/21/2026 | Expanded study comments across all 14 Member 2 assignments: shared startup/DI (WBS 1), recovery/OTP/Brevo (9-12), equipment list/forms/locks/archive (25-28), history scope/search/filters/CSV/XLSX (52-55), and existing targeted test fixtures (59). Comments explain purpose, file connections, key branches and data flow without personal names. Source changes verified as added comment lines only; no application tests required or run. All 46 WBS rows remain Done and progress counts unchanged. | Codex | — |
 | 11/21/2026 | Created a 53-page study PDF for all 14 Member 2 assignments (WBS 1, 9-12, 25-28, 52-55 and 59): pseudocode, controller/service connections, selected controller source with original line numbers, and panel practice answers. Based on local snapshot c2ba8cb and 23 source files; verified all task sections, 51 bookmarks, text bounds and rendered page layouts. No application tests run for this document. WBS statuses and progress counts unchanged. | Codex | — |
 | 11/14/2026 | WBS 14–15 follow-up: use one School ID in account administration and the CSV import template. The CSV SchoolId maps to the existing account identifier. Administrators still set initial passwords. CSV validation shows specific duplicate messages once per field and still reports other Identity errors. | Laroco | — |
@@ -486,6 +487,7 @@ The first version is complete when borrowers can securely reserve one available 
 
 | Date | Change | By |
 | --- | --- | --- |
+| 11/21/2026 | Added star markers to the assigned-task comments and prepared the update for the existing docs/assigned-task-flow-comments branch under Additional work. | Codex |
 | 11/21/2026 | Added workflow and debugging comments for the 14 assigned/shared tasks under Additional work, preserving runtime source and all WBS dates, owners, statuses, counts and milestone checkboxes. | Codex |
 | 11/21/2026 | Added the assigned-task pseudocode and controller study PDF under output/pdf and recorded it as Additional work; retained all 46 completed WBS rows, owners, dates, milestone checkboxes and progress counts. | Codex |
 | 11/14/2026 | Mapped duplicate login names reported by Identity to the School ID field in CSV import, including IDs that differ only in casing. | Codex |

@@ -28,8 +28,8 @@ namespace ASI.Basecode.Data.Repositories
 
         public async Task<EquipmentCategory> LoadCategoryForRegistrationAsync(long categoryId)
         {
-            // WBS 26: serialize category counter allocation so concurrent registrations
-            // cannot choose the same next item number. The service owns the transaction.
+            // ★ WBS 26: serialize category counter allocation so concurrent registrations
+            // ★ cannot choose the same next item number. The service owns the transaction.
             EnsureSerializableTransaction();
             var query = Context.Database.IsSqlServer()
                 ? Context.EquipmentCategories.FromSqlInterpolated($"SELECT * FROM EquipmentCategory WITH (UPDLOCK, HOLDLOCK) WHERE CategoryId = {categoryId}")
@@ -50,8 +50,8 @@ namespace ASI.Basecode.Data.Repositories
             long equipmentId,
             bool includeArchived)
         {
-            // WBS 27-28: edit/archive take this lock before checking reservations.
-            // Reservation writes coordinate on the same item; includeArchived enables restore.
+            // ★ WBS 27-28: edit/archive take this lock before checking reservations.
+            // ★ Reservation writes coordinate on the same item; includeArchived enables restore.
             if (Context.Database.IsSqlServer())
             {
                 return includeArchived

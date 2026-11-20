@@ -34,8 +34,8 @@ namespace ASI.Basecode.WebApp
                 .AddEntityFrameworkStores<AsiBasecodeDBContext>()
                 .AddDefaultTokenProviders();
 
-            // WBS 12: Identity's password-reset token lasts 15 minutes. It is generated
-            // after successful OTP verification; the email OTP has its own 10-minute expiry.
+            // ★ WBS 12: Identity's password-reset token lasts 15 minutes. It is generated
+            // ★ after successful OTP verification; the email OTP has its own 10-minute expiry.
             _services.Configure<DataProtectionTokenProviderOptions>(options =>
                 options.TokenLifespan = TimeSpan.FromMinutes(15));
 

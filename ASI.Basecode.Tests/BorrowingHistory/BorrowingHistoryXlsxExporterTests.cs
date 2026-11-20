@@ -13,9 +13,9 @@ using Xunit;
 
 namespace ASI.Basecode.Tests.BorrowingHistory
 {
-    // WBS 59 (shared testing), covering WBS 55: export representative rows, reopen the
-    // workbook with OpenXML, and inspect literal text, typed dates, formatting and cleanup.
-    // Structural assertions complement manual Excel checks; they do not open Excel itself.
+    // ★ WBS 59 (shared testing), covering WBS 55: export representative rows, reopen the
+    // ★ workbook with OpenXML, and inspect literal text, typed dates, formatting and cleanup.
+    // ★ Structural assertions complement manual Excel checks; they do not open Excel itself.
     public sealed class BorrowingHistoryXlsxExporterTests
     {
         [Fact]

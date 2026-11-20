@@ -66,8 +66,8 @@ namespace ASI.Basecode.WebApp.Controllers
             long? equipmentCategoryId = null,
             int equipmentPage = 1)
         {
-            // WBS 25: this page contains both tabs. EquipmentItemService supplies
-            // the Equipment tab; CategoryService supplies the shared page/category data.
+            // ★ WBS 25: this page contains both tabs. EquipmentItemService supplies
+            // ★ the Equipment tab; CategoryService supplies the shared page/category data.
             if (!await _categoryService.CanManageAsync(UserId))
             {
                 return Forbid();
@@ -107,8 +107,8 @@ namespace ASI.Basecode.WebApp.Controllers
         [HttpGet]
         public async Task<IActionResult> CreateEquipment()
         {
-            // WBS 26 GET: load allowed category choices, then render CreateEquipment.cshtml.
-            // That form submits its fields and optional photo to the POST overload below.
+            // ★ WBS 26 GET: load allowed category choices, then render CreateEquipment.cshtml.
+            // ★ That form submits its fields and optional photo to the POST overload below.
             var model = await _equipmentItemService.GetCreateFormAsync(UserId);
             if (model == null)
             {
@@ -132,7 +132,7 @@ namespace ASI.Basecode.WebApp.Controllers
             EquipmentItemFormViewModel model,
             IFormFile imageFile)
         {
-            // Check the actor before any upload. A visible button alone is not authorization.
+            // ★ Check the actor before any upload. A visible button alone is not authorization.
             if (!await _categoryService.CanManageAsync(UserId))
             {
                 return Forbid();
@@ -146,8 +146,8 @@ namespace ASI.Basecode.WebApp.Controllers
                 return View("CreateEquipment", model);
             }
 
-            // A successful upload supplies the image URL saved with the new item.
-            // If the later database write fails, the branches below try to remove it.
+            // ★ A successful upload supplies the image URL saved with the new item.
+            // ★ If the later database write fails, the branches below try to remove it.
             string uploadedUrl = null;
             if (HasFile(imageFile))
             {
@@ -161,7 +161,7 @@ namespace ASI.Basecode.WebApp.Controllers
                 model.ImageUrl = uploadedUrl;
             }
 
-            // The service owns validation, category locking, code allocation and insertion.
+            // ★ The service owns validation, category locking, code allocation and insertion.
             var result = await _equipmentItemService.CreateAsync(UserId, model);
             if (result.Forbidden)
             {
@@ -185,8 +185,8 @@ namespace ASI.Basecode.WebApp.Controllers
         [HttpGet]
         public async Task<IActionResult> EditEquipment(long id)
         {
-            // WBS 27 GET: retrieve stored item fields and derived lock/category flags.
-            // A missing record is 404; an actor without management access is forbidden.
+            // ★ WBS 27 GET: retrieve stored item fields and derived lock/category flags.
+            // ★ A missing record is 404; an actor without management access is forbidden.
             var model = await _equipmentItemService.GetEditFormAsync(UserId, id);
             if (model == null)
             {
@@ -265,8 +265,8 @@ namespace ASI.Basecode.WebApp.Controllers
                 model.ImageUrl = currentImageUrl;
             }
 
-            // WBS 27 POST: UpdateAsync rechecks access and active transactions while
-            // holding the item lock; form flags do not replace those server checks.
+            // ★ WBS 27 POST: UpdateAsync rechecks access and active transactions while
+            // ★ holding the item lock; form flags do not replace those server checks.
             var result = await _equipmentItemService.UpdateAsync(UserId, model);
             if (result.Forbidden)
             {
@@ -316,8 +316,8 @@ namespace ASI.Basecode.WebApp.Controllers
                 return Forbid();
             }
 
-            // WBS 28: Delete posts archived=true; Restore posts archived=false.
-            // The service changes IsArchived rather than physically deleting the row.
+            // ★ WBS 28: Delete posts archived=true; Restore posts archived=false.
+            // ★ The service changes IsArchived rather than physically deleting the row.
             var result = await _equipmentItemService.SetArchivedAsync(
                 UserId,
                 id,
@@ -347,8 +347,8 @@ namespace ASI.Basecode.WebApp.Controllers
             EquipmentItemFormViewModel model,
             bool isEdit)
         {
-            // Rebuild dropdowns and authoritative flags after an unsuccessful save.
-            // Keep submitted editable fields so the user can correct the same form.
+            // ★ Rebuild dropdowns and authoritative flags after an unsuccessful save.
+            // ★ Keep submitted editable fields so the user can correct the same form.
             ViewData["Title"] = isEdit ? "Edit equipment item" : "Register equipment item";
             ViewData["Eyebrow"] = "Master data";
             PrepareImageUploadViewData();

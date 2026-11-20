@@ -18,9 +18,9 @@ using Xunit;
 
 namespace ASI.Basecode.Tests.Category
 {
-    // WBS 59 (shared testing), covering WBS 25-28: arrange isolated inventory/users,
-    // invoke the equipment service, then inspect saved rows and rejected operations.
-    // SQL Server-specific locking is covered separately by EquipmentItemSqlServerConcurrencyTests.
+    // ★ WBS 59 (shared testing), covering WBS 25-28: arrange isolated inventory/users,
+    // ★ invoke the equipment service, then inspect saved rows and rejected operations.
+    // ★ SQL Server-specific locking is covered separately by EquipmentItemSqlServerConcurrencyTests.
     public class EquipmentItemServiceTests
     {
         [Fact]

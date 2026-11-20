@@ -41,10 +41,10 @@ namespace ASI.Basecode.WebApp.Controllers
             [FromQuery] BorrowingHistoryFilterViewModel filter,
             CancellationToken cancellationToken)
         {
-            // WBS 52 (view), 53 (search) and 54 (filter) share this GET action.
-            // Views/BorrowingHistory/Index.cshtml submits query values into this model.
+            // ★ WBS 52 (view), 53 (search) and 54 (filter) share this GET action.
+            // ★ Views/BorrowingHistory/Index.cshtml submits query values into this model.
             filter ??= new BorrowingHistoryFilterViewModel();
-            // This endpoint uses Search for equipment text; ignore the legacy Item field.
+            // ★ This endpoint uses Search for equipment text; ignore the legacy Item field.
             filter.Item = null;
             ModelState.Remove(nameof(filter.Item));
             if (!TryGetHistoryScope(out var onlyOwnHistory))
@@ -52,7 +52,7 @@ namespace ASI.Basecode.WebApp.Controllers
                 return Forbid();
             }
 
-            // The service scopes records first, combines filters, then returns one page.
+            // ★ The service scopes records first, combines filters, then returns one page.
             var model = await _borrowingHistoryService.GetHistoryAsync(
                 filter,
                 UserId,
@@ -60,8 +60,8 @@ namespace ASI.Basecode.WebApp.Controllers
                 cancellationToken);
             if (!ModelState.IsValid)
             {
-                // Binding errors (for example an invalid date) must not display a report
-                // that looks as though the invalid filter was successfully applied.
+                // ★ Binding errors (for example an invalid date) must not display a report
+                // ★ that looks as though the invalid filter was successfully applied.
                 model.Items.Clear();
                 model.TotalCount = 0;
                 model.TotalPages = 1;
@@ -101,21 +101,21 @@ namespace ASI.Basecode.WebApp.Controllers
                 return BadRequest(validationMessage);
             }
 
-            // WBS 55: validate before starting a file response. Both export actions
-            // use the same permitted scope and filter rules as the page above.
+            // ★ WBS 55: validate before starting a file response. Both export actions
+            // ★ use the same permitted scope and filter rules as the page above.
             Response.ContentType = "text/csv; charset=utf-8";
             Response.Headers["Content-Disposition"] =
                 $"attachment; filename=\"borrowing-history-{ManilaClock.NowLocal:yyyyMMdd}.csv\"";
 
-            // Write asynchronously for Kestrel; leave the response body owned by ASP.NET.
+            // ★ Write asynchronously for Kestrel; leave the response body owned by ASP.NET.
             await using var writer = new StreamWriter(
                 Response.Body,
                 new UTF8Encoding(encoderShouldEmitUTF8Identifier: false),
                 1024,
                 leaveOpen: true);
             await writer.WriteLineAsync(BorrowingHistoryCsvFormatter.FormatHeader());
-            // StreamReportRowsAsync omits paging, so export includes ALL matching rows.
-            // The formatter quotes values and protects spreadsheet-formula-like text.
+            // ★ StreamReportRowsAsync omits paging, so export includes ALL matching rows.
+            // ★ The formatter quotes values and protects spreadsheet-formula-like text.
             await foreach (var row in _borrowingHistoryService
                 .StreamReportRowsAsync(
                     filter,
@@ -164,8 +164,8 @@ namespace ASI.Basecode.WebApp.Controllers
                 onlyOwnHistory,
                 cancellationToken);
 
-            // XLSX writes those rows to a temporary file using the OpenXML exporter.
-            // Its returned stream deletes the temporary file when the response closes it.
+            // ★ XLSX writes those rows to a temporary file using the OpenXML exporter.
+            // ★ Its returned stream deletes the temporary file when the response closes it.
             FileStream workbook;
             try
             {
@@ -184,8 +184,8 @@ namespace ASI.Basecode.WebApp.Controllers
 
         private bool TryGetHistoryScope(out bool onlyOwnHistory)
         {
-            // The controller's history.view policy is required as well as this role check.
-            // Borrower-only callers see their own records; staff roles allow wider scope.
+            // ★ The controller's history.view policy is required as well as this role check.
+            // ★ Borrower-only callers see their own records; staff roles allow wider scope.
             var isCustodian = User.IsInRole(DomainValues.Roles.Custodian);
             var isAdministrator = User.IsInRole(DomainValues.Roles.Administrator);
             var isBorrower = User.IsInRole(DomainValues.Roles.Borrower);

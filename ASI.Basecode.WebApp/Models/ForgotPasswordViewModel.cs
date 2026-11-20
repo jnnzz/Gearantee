@@ -2,8 +2,8 @@ using System.ComponentModel.DataAnnotations;
 
 namespace ASI.Basecode.WebApp.Models
 {
-    // WBS 9: ForgotPassword.cshtml posts this model to AccountController.ForgotPassword.
-    // These annotations feed ModelState validation before the service receives a request.
+    // ★ WBS 9: ForgotPassword.cshtml posts this model to AccountController.ForgotPassword.
+    // ★ These annotations feed ModelState validation before the service receives a request.
     public class ForgotPasswordViewModel
     {
         [Required(ErrorMessage = "Enter your School ID.")]
@@ -12,8 +12,8 @@ namespace ASI.Basecode.WebApp.Models
         public string SchoolId { get; set; }
     }
 
-    // WBS 12: created after successful OTP verification and posted by ResetPassword.cshtml.
-    // UserId/Token identify the authorized reset; Identity validates that token on submission.
+    // ★ WBS 12: created after successful OTP verification and posted by ResetPassword.cshtml.
+    // ★ UserId/Token identify the authorized reset; Identity validates that token on submission.
     public class ResetPasswordViewModel
     {
         [Required]
@@ -35,8 +35,8 @@ namespace ASI.Basecode.WebApp.Models
         public string ConfirmPassword { get; set; }
     }
 
-    // WBS 11: CheckInbox carries the School ID and entered code to VerifyPasswordResetOtp.
-    // This checks input shape; PasswordResetOtpService and the controller check its validity.
+    // ★ WBS 11: CheckInbox carries the School ID and entered code to VerifyPasswordResetOtp.
+    // ★ This checks input shape; PasswordResetOtpService and the controller check its validity.
     public class VerifyPasswordResetOtpViewModel
     {
         [Required]

@@ -54,8 +54,8 @@ namespace ASI.Basecode.Services.Services
             string fallbackEmail,
             CancellationToken cancellationToken = default)
         {
-            // WBS 10 flow: reserve issuance -> generate code -> persist hash/state -> send.
-            // AccountController awaits this operation before redirecting to OTP entry.
+            // ★ WBS 10 flow: reserve issuance -> generate code -> persist hash/state -> send.
+            // ★ AccountController awaits this operation before redirecting to OTP entry.
             var now = DateTimeOffset.UtcNow;
             var issuance = await TryReserveIssuanceAsync(user, now, cancellationToken);
             if (!issuance.IsReserved)
@@ -64,8 +64,8 @@ namespace ASI.Basecode.Services.Services
                 return;
             }
 
-            // Generate the secret with a cryptographic RNG; only the outgoing email
-            // receives this plaintext value. Persist the hash and verification metadata.
+            // ★ Generate the secret with a cryptographic RNG; only the outgoing email
+            // ★ receives this plaintext value. Persist the hash and verification metadata.
             var otp = RandomNumberGenerator
                 .GetInt32(100000, 1000000)
                 .ToString("D6", CultureInfo.InvariantCulture);
@@ -79,8 +79,8 @@ namespace ASI.Basecode.Services.Services
                 now,
                 otpHash);
             var storedOtp = state.Serialize();
-            // IdentityPasswordResetOtpStore writes AspNetUserTokens before delivery,
-            // so a received code already has a saved state that verification can check.
+            // ★ IdentityPasswordResetOtpStore writes AspNetUserTokens before delivery,
+            // ★ so a received code already has a saved state that verification can check.
             var storeResult = await SetAsync(user, storedOtp);
 
             if (!storeResult.Succeeded)
@@ -94,7 +94,7 @@ namespace ASI.Basecode.Services.Services
 
             try
             {
-                // Startup.DI connects IBrevoEmailSender to BrevoEmailSender's HTTP client.
+                // ★ Startup.DI connects IBrevoEmailSender to BrevoEmailSender's HTTP client.
                 await _emailSender.SendPasswordResetOtpAsync(
                     user.Email ?? fallbackEmail,
                     $"{user.FirstName} {user.LastName}".Trim(),
@@ -138,8 +138,8 @@ namespace ASI.Basecode.Services.Services
             DateTimeOffset now,
             CancellationToken cancellationToken = default)
         {
-            // WBS 10: per-account issuance state is separate from the one-use OTP state.
-            // Consuming a code must not erase the resend cooldown or hourly issue count.
+            // ★ WBS 10: per-account issuance state is separate from the one-use OTP state.
+            // ★ Consuming a code must not erase the resend cooldown or hourly issue count.
             var currentValue = await _store.GetRateLimitAsync(
                 user.Id,
                 cancellationToken);
@@ -204,8 +204,8 @@ namespace ASI.Basecode.Services.Services
             DateTimeOffset now,
             CancellationToken cancellationToken = default)
         {
-            // WBS 11: load and validate the saved state, then count one allowed check.
-            // This method reserves a check; AccountController performs the hash comparison.
+            // ★ WBS 11: load and validate the saved state, then count one allowed check.
+            // ★ This method reserves a check; AccountController performs the hash comparison.
             var storedValue = await _store.GetAsync(
                 userId,
                 cancellationToken);
@@ -241,8 +241,8 @@ namespace ASI.Basecode.Services.Services
                     PasswordResetOtpAttemptStatus.TooManyAttempts);
             }
 
-            // Compare-and-replace succeeds only if no request changed the state since
-            // our read. A conflict is rejected instead of bypassing the five-check limit.
+            // ★ Compare-and-replace succeeds only if no request changed the state since
+            // ★ our read. A conflict is rejected instead of bypassing the five-check limit.
             var reservedState = state.WithAttempts(state.Attempts + 1);
             var reservedValue = reservedState.Serialize();
             var reserved = await _store.TryReplaceAsync(
@@ -266,8 +266,8 @@ namespace ASI.Basecode.Services.Services
             string expectedValue,
             CancellationToken cancellationToken = default)
         {
-            // Remove only the exact state the caller verified or needs to invalidate.
-            // Reuse fails, and cleanup cannot delete a newer replacement code by mistake.
+            // ★ Remove only the exact state the caller verified or needs to invalidate.
+            // ★ Reuse fails, and cleanup cannot delete a newer replacement code by mistake.
             return _store.TryRemoveAsync(
                 userId,
                 expectedValue,
